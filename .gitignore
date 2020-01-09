@@ -1,0 +1,5 @@
+program.c
+build/
+.idea/
+libs/
+.gradle/

@@ -1,0 +1,81 @@
+plugins {
+    id 'org.jetbrains.kotlin.multiplatform' version '1.3.61'
+}
+
+repositories {
+    mavenCentral()
+}
+
+kotlin {
+    jvm()
+    js()
+
+    sourceSets {
+        commonMain {
+            dependencies {
+                implementation kotlin('stdlib-common')
+            }
+        }
+        commonTest {
+            dependencies {
+                implementation kotlin('test-common')
+                implementation kotlin('test-annotations-common')
+            }
+        }
+
+        jvmMain {
+            dependencies {
+                implementation kotlin('stdlib-jdk8')
+                implementation('com.google.code.gson:gson:2.8.6')
+            }
+        }
+
+        jvmTest {
+            dependencies {
+                implementation kotlin('test-junit')
+            }
+        }
+
+        jsMain {
+            dependencies {
+                implementation kotlin('stdlib-js')
+            }
+        }
+
+        all {
+            languageSettings.progressiveMode = true
+        }
+
+//        jvm().compilations.main.defaultSourceSet {
+//            dependencies {
+//                implementation kotlin('stdlib-jdk8')
+//            }
+//        }
+//        // JVM-specific tests and their dependencies:
+//        jvm().compilations.test.defaultSourceSet {
+//            dependencies {
+//                implementation kotlin('test-junit')
+//            }
+//        }
+    }
+}
+
+
+
+//
+//sourceCompatibility = 1.8
+//
+//repositories {
+//    mavenCentral()
+//}
+//
+//dependencies {
+//    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
+//}
+//
+//compileKotlin {
+//    kotlinOptions.jvmTarget = "1.8"
+//}
+//compileTestKotlin {
+//    kotlinOptions.jvmTarget = "1.8"
+//}

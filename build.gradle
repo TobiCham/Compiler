@@ -1,0 +1,13 @@
+group 'com.tobi'
+version '1.0'
+
+allprojects {
+    repositories {
+        jcenter()
+        mavenCentral()
+    }
+}
+
+wrapper {
+    gradleVersion("6.0.1")
+}
