@@ -10,11 +10,14 @@ object IntType : ExpandedType(DataType.INT)
 object StringType : ExpandedType(DataType.STRING)
 object VoidType : ExpandedType(DataType.VOID)
 object AnythingType : ExpandedType(DataType.ANYTHING)
-data class FunctionType(val returnType: ExpandedType?) : ExpandedType(DataType.FUNCTION) {
+data class FunctionType(val returnType: ExpandedType, val params: ExpandedParameterList) : ExpandedType(DataType.FUNCTION) {
 
     override fun toString(): String = buildString {
         append("function<")
-        append(returnType?.toString() ?: "?")
+        append(returnType.toString())
         append('>')
     }
 }
+
+typealias ExpandedParameterList = List<Pair<String, ExpandedType>>
+fun ExpandedParameterList.toParameterList() = this.map { (name, type) -> Pair(name, type.type) }
