@@ -3,11 +3,11 @@ package com.tobi.mc.inbuilt
 import com.tobi.mc.Context
 import com.tobi.mc.Data
 import com.tobi.mc.ExecutionEnvironment
-import com.tobi.mc.analysis.AnythingType
-import com.tobi.mc.analysis.VoidType
 import com.tobi.mc.computable.data.DataTypeString
+import com.tobi.mc.parser.syntax.types.IntType
+import com.tobi.mc.parser.syntax.types.StringType
 
-object FunctionToString : InbuiltFunction("toString", listOf("value" to AnythingType), VoidType) {
+object FunctionIntToString : InbuiltFunction("intToString", listOf("value" to IntType), StringType) {
 
     override fun compute(context: Context, environment: ExecutionEnvironment): DataTypeString {
         val value = context.getDataOfType<Data>("value")

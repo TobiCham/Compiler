@@ -5,21 +5,30 @@ import com.tobi.mc.computable.data.DataType
 
 class VariableTypeState(private val parent: VariableTypeState?) {
 
-    private val variables: MutableMap<String, AnalysisType> = HashMap()
+    private val variables: MutableMap<String, ExpandedType> = HashMap()
 
     fun getType(name: String) = find(name, VariableTypeState::variables)
 
-    fun define(name: String, type: AnalysisType) = apply {
+    fun define(name: String, type: ExpandedType) = apply {
         variables[name] = type
+    }
+
+    fun set(name: String, type: ExpandedType) {
+        val state = find {
+            if(it.variables.containsKey(name)) it else null
+        } ?: throw IllegalStateException()
+        state.variables[name] = type
     }
 
     /**
      * Initialises a new function
      * @return the new state
      */
-    fun initialiseFunction(function: FunctionDeclaration, mapping: (DataType) -> AnalysisType): Pair<VariableTypeState, AnalysisFunctionType> {
+    fun initialiseFunction(function: FunctionDeclaration, mapping: (DataType) -> ExpandedType): Pair<VariableTypeState, FunctionType> {
         val params = function.parameters.map { (_, type) -> mapping(type) }
-        val functionType = AnalysisFunctionType(mapping(function.returnType), AnalysisKnownParams(params))
+
+        val returnType = if(function.returnType != null) mapping(function.returnType!!) else UnknownType
+        val functionType = FunctionType(returnType, KnownParameters(params))
         define(function.name, functionType)
 
         val newState = VariableTypeState(this)

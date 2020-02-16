@@ -3,10 +3,7 @@ package com.tobi.mc.computable
 import com.tobi.mc.*
 import com.tobi.mc.computable.data.DataType
 
-class DefineVariable(override val name: String, val value: DataComputable, expectedType: DataType?): VariableReference, DataComputable {
-
-    var expectedType: DataType? = expectedType
-        private set
+class DefineVariable(override val name: String, val value: DataComputable, var expectedType: DataType?): VariableReference, DataComputable {
 
     override val components: Array<Computable> = arrayOf(value)
 
@@ -21,10 +18,6 @@ class DefineVariable(override val name: String, val value: DataComputable, expec
         }
         context.defineVariable(name, value)
         return value
-    }
-
-    fun setExpectedType(type: DataType) {
-        this.expectedType = type
     }
 
     override fun optimise() = DefineVariable(name, value.optimise(), expectedType)

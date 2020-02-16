@@ -5,8 +5,7 @@ enum class DataType {
     INT,
     FUNCTION,
     STRING,
-    VOID,
-    ANYTHING;
+    VOID;
 
     override fun toString(): String {
         return name.toLowerCase()

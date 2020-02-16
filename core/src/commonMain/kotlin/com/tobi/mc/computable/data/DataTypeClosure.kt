@@ -9,7 +9,7 @@ class DataTypeClosure(
     val parameters: ParameterList,
     val context: Context,
     val body: ExpressionSequence,
-    val returnType: DataType
+    val returnType: DataType?
 ) : Data() {
 
     override val type: DataType = DataType.FUNCTION
@@ -20,7 +20,7 @@ class DataTypeClosure(
         val paramList = parameters.joinToString(", ") {
             "${it.second} ${it.first}"
         }
-        return "[$returnType function($paramList)]"
+        return "[${returnType.toString() ?: "?"} function($paramList)]"
     }
 
     override fun toString(): String = description

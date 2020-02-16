@@ -4,7 +4,6 @@ import com.tobi.mc.Context
 import com.tobi.mc.Data
 import com.tobi.mc.ExecutionEnvironment
 import com.tobi.mc.ScriptException
-import com.tobi.mc.computable.data.DataType
 import com.tobi.mc.computable.data.DataTypeClosure
 
 class FunctionCall(val function: DataComputable, val arguments: List<DataComputable>) : DataComputable {
@@ -27,7 +26,7 @@ class FunctionCall(val function: DataComputable, val arguments: List<DataComputa
         val newContext = Context(function.context)
         for((i, pair) in function.parameters.withIndex()) {
             val value = arguments[i].compute(context, environment)
-            if(value.type != pair.second && pair.second != DataType.ANYTHING) {
+            if(value.type != pair.second) {
                 throw ScriptException("Invalid type on parameter index $i: Expected ${pair.second}, got ${value.type}")
             }
             newContext.defineVariable(pair.first, value)

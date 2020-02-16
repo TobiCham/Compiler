@@ -14,7 +14,6 @@ WhiteSpace = {LineTerminator} | [ \t\f]+
 <YYINITIAL> {
     "int" { return TokenType.INT; }
     "string" { return TokenType.STRING; }
-    "function" { return TokenType.FUNCTION; }
     "void" { return TokenType.VOID; }
     "anything" { return TokenType.ANYTHING; }
     "???" { return TokenType.UNKNOWN_PARAMS; }

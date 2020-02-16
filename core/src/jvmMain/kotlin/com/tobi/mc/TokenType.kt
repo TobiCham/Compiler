@@ -7,7 +7,6 @@ enum class TokenType {
     VOID,
     ANYTHING,
     UNKNOWN,
-    FUNCTION,
     START_FUNCTION,
     END_FUNCTION,
     START_INTERSECTION,

@@ -83,7 +83,7 @@ object NodeConverter {
             right.type == NodeType.SEMI_COLON -> convertSequence(right)
             else -> ExpressionSequence(listOf(convert(right)))
         }
-        val returnType = getDataType(left!!.left!!.left!!.lexeme)
+        val returnType = if(left.left == null) null else getDataType(left.left.left.lexeme)
         val functionName = left.right!!.left!!.left!!.lexeme
         val parameterList = getParameterList(left.right.right)
 

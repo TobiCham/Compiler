@@ -8,11 +8,13 @@ class DefaultContext : Context(null) {
 
     init {
         addVariables(
-            FunctionPrint,
-            FunctionPrintln,
+            FunctionPrintInt,
+            FunctionPrintString,
+            FunctionPrintFunction,
             FunctionReadInt,
             FunctionReadString,
-            FunctionToString,
+            FunctionIntToString,
+            FunctionFunctionToString,
             FunctionConcat
         )
     }

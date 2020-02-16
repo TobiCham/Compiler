@@ -2,8 +2,8 @@ package com.tobi.mc.inbuilt
 
 import com.tobi.mc.Context
 import com.tobi.mc.ExecutionEnvironment
-import com.tobi.mc.analysis.IntType
 import com.tobi.mc.computable.data.DataTypeInt
+import com.tobi.mc.parser.syntax.types.IntType
 
 object FunctionReadInt : InbuiltFunction("readInt", emptyList(), IntType) {
 
