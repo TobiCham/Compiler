@@ -1,0 +1,162 @@
+<html>
+<head>
+    <title>A page</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <style>
+        #code-area {
+            margin-bottom: 1rem;
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        #compile {
+            /*width: 120px;
+            height: 30px;
+            border: none;
+            background-color: #1da73b;
+            color: white;
+            border-radius: 5px;
+            display: block;
+            margin-bottom: 1.5rem;*/
+            margin-bottom: 0.5rem;
+        }
+
+        #output {
+            display: block;
+            border: 1px solid #aaaaaa;
+            border-radius: 4px;
+            padding: 4px;
+            height: calc(100% - 6.5rem);
+            background-color: #eeeeee;
+            color: #5e5e5e;
+        }
+
+        .col-md-6 {
+            height: 100%;
+        }
+
+        .row {
+            height: calc(100% - 5rem);
+        }
+
+        .container-fluid {
+            height: 100%;
+        }
+
+        #input {
+            width: calc(100% - 110px);
+            display: inline-block;
+            height: 2.5rem;
+            border: 1px solid #aaaaaa;
+            margin-right: 5px;
+        }
+        #inputButton {
+            height: 2.5rem;
+            width: 100px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container-fluid">
+    <h3>MinusC Interpreter</h3>
+
+    <div class="row main-content">
+        <div class="col-md-6">
+            <textarea id="code-area"></textarea>
+        </div>
+        <div class="col-md-6">
+            <button class="btn btn-success" id="compile">Compile & Run</button>
+            <pre id="output">
+auto factorial(int x) {
+    if(x <= 2) {
+        return x;
+    }
+    return x * factorial(x - 1);
+}
+
+int readInput() {
+    printString("Enter a number:\n");
+    return readInt();
+}
+
+void main() {
+    auto x = readInput();
+    auto result = factorial(x);
+
+    printInt(x);
+    printString("! = ");
+    printInt(result);
+}
+            </pre>
+            <div style="width: 100%">
+                <input id="input" class="form-control" disabled />
+                <button id="inputButton" class="btn btn-primary" disabled>Submit</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="./main.js"></script>
+<script>
+    var textareas = document.getElementsByTagName('textarea');
+var count = textareas.length;
+for(var i=0;i<count;i++){
+    textareas[i].onkeyup = function(e) {
+        if(e.ctrlKey) {
+            if(e.key == "F11") {
+                document.getElementById("compile").click();
+                return;
+            }
+        }
+    }
+    textareas[i].onkeydown = function(e){
+        const s = this.selectionStart;
+        if(e.keyCode==9 || e.which==9){
+            e.preventDefault();
+            this.value = this.value.substring(0,this.selectionStart) + "\t" + this.value.substring(this.selectionEnd);
+            this.selectionEnd = s+1;
+        }
+        function findIndent() {
+            let indent = 0;
+            let index = this.selectionStart - 1;
+            while(index >= 0 && this.value[index] != '\n') {
+                index--;
+            }
+            index++;
+            let endIndex = index
+            while(true) {
+                if(this.value[endIndex] != ' ' && this.value[endIndex] != '\t') break;
+                endIndex++;
+            }
+            return this.value.substring(index, endIndex);
+        }
+        findIndent = findIndent.bind(this);
+
+        if(e.keyCode == 13 && this.value.length > 0) {
+            if(this.value[this.selectionStart - 1] == '{') {
+                e.preventDefault();
+                let spacing = findIndent();
+                this.value = this.value.substring(0,this.selectionStart) + "\n" + spacing + "\t\n" + spacing + "}" + this.value.substring(this.selectionEnd);
+                this.selectionEnd = s + 2 + spacing.length;
+            } else {
+                let spacing = findIndent();
+                const currEnd = this.selectionEnd;
+                e.preventDefault();
+                this.value = this.value.substring(0, this.selectionStart) + "\n" + spacing + this.value.substring(this.selectionEnd);
+                this.selectionEnd = s + 1 + spacing.length;
+            }
+        }
+        /*if(e.key == '(') {
+            e.preventDefault();
+            this.value = this.value.substring(0,this.selectionStart) + "()" + this.value.substring(this.selectionEnd);
+            this.selectionEnd = s + 1;
+        }*/
+    }
+}
+</script>
+
+</body>
+</html>

@@ -1,0 +1,66 @@
+package com.tobi.mc.parser
+
+import com.tobi.mc.computable.Program
+import com.tobi.mc.parser.ast.ASTConverter
+import com.tobi.mc.parser.ast.SimpleStringReader
+import com.tobi.mc.parser.ast.lexer.Lexer
+import com.tobi.mc.parser.ast.lexer.LexerNode
+import com.tobi.mc.parser.ast.lexer.LexerNodeType
+import com.tobi.mc.parser.ast.parser.Parser
+import com.tobi.mc.parser.ast.parser.ParserNode
+import com.tobi.mc.parser.ast.parser.runtime.*
+import com.tobi.mc.parser.optimisation.OptimisationImpl
+import com.tobi.mc.parser.optimisation.OptimisationsList
+import com.tobi.mc.parser.syntax.SyntaxRulesList
+import com.tobi.mc.parser.syntax.SyntaxValidatorImpl
+import com.tobi.mc.parser.types.TypeDetectionImpl
+
+internal class ParserContextImpl : ParserContext {
+
+    private val optimiser = OptimisationImpl(OptimisationsList.DEFAULT_OPTIMISATIONS)
+    private val syntaxValidator = SyntaxValidatorImpl(SyntaxRulesList.RULES)
+    private val typeDetection = TypeDetectionImpl
+
+    private val allOperations = setOf(optimiser, syntaxValidator, typeDetection)
+    private val orderedOperations = listOf(syntaxValidator, optimiser, typeDetection)
+
+    override fun getAllOperations(): Set<ParserOperation> = allOperations
+
+    override fun getParserOperationFlow(): List<ParserOperation> = orderedOperations
+
+    override fun processProgram(program: Program): Program {
+        return getParserOperationFlow().fold(program) { acc, parser -> parser.processProgram(acc) }
+    }
+
+    override fun parseFromString(program: String): Program {
+        try {
+            return parseProgram(program)
+        } catch (e: ParseException) {
+            throw com.tobi.mc.ParseException(e.createErrorMessage(program))
+        }
+    }
+
+    private fun parseProgram(program: String): Program {
+        val lexer = Lexer(SimpleStringReader(program))
+        val parser = Parser(object : Scanner {
+            override fun next_token(): Symbol? {
+                val node = lexer.yylex() ?: return null
+                return convertNodeToToken(node)
+            }
+        }, ComplexSymbolFactory(), ::convertIdToName)
+
+        val symbol = parser.parse()
+        val result = symbol.value as ParserNode
+        return ASTConverter.convertProgram(result)
+    }
+
+    private fun convertNodeToToken(node: LexerNode): Symbol {
+        val loc = FileLocation(node.line, node.column)
+        val endExtra = if(node.value != null) node.value.toString() else node.type.representation
+        val endLoc = FileLocation(node.line, node.column + endExtra.length)
+
+        return ComplexSymbol(node.type.representation, node.type.parserId, loc, endLoc, node.value)
+    }
+
+    private fun convertIdToName(id: Int) = LexerNodeType.values().find { it.parserId == id }?.representation ?: "unknown"
+}

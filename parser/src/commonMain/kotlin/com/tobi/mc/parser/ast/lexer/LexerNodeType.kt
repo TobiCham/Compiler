@@ -1,0 +1,38 @@
+package com.tobi.mc.parser.ast.lexer
+
+internal enum class LexerNodeType(val parserId: Int, val representation: String = "", val hasValue: Boolean = false) {
+
+    IDENTIFIER(2, "identifier", false),
+    CONSTANT(3, "constant", false),
+    STRING(4, "string", false),
+    LE_OP(5, "<="),
+    GE_OP(6, ">="),
+    EQ_OP(7, "=="),
+    NE_OP(8, "!="),
+    EXTERN(9, "extern"),
+    AUTO(10, "auto"),
+    INT(11, "int"),
+    VOID(12, "void"),
+    FUNCTION(13, "function"),
+    IF(14, "if"),
+    ELSE(15, "else"),
+    WHILE(16, "while"),
+    CONTINUE(17, "continue"),
+    BREAK(18, "break"),
+    RETURN(19, "return"),
+    COMMA(20, ","),
+    MINUS(21, "-"),
+    ADD(22, "+"),
+    MULTIPLY(23, "*"),
+    DIVIDE(24, "/"),
+    MOD(25, "%"),
+    GREATER_THAN(26, ">"),
+    LESS_THAN(27, "<"),
+    SEMI_COLON(28, ";"),
+    ASSIGNMENT(29, "="),
+    LEFT_CURLY(30, "{"),
+    RIGHT_CURLY(31, "}"),
+    LEFT_BRACKET(32, "("),
+    RIGHT_BRACKET(33, ")"),
+    NOT(34, "!")
+}
