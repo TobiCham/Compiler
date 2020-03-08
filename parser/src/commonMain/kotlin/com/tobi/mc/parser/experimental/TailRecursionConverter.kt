@@ -24,10 +24,10 @@ object TailRecursionConverter {
 
                 for((i, value) in tailRecFunc.parameters.withIndex()) {
                     var newValue = (this.toReturn as FunctionCall).arguments[i]
-                    println(ProgramToString.toString(newValue))
+                    println(ProgramToString().toString(newValue))
                     for((name, _) in tailRecFunc.parameters) {
                         newValue = VariableRenamer.renameVariable(newValue, name, "old_$name") as DataComputable
-                        println(ProgramToString.toString(newValue))
+                        println(ProgramToString().toString(newValue))
                     }
                     println()
                     list.add(SetVariable(value.first, newValue))

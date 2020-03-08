@@ -5,9 +5,9 @@ internal object StringConverter {
     private val replacements = mapOf(
         'n' to '\n',
         't' to '\t',
+        '"' to '"',
         '\\' to '\\',
-        '\'' to '\'',
-        '"' to '"'
+        '\'' to '\''
     )
 
     fun convertToString(rawInput: String): String {

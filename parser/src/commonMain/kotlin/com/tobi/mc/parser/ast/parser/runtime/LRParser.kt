@@ -156,7 +156,9 @@ internal abstract class LRParser(
         /* information about production being reduced with */
         var handle_size: Short
         var lhs_sym_num: Short
-        /* set up direct reference to tables to drive the parser */production_tab = production_table()
+
+        /* set up direct reference to tables to drive the parser */
+        production_tab = production_table()
         action_tab = action_table()
         reduce_tab = reduce_table()
         /* get the first token */cur_token = scan()
@@ -178,14 +180,15 @@ internal abstract class LRParser(
                 /* advance to the next Symbol */cur_token = scan()
             } else if (act < 0) { /* perform the action for the reduce */
                 lhs_sym = do_action(-act - 1, this, stack, tos)
-                /* look up information about the production */lhs_sym_num = production_tab[-act - 1][0]
+                /* look up information about the production */
+                lhs_sym_num = production_tab[-act - 1][0]
                 handle_size = production_tab[-act - 1][1]
                 /* pop the handle off the stack */for (i in 0 until handle_size) {
                     stack.pop()
                     tos--
                 }
-                /* look up the state to go to from the one popped back to */act =
-                    getReduce(stack.peek().parseState, lhs_sym_num.toInt()).toInt()
+                /* look up the state to go to from the one popped back to */
+                act = getReduce(stack.peek().parseState, lhs_sym_num.toInt()).toInt()
                 /* shift to that state */lhs_sym.parseState = act
                 lhs_sym.used_by_parser = true
                 stack.push(lhs_sym)
@@ -389,23 +392,21 @@ internal abstract class LRParser(
     companion object {
         private const val ERROR_SYNC_SIZE = 3
 
-        fun unpackFromStrings(sa: Array<String>): Array<ShortArray> {
-            val sb = StringBuilder(sa[0])
-            for (i in 1 until sa.size) {
-                sb.append(sa[i])
-            }
+        fun unpackFromString(str: String): Array<ShortArray> {
             var n = 0 // location in initialization string
-            val size1 = sb[n].toInt() shl 16 or sb[n + 1].toInt()
+            val size1 = str[n].toInt() shl 16 or str[n + 1].toInt()
             n += 2
             val result = Array(size1) {
-                val size2 = sb[n].toInt() shl 16 or sb[n + 1].toInt()
+                val size2 = str[n].toInt() shl 16 or str[n + 1].toInt()
                 n += 2
                 ShortArray(size2) {
-                    (sb[n++] - 2).toShort()
+                    (str[n++] - 2).toShort()
                 }
             }
+            println("""
+                arrayOf(${result.joinToString(", ") { arr -> "shortArrayOf(${arr.joinToString(", ")})" }})
+            """.trimIndent())
             return result
         }
     }
-
 }

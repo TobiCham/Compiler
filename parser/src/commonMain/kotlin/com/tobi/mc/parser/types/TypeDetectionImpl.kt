@@ -55,45 +55,36 @@ internal object TypeDetectionImpl : TypeDetection {
     }
 
     private fun SetVariable.handle(state: VariableTypeState) {
-        val expectedType = state.getType(name)!!
-        val actualType = value.calculateType(state)
-        setTypes(name, state, expectedType, actualType)
+        val currentType = state.getType(name)!!
+        val assignedType = value.calculateType(state)
+
+        if(!TypeMerger.canBeAssignedTo(currentType, assignedType)) {
+            throw ParseException("$name: $assignedType cannot be assigned to '$currentType'")
+        }
+        if(currentType is ComplexType) {
+            var mergedType = TypeMerger.mergeTypes(currentType, assignedType)
+            mergedType = TypeMerger.restrictType(mergedType, TypeMerger.getSimpleType(currentType)!!)
+            state.set(name, mergedType)
+        }
     }
 
     private fun DefineVariable.handle(state: VariableTypeState) {
-        var expected = this.expectedType?.mapToType()
+        val expected = this.expectedType?.mapToType()
         val actualType = this.value.calculateType(state)
 
         if(expected == null) {
             val simpleType = TypeMerger.getSimpleType(actualType) ?:
                 throw ParseException("Unable to infer type for '$name'. Please specify it manually")
             this.expectedType = simpleType
-            expected = actualType
+        } else {
+            if(!TypeMerger.canBeAssignedTo(expected, actualType)) {
+                throw ParseException("$name: $actualType cannot be assigned to '$expected'")
+            }
         }
         if(expectedType == DataType.VOID || actualType is VoidType) {
             throw ParseException("Can't define variable '$name' as void")
         }
-
-        state.define(name, expected)
-        setTypes(
-            name,
-            state,
-            expected,
-            actualType,
-            expectedType!!
-        )
-    }
-
-    private fun setTypes(name: String, state: VariableTypeState, currentType: ExpandedType, newType: ExpandedType, restriction: DataType? = null) {
-        if(!TypeMerger.canBeAssignedTo(currentType, newType)) {
-            throw ParseException("$name: $currentType cannot be assigned to '$newType'")
-        }
-        var mergedType = TypeMerger.mergeTypes(currentType, newType)
-        if(restriction != null) {
-            mergedType =
-                TypeMerger.restrictType(mergedType, restriction)
-        }
-        state.set(name, mergedType)
+        state.define(name, actualType)
     }
 
     private fun FunctionCall.handle(state: VariableTypeState) {

@@ -4,11 +4,11 @@ import com.tobi.mc.computable.Computable
 import com.tobi.mc.computable.ExpressionSequence
 import com.tobi.mc.computable.FlowInterrupt
 import com.tobi.mc.computable.ReturnExpression
-import com.tobi.mc.parser.optimisation.Optimisation
+import com.tobi.mc.parser.optimisation.InstanceOptimisation
 import com.tobi.mc.parser.util.SimpleDescription
 import com.tobi.util.DescriptionMeta
 
-internal object FlowInterruptOptimisation : Optimisation<ExpressionSequence> {
+internal object FlowInterruptOptimisation : InstanceOptimisation<ExpressionSequence>(ExpressionSequence::class) {
 
     override val description: DescriptionMeta = SimpleDescription("Flow Interruption", """
         When code is added to interrupt the flow of an expression sequence, all code below can be ignored. E.g:
@@ -22,8 +22,6 @@ internal object FlowInterruptOptimisation : Optimisation<ExpressionSequence> {
         println("Hello");
         return;
     """.trimIndent())
-
-    override fun accepts(computable: Computable): Boolean = computable is ExpressionSequence
 
     override fun ExpressionSequence.optimise(replace: (Computable) -> Boolean): Boolean {
         var interruptIndex = this.operations.indexOfFirst {

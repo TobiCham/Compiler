@@ -1,19 +1,17 @@
 package com.tobi.mc.parser.optimisation.optimisations
 
 import com.tobi.mc.computable.*
-import com.tobi.mc.parser.optimisation.Optimisation
+import com.tobi.mc.parser.optimisation.InstanceOptimisation
 import com.tobi.mc.parser.util.SimpleDescription
 import com.tobi.mc.parser.util.getComponents
 import com.tobi.util.DescriptionMeta
 import com.tobi.util.copyAndReplaceIndex
 
-object RedundantVariablesOptimisation : Optimisation<ExpressionSequence> {
+object RedundantVariablesOptimisation : InstanceOptimisation<ExpressionSequence>(ExpressionSequence::class) {
 
     override val description: DescriptionMeta = SimpleDescription("Redundant variable remover", """
         Removes any unused variables and function declarations
     """.trimIndent())
-
-    override fun accepts(computable: Computable): Boolean = computable is ExpressionSequence
 
     override fun ExpressionSequence.optimise(replace: (Computable) -> Boolean): Boolean {
         for((i, operation) in operations.withIndex()) {

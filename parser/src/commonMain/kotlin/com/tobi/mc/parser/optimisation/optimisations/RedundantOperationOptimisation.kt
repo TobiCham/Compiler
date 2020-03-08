@@ -3,11 +3,11 @@ package com.tobi.mc.parser.optimisation.optimisations
 import com.tobi.mc.computable.Computable
 import com.tobi.mc.computable.Data
 import com.tobi.mc.computable.ExpressionSequence
-import com.tobi.mc.parser.optimisation.Optimisation
+import com.tobi.mc.parser.optimisation.InstanceOptimisation
 import com.tobi.mc.parser.util.SimpleDescription
 import com.tobi.util.DescriptionMeta
 
-internal object RedundantOperationOptimisation : Optimisation<ExpressionSequence> {
+internal object RedundantOperationOptimisation : InstanceOptimisation<ExpressionSequence>(ExpressionSequence::class) {
 
     override val description: DescriptionMeta = SimpleDescription("Redundant Expression Removal", """
         Removes redundant expressions, e.g:
@@ -16,8 +16,6 @@ internal object RedundantOperationOptimisation : Optimisation<ExpressionSequence
         [empty statement]
         are removed
     """.trimIndent())
-
-    override fun accepts(computable: Computable): Boolean = computable is ExpressionSequence
 
     override fun ExpressionSequence.optimise(replace: (Computable) -> Boolean): Boolean {
         val newOperations = this.operations.filter(this@RedundantOperationOptimisation::isRequired)

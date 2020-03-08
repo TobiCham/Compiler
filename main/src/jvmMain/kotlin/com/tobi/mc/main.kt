@@ -10,7 +10,7 @@ fun main() {
 
     ast = parserContext.processProgram(ast)
 
-    println(ProgramToString.toString(ast))
+    println(ProgramToString().toString(ast))
 
 //    val job = GlobalScope.launch {
 //        ProgramRunner().run(ast, JVMExecutionEnvironment)

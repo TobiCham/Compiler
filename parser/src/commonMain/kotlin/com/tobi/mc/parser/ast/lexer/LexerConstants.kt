@@ -20,16 +20,7 @@ internal object LexerConstants {
     /**
      * Translates characters to character classes
      */
-    const val ZZ_CMAP_PACKED =
-        "\u0009\u0000\u0001\u0003\u0001\u0002\u0001\u001f\u0001\u0020\u0001\u0001\u0012\u0000\u0001\u0003\u0001\u0024\u0001\u001d" +
-        "\u0002\u0000\u0001\u002d\u0002\u0000\u0001\u002a\u0001\u002b\u0001\u000c\u0001\u0006\u0001\u0028\u0001\u002c\u0001\u0000" +
-        "\u0001\u000b\u000a\u0004\u0001\u0029\u0001\u0025\u0001\u0021\u0001\u0022\u0001\u0023\u0002\u0000\u0004\u0005\u0001\u0005" +
-        "\u0001\u0005\u0005\u0005\u0001\u0009\u0008\u0005\u0001\u0009\u0005\u0005\u0001\u0000\u0001\u001e\u0002\u0000\u0001\u0005" +
-        "\u0001\u0000\u0001\u000d\u0001\u0010\u0001\u0014\u0001\u001a\u0001\u0012\u0001\u0007\u0001\u0005\u0001\u001c\u0001\u0016" +
-        "\u0001\u0005\u0001\u0013\u0001\u0008\u0001\u0005\u0001\u0015\u0001\u000f\u0002\u0005\u0001\u0011\u0001\u0017\u0001\u000e" +
-        "\u0001\u000a\u0001\u0019\u0001\u001b\u0001\u0018\u0002\u0005\u0001\u0026\u0001\u0000\u0001\u0027\u0007\u0000\u0001\u001f" +
-        "\u1fa2\u0000\u0001\u001f\u0001\u001f\uffff\u0000\uffff\u0000\uffff\u0000\uffff\u0000\uffff\u0000\uffff\u0000\uffff\u0000" +
-        "\uffff\u0000\uffff\u0000\uffff\u0000\uffff\u0000\uffff\u0000\uffff\u0000\uffff\u0000\uffff\u0000\uffff\u0000\udfe6\u0000"
+    val ZZ_CMAP_PACKED = intArrayOf(9, 0, 1, 3, 1, 2, 1, 31, 1, 32, 1, 1, 18, 0, 1, 3, 1, 36, 1, 29, 2, 0, 1, 45, 2, 0, 1, 42, 1, 43, 1, 12, 1, 6, 1, 40, 1, 44, 1, 0, 1, 11, 10, 4, 1, 41, 1, 37, 1, 33, 1, 34, 1, 35, 2, 0, 4, 5, 1, 5, 1, 5, 5, 5, 1, 9, 8, 5, 1, 9, 5, 5, 1, 0, 1, 30, 2, 0, 1, 5, 1, 0, 1, 13, 1, 16, 1, 20, 1, 26, 1, 18, 1, 7, 1, 5, 1, 28, 1, 22, 1, 5, 1, 19, 1, 8, 1, 5, 1, 21, 1, 15, 2, 5, 1, 17, 1, 23, 1, 14, 1, 10, 1, 25, 1, 27, 1, 24, 2, 5, 1, 38, 1, 0, 1, 39, 7, 0, 1, 31, 8098, 0, 1, 31, 1, 31, 65535, 0, 65535, 0, 65535, 0, 65535, 0, 65535, 0, 65535, 0, 65535, 0, 65535, 0, 65535, 0, 65535, 0, 65535, 0, 65535, 0, 65535, 0, 65535, 0, 65535, 0, 65535, 0, 57318, 0)
     /**
      * Translates DFA states to action switch labels.
      */
@@ -53,11 +44,11 @@ internal object LexerConstants {
         var i = 0 /* index in packed string  */
         var j = 0 /* index in unpacked array */
         while (i < 180) {
-            val count = ZZ_CMAP_PACKED[i++].toInt()
+            val count = ZZ_CMAP_PACKED[i++]
             val value = ZZ_CMAP_PACKED[i++]
 
             if(index >= j && index < j + count) {
-                return value.toInt()
+                return value
             }
             j += count
         }

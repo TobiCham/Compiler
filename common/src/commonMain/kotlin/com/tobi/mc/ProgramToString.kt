@@ -1,10 +1,11 @@
 package com.tobi.mc
 
 import com.tobi.mc.computable.*
-import com.tobi.mc.inbuilt.InbuiltFunction
+import com.tobi.mc.computable.data.DataTypeInt
+import com.tobi.mc.computable.data.DataTypeString
 import com.tobi.util.TabbedBuilder
 
-object ProgramToString {
+class ProgramToString(val styler: ProgramToStringStyler = Stylers.NONE) {
 
     fun toString(program: Program): String {
         val builder = TabbedBuilder()
@@ -21,82 +22,105 @@ object ProgramToString {
         return builder.toString()
     }
 
-
     fun Computable.toString(builder: TabbedBuilder): Unit = when(this) {
-        is InbuiltFunction -> builder.print("/* Compiled code */")
-        is BreakStatement -> builder.print("break")
-        is ContinueStatement -> builder.print("continue")
+//        is InbuiltFunction -> builder.print("/* Compiled code */")
+        is BreakStatement -> builder.print(styler.style(StyleType.BREAK, "break"))
+        is ContinueStatement -> builder.print(styler.style(StyleType.CONTINUE, "continue"))
         is ReturnExpression -> {
-            if(toReturn == null) builder.print("return")
-            else {
-                builder.print("return ")
+            builder.print(styler.style(StyleType.RETURN, "return"))
+            if(toReturn != null) {
+                builder.print(" ")
                 toReturn!!.toString(builder)
             }
+            Unit
         }
         is IfStatement -> {
-            builder.print("if(")
+            builder.print(styler.style(StyleType.IF, "if"))
+            builder.print(styler.style(StyleType.BRACKET, "("))
+
             check.toString(builder)
-            builder.print(") ")
+            builder.print(styler.style(StyleType.BRACKET, ")"))
+            builder.print(" ")
             ifBody.toString(builder)
 
             if(elseBody != null) {
-                builder.print(" else ")
+                builder.print(" ")
+                builder.print(styler.style(StyleType.ELSE, "else"))
+                builder.print(" ")
                 elseBody!!.toString(builder)
             } else Unit
         }
         is WhileLoop -> {
-            builder.print("while(")
+            builder.print(styler.style(StyleType.WHILE, "while"))
+            builder.print(styler.style(StyleType.BRACKET, "("))
             check.toString(builder)
-            builder.print(") ")
+            builder.print(styler.style(StyleType.BRACKET, ")"))
+            builder.print(" ")
             body.toString(builder)
         }
         is FunctionDeclaration -> {
-            builder.print(returnType ?: "auto")
+            builder.print(styler.style(StyleType.TYPE_DECLARATION, returnType?.toString() ?: "auto"))
             builder.print(' ')
-            builder.print(name)
-            builder.print('(')
-            builder.print(parameters.joinToString(", ") { "${it.second} ${it.first}" })
-            builder.print(") ")
+            builder.print(styler.style(StyleType.NAME, name))
+            builder.print(styler.style(StyleType.BRACKET, "("))
+            builder.print(parameters.joinToString(styler.style(StyleType.PARAMS_SEPARATOR, ",") + " ") {
+                "${styler.style(StyleType.TYPE_DECLARATION, it.second.toString())} ${styler.style(StyleType.NAME, it.first)}"
+            })
+            builder.print(styler.style(StyleType.BRACKET, ")"))
+            builder.print(" ")
             body.toString(builder)
         }
         is DefineVariable -> {
-            builder.print(expectedType ?: "auto")
-            builder.print(" $name = ")
+            builder.print(styler.style(StyleType.TYPE_DECLARATION, expectedType?.toString() ?: "auto"))
+            builder.print(" ")
+            builder.print(styler.style(StyleType.NAME, name))
+            builder.print(" ")
+            builder.print(styler.style(StyleType.ASSIGNMENT, "="))
+            builder.print(" ")
             value.toString(builder)
         }
         is SetVariable -> {
-            builder.print("$name = ")
+            builder.print(styler.style(StyleType.NAME, name))
+            builder.print(" ")
+            builder.print(styler.style(StyleType.ASSIGNMENT, "="))
+            builder.print(" ")
             value.toString(builder)
         }
-        is GetVariable -> builder.print(name)
+        is GetVariable -> builder.print(styler.style(StyleType.NAME, name))
         is FunctionCall -> {
             function.toString(builder)
-            builder.print('(')
+            builder.print(styler.style(StyleType.BRACKET, "("))
             for((i, arg) in arguments.withIndex()) {
-                if(i != 0) builder.print(", ")
+                if(i != 0) {
+                    builder.print(styler.style(StyleType.PARAMS_SEPARATOR, ","))
+                    builder.print(" ")
+                }
                 arg.toString(builder)
             }
-            builder.print(')')
+            builder.print(styler.style(StyleType.BRACKET, ")"))
         }
         is MathOperation -> {
             arg1.toString(builder)
-            builder.print(" $operationString ")
+            builder.print(" ")
+            builder.print(styler.style(StyleType.MATH, operationString))
+            builder.print(" ")
             arg2.toString(builder)
         }
-        is Data -> builder.print(toString())
+        is DataTypeInt -> builder.print(styler.style(StyleType.INT, this.toString()))
+        is DataTypeString -> builder.print(styler.style(StyleType.STRING, this.toString()))
         is ExpressionSequence -> {
-            builder.println('{')
+            builder.println(styler.style(StyleType.CURLY_BRACKET, "{"))
             builder.indent()
             for (operation in operations) {
                 operation.toString(builder)
 
                 if(operation.requiresSemiColon()) {
-                    builder.print(";")
+                    builder.print(styler.style(StyleType.SEMI_COLON, ";"))
                 }
                 builder.println("")
             }
             builder.outdent()
-            builder.print('}')
+            builder.print(styler.style(StyleType.CURLY_BRACKET, "}"))
         }
         else -> throw IllegalStateException("Unknown value $this")
     }

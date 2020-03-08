@@ -1,0 +1,91 @@
+#code-area {
+    margin-bottom: 1rem;
+    width: 100%;
+    height: 100%;
+    display: block;
+    font-family: 'Monospace';
+    font-size: 0.9rem;
+    tab-size: 2rem;
+}
+
+.actionButton {
+    margin-bottom: 0.5rem;
+}
+
+#output {
+    display: block;
+    border: 1px solid #aaaaaa;
+    border-radius: 4px;
+    padding: 4px;
+    height: calc(100% - 6.5rem);
+    background-color: #eeeeee;
+    color: #5e5e5e;
+}
+
+.col-md-6 {
+    height: 100%;
+}
+
+.row {
+    height: calc(100% - 5rem);
+}
+
+.container-fluid {
+    height: 100%;
+}
+
+#input {
+    width: calc(100% - 110px);
+    display: inline-block;
+    height: 2.5rem;
+    border: 1px solid #aaaaaa;
+    margin-right: 5px;
+}
+#inputButton {
+    height: 2.5rem;
+    width: 100px;
+}
+
+.style-string {
+    color: #42822d
+}
+
+.style-number {
+    color: #bf2e55;
+}
+
+.style-type {
+    color: #953da0;
+}
+
+.style-control {
+    color: #5656bf;
+}
+
+.style-flow {
+    color: #5656bf;
+}
+
+.style-bracket {
+    color: #6d6c6c;
+}
+
+.style-curly-bracket {
+    color: #6d6c6c;
+}
+
+.style-math {
+    color: #b5893b;
+}
+
+.style-semi-colon {
+    color: #717171;
+}
+
+.style-name {
+    color: #2f2f2f;
+}
+
+.style-params-separator {
+    color: #6d6c6c;
+}

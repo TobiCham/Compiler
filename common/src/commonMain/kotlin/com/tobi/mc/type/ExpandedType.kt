@@ -6,6 +6,7 @@ sealed class ExpandedType
 interface CompleteType {
     val type: DataType
 }
+interface ComplexType
 
 object IntType : ExpandedType(),
     CompleteType {
@@ -26,8 +27,7 @@ object UnknownType : ExpandedType() {
     override fun toString(): String = "?"
 }
 
-data class FunctionType(val returnType: ExpandedType, val parameters: AnalysisParamList) : ExpandedType(),
-    CompleteType {
+data class FunctionType(val returnType: ExpandedType, val parameters: AnalysisParamList) : ExpandedType(), ComplexType, CompleteType {
 
     override val type: DataType = DataType.FUNCTION
 
@@ -41,7 +41,7 @@ data class FunctionType(val returnType: ExpandedType, val parameters: AnalysisPa
     }
 }
 
-data class IntersectionType(val possible: Set<ExpandedType>): ExpandedType() {
+data class IntersectionType(val possible: Set<ExpandedType>): ExpandedType(), ComplexType {
     override fun toString(): String = buildString {
         append('<')
         append(possible.joinToString(" | "))
