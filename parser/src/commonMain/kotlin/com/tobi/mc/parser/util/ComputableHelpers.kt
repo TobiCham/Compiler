@@ -2,7 +2,8 @@ package com.tobi.mc.parser.util
 
 import com.tobi.mc.computable.*
 import com.tobi.mc.computable.data.DataTypeInt
-import com.tobi.util.TypeNameConverter
+import com.tobi.mc.util.copyAndReplaceIndex
+import com.tobi.mc.util.typeName
 import kotlin.reflect.KMutableProperty0
 
 @Suppress("UNCHECKED_CAST")
@@ -29,36 +30,9 @@ fun <T : Computable> T.clone(): T = when(this) {
     is LessThanOrEqualTo -> LessThanOrEqualTo(arg1.clone(), arg2.clone())
     is Equals -> Equals(arg1.clone(), arg2.clone())
     is NotEquals -> NotEquals(arg1.clone(), arg2.clone())
-    else -> throw IllegalStateException("Invalid value ${TypeNameConverter.getTypeName(this)}")
+    is Negation -> Negation(negation.clone())
+    else -> throw IllegalStateException("Invalid value ${this.typeName}")
 } as T
-
-internal fun Computable.updateComponents(components: Array<Computable>) {
-    when(this) {
-        is ReturnExpression -> toReturn = if(components.isEmpty()) null else components[1]
-        is IfStatement -> {
-            check = components.at(0)
-            ifBody = components.at(1)
-            elseBody = if(components.size < 3) null else components.at<ExpressionSequence>(2)
-        }
-        is WhileLoop -> {
-            check = components.at(0)
-            body = components.at(1)
-        }
-        is ExpressionSequence -> operations = components.toMutableList()
-        is SetVariable -> value = components.at(0)
-        is DefineVariable -> value = components.at(0)
-        is FunctionDeclaration -> body = components.at(0)
-        is FunctionCall -> {
-            function = components.at(1)
-            arguments = components.copyOfRange(1, components.size).map { it as DataComputable }.toMutableList()
-        }
-        is MathOperation -> {
-            arg1 = components[0]
-            arg2 = components[1]
-        }
-        else -> throw IllegalStateException("Can't update components for ${TypeNameConverter.getTypeName(this)}")
-    }
-}
 
 @Suppress("UNCHECKED_CAST")
 internal fun Computable.updateComponentAtIndex(index: Int, component: Computable) {
@@ -85,15 +59,17 @@ internal fun Computable.updateComponentAtIndex(index: Int, component: Computable
         is FunctionCall -> {
             if(index >= 0 && index < this.arguments.size + 1) {
                 if(index == 0) this.function = component as DataComputable
-                else this.arguments = newList(this.arguments, index, component) as List<DataComputable>
+                else this.arguments = this.arguments.copyAndReplaceIndex(index - 1, component) as List<DataComputable>
                 true
             } else false
         }
         is MathOperation -> update(this::arg1, this::arg2)
-        else -> throw IllegalStateException("Can't update components for ${TypeNameConverter.getTypeName(this)}")
+        is Negation -> update(this::negation)
+        is Program -> update(this::code)
+        else -> throw IllegalStateException("Can't update components for ${this.typeName}")
     }
     if(!updated) {
-        throw IllegalStateException("Invalid component index $index for ${TypeNameConverter.getTypeName(this)}")
+        throw IllegalStateException("Invalid component index $index for ${this.typeName}")
     }
 }
 
@@ -114,12 +90,11 @@ internal fun Computable.getComponents(): Array<Computable> = when(this) {
     is FunctionDeclaration -> arrayOf(body)
     is FunctionCall -> arrayOf(function, *arguments.toTypedArray())
     is MathOperation -> arrayOf(arg1, arg2)
-    else -> throw IllegalStateException("Can't get components for ${TypeNameConverter.getTypeName(this)}")
+    is Negation -> arrayOf(negation)
+    is Program -> arrayOf(code)
+    else -> throw IllegalStateException("Can't get components for ${this.typeName}")
 }
 
-@Suppress("UNCHECKED_CAST")
-private fun <T : Computable> Array<Computable>.at(index: Int) = this[index] as T
-
-internal fun Computable.isNumber(number: Int) = this is DataTypeInt && this.value == number
+internal fun Computable.isNumber(number: Long) = this is DataTypeInt && this.value == number
 internal fun Computable.isZero() = this.isNumber(0)
 internal fun Computable.isOne() = this.isNumber(1)

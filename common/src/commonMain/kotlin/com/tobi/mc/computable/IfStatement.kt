@@ -11,7 +11,7 @@ class IfStatement(var check: DataComputable, var ifBody: ExpressionSequence, var
         if(checkResult !is DataTypeInt) {
             throw ScriptException("Expected int in if, got ${checkResult.description}")
         }
-        if(checkResult.value != 0) {
+        if(checkResult.value != 0L) {
             return ifBody.compute(context, environment)
         }
         return elseBody?.compute(context, environment) ?: DataTypeVoid

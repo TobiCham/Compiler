@@ -29,6 +29,10 @@ class ParseException(message: String, val from: FileLocation?, val to: FileLocat
             if(ch == '\n') {
                 lineCounter++
                 columnCounter = 0
+
+                if(lineCounter == line) {
+                    return index
+                }
             } else {
                 columnCounter++
             }

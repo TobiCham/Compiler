@@ -3,7 +3,7 @@ package com.tobi.mc.parser.experimental
 import com.tobi.mc.computable.*
 import com.tobi.mc.parser.util.getComponents
 
-object VariableRenamer {
+internal object VariableRenamer {
 
     fun renameVariable(computable: Computable, from: String, to: String) {
         return computable.rename(from, to)

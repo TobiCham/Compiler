@@ -2,8 +2,8 @@ package com.tobi.mc.parser.ast.parser.runtime
 
 import com.tobi.mc.parser.ParseException
 import com.tobi.mc.parser.ast.ReaderHelpers
-import com.tobi.util.ArrayListStack
-import com.tobi.util.Stack
+import com.tobi.mc.util.ArrayListStack
+import com.tobi.mc.util.Stack
 
 internal abstract class LRParser(
     val scanner: Scanner,

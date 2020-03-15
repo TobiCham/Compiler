@@ -6,7 +6,7 @@ import com.tobi.mc.computable.FlowInterrupt
 import com.tobi.mc.computable.ReturnExpression
 import com.tobi.mc.parser.optimisation.InstanceOptimisation
 import com.tobi.mc.parser.util.SimpleDescription
-import com.tobi.util.DescriptionMeta
+import com.tobi.mc.util.DescriptionMeta
 
 internal object FlowInterruptOptimisation : InstanceOptimisation<ExpressionSequence>(ExpressionSequence::class) {
 
@@ -24,21 +24,13 @@ internal object FlowInterruptOptimisation : InstanceOptimisation<ExpressionSeque
     """.trimIndent())
 
     override fun ExpressionSequence.optimise(replace: (Computable) -> Boolean): Boolean {
-        var interruptIndex = this.operations.indexOfFirst {
-            it is FlowInterrupt
+        val interruptIndex = this.operations.indexOfFirst {
+            it is FlowInterrupt || it is ReturnExpression
         }
-        if(interruptIndex < 0) {
-            interruptIndex = this.operations.indexOfFirst { it is ReturnExpression }
-            if(interruptIndex == this.operations.size - 1) {
-                interruptIndex = -1
-            }
-            if(interruptIndex >= 0) interruptIndex++
-        }
-        if (interruptIndex < 0) {
-            //No break, continue, returns were found
+        if(interruptIndex < 0 || interruptIndex == this.operations.size - 1) {
             return false
         }
-        val newSeq = ExpressionSequence(this.operations.slice(0 until interruptIndex))
+        val newSeq = ExpressionSequence(this.operations.slice(0 until interruptIndex + 1))
         return replace(newSeq)
     }
 }

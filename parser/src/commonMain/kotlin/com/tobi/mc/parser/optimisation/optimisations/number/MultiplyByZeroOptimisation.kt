@@ -5,7 +5,7 @@ import com.tobi.mc.computable.data.DataTypeInt
 import com.tobi.mc.parser.optimisation.Optimisation
 import com.tobi.mc.parser.util.SimpleDescription
 import com.tobi.mc.parser.util.isZero
-import com.tobi.util.DescriptionMeta
+import com.tobi.mc.util.DescriptionMeta
 
 internal object MultiplyByZeroOptimisation : Optimisation<MathOperation> {
 

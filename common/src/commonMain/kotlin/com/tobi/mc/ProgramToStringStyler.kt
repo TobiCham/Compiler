@@ -20,7 +20,8 @@ enum class StyleType {
     SEMI_COLON,
     NAME,
     ASSIGNMENT,
-    PARAMS_SEPARATOR
+    PARAMS_SEPARATOR,
+    NEGATION
 }
 
 object Stylers {

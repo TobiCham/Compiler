@@ -1,14 +1,12 @@
 package com.tobi.mc.parser.optimisation
 
 import com.tobi.mc.computable.Computable
-import com.tobi.mc.computable.FunctionDeclaration
 import com.tobi.mc.computable.Program
 import com.tobi.mc.parser.SyntaxOptimiser
 import com.tobi.mc.parser.util.SimpleDescription
 import com.tobi.mc.parser.util.getComponents
 import com.tobi.mc.parser.util.updateComponentAtIndex
-import com.tobi.util.DescriptionMeta
-import com.tobi.util.TypeNameConverter
+import com.tobi.mc.util.DescriptionMeta
 
 internal class OptimisationImpl(val optimisations: Array<Optimisation<*>>) : SyntaxOptimiser {
 
@@ -19,24 +17,24 @@ internal class OptimisationImpl(val optimisations: Array<Optimisation<*>>) : Syn
 
     override val optimisationDescriptions: List<DescriptionMeta> = optimisations.map(Optimisation<*>::description)
 
-    override fun processProgram(program: Program): Program {
-        return program.map {
-            optimise(it) as FunctionDeclaration
+    override fun processProgram(program: Program) {
+        val result = optimise(program)
+        if(result !== program) {
+            throw IllegalStateException("Cannot replace program")
         }
     }
 
     override fun optimise(computable: Computable): Computable {
-        var modified: Boolean
-        var currentValue = computable
-        do {
-            val result = currentValue.optimiseTree()
-            if(result.modified && result.newValue != null) {
-                currentValue = result.newValue
+        var output = computable
+        while(true) {
+            val result = output.optimiseTree()
+            if(!result.modified) {
+                return output
             }
-            modified = result.modified
-        } while(modified)
-
-        return currentValue
+            if(result.newValue != null) {
+                output = result.newValue
+            }
+        }
     }
 
     private fun Computable.optimiseTree(): Result {
@@ -72,8 +70,12 @@ internal class OptimisationImpl(val optimisations: Array<Optimisation<*>>) : Syn
             if(result != null) {
                 throw IllegalStateException("Cannot call 'replace' twice")
             }
-            result = Result(true, it)
-            true
+            if(it === computable) {
+                false
+            } else {
+                result = Result(true, it)
+                true
+            }
         }
 
         @Suppress("UNCHECKED_CAST")
@@ -86,10 +88,6 @@ internal class OptimisationImpl(val optimisations: Array<Optimisation<*>>) : Syn
             if(result == null) {
                 result = Result(modified, null)
             }
-        }
-        if(result!!.modified) {
-            println("Optimise ${TypeNameConverter.getTypeName(computable)} (${this.description.name})")
-//            println(ProgramToString.toString(result!!.newValue ?: computable))
         }
         return result!!
     }

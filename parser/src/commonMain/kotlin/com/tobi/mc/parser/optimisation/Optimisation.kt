@@ -1,9 +1,11 @@
 package com.tobi.mc.parser.optimisation
 
 import com.tobi.mc.computable.Computable
-import com.tobi.util.DescriptionMeta
+import com.tobi.mc.util.DescriptionMeta
 
 internal interface Optimisation<T : Computable> {
+
+    val description: DescriptionMeta
 
     fun accepts(computable: Computable): Boolean
 
@@ -12,6 +14,4 @@ internal interface Optimisation<T : Computable> {
      * @return Whether a modification was made
      */
     fun T.optimise(replace: (Computable) -> Boolean): Boolean
-
-    val description: DescriptionMeta
 }

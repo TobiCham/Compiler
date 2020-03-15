@@ -279,7 +279,7 @@ internal class Lexer(private val reader: SimpleReader) {
         if (code == 3) {
             val text = yytext()
             return try {
-                makeNode(LexerNodeType.CONSTANT, text.toInt())
+                makeNode(LexerNodeType.CONSTANT, text.toLong())
             } catch (e: NumberFormatException) {
                 throw ParseException("Invalid integer", FileLocation(yyline, yycolumn), FileLocation(yyline, yycolumn + text.length))
             }

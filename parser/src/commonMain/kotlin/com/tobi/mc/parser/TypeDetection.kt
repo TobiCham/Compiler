@@ -5,5 +5,5 @@ import com.tobi.mc.computable.DefaultContext
 
 interface TypeDetection : ParserOperation {
 
-    fun <T : Computable> inferAndValidateTypes(computable: T, defaultContext: DefaultContext)
+    fun inferAndValidateTypes(computable: Computable, defaultContext: DefaultContext)
 }

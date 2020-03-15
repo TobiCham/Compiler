@@ -5,12 +5,12 @@ import com.tobi.mc.parser.experimental.VariableRenamer
 import com.tobi.mc.parser.optimisation.InstanceOptimisation
 import com.tobi.mc.parser.util.SimpleDescription
 import com.tobi.mc.parser.util.getComponents
-import com.tobi.util.DescriptionMeta
-import com.tobi.util.copyAndReplaceIndex
-import com.tobi.util.copyExceptIndex
-import com.tobi.util.getAfterIndex
+import com.tobi.mc.util.DescriptionMeta
+import com.tobi.mc.util.copyAndReplaceIndex
+import com.tobi.mc.util.copyExceptIndex
+import com.tobi.mc.util.getAfterIndex
 
-object NestedSequenceOptimisation : InstanceOptimisation<ExpressionSequence>(ExpressionSequence::class) {
+internal object NestedSequenceOptimisation : InstanceOptimisation<ExpressionSequence>(ExpressionSequence::class) {
 
     override val description: DescriptionMeta = SimpleDescription("Nested sequence", """
         It can occur that expression sequences are nested, e.g. when the body of an if will always succeed.
@@ -86,8 +86,8 @@ object NestedSequenceOptimisation : InstanceOptimisation<ExpressionSequence>(Exp
             newDepth++
         }
 
-        this.getComponents().forEach {
-            it.findUsedVariables(names, definedVariables, newDepth)
+        for (component in this.getComponents()) {
+            component.findUsedVariables(names, definedVariables, newDepth)
         }
     }
 }

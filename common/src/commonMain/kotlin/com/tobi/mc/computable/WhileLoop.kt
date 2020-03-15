@@ -25,6 +25,6 @@ class WhileLoop(var check: DataComputable, var body: ExpressionSequence) : Compu
         if(checkResult !is DataTypeInt) {
             throw ScriptException("Expected int, got ${checkResult.description}")
         }
-        return checkResult.value != 0
+        return checkResult.value != 0L
     }
 }

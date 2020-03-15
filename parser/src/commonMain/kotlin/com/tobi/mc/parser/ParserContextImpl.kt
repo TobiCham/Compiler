@@ -1,5 +1,7 @@
 package com.tobi.mc.parser
 
+import com.tobi.mc.computable.DefaultContext
+import com.tobi.mc.computable.FunctionDeclaration
 import com.tobi.mc.computable.Program
 import com.tobi.mc.parser.ast.ASTConverter
 import com.tobi.mc.parser.ast.SimpleStringReader
@@ -28,8 +30,10 @@ internal class ParserContextImpl : ParserContext {
 
     override fun getParserOperationFlow(): List<ParserOperation> = orderedOperations
 
-    override fun processProgram(program: Program): Program {
-        return getParserOperationFlow().fold(program) { acc, parser -> parser.processProgram(acc) }
+    override fun processProgram(program: Program) {
+        for (operation in getParserOperationFlow()) {
+            operation.processProgram(program)
+        }
     }
 
     override fun parseFromString(program: String): Program {
@@ -40,8 +44,14 @@ internal class ParserContextImpl : ParserContext {
         }
     }
 
-    private fun parseProgram(program: String): Program {
-        val lexer = Lexer(SimpleStringReader(program))
+    private fun parseProgram(program: String, context: DefaultContext = DefaultContext()): Program {
+        val actualProgram = """
+            void main() {
+                $program
+            }
+        """.trimIndent()
+
+        val lexer = Lexer(SimpleStringReader(actualProgram))
         val parser = Parser(object : Scanner {
             override fun next_token(): Symbol? {
                 val node = lexer.yylex() ?: return null
@@ -51,7 +61,9 @@ internal class ParserContextImpl : ParserContext {
 
         val symbol = parser.parse()
         val result = symbol.value as ParserNode
-        return ASTConverter.convertProgram(result)
+        val rawAst = ASTConverter.convert(result) as FunctionDeclaration
+
+        return Program(rawAst.body, context)
     }
 
     private fun convertNodeToToken(node: LexerNode): Symbol {

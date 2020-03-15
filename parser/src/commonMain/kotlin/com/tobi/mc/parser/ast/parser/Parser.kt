@@ -4,7 +4,7 @@
 package com.tobi.mc.parser.ast.parser
 
 import com.tobi.mc.parser.ast.parser.runtime.*
-import com.tobi.util.Stack
+import com.tobi.mc.util.Stack
 
 internal class Parser(scanner: Scanner, symbolFactory: SymbolFactory, symbolIdNameMapping: (Int) -> String) : LRParser(scanner, symbolFactory, symbolIdNameMapping) {
 

@@ -7,7 +7,7 @@ import com.tobi.mc.computable.Multiply
 import com.tobi.mc.parser.optimisation.Optimisation
 import com.tobi.mc.parser.util.SimpleDescription
 import com.tobi.mc.parser.util.isOne
-import com.tobi.util.DescriptionMeta
+import com.tobi.mc.util.DescriptionMeta
 
 internal object MultiplyByOneOptimisation : Optimisation<MathOperation> {
 

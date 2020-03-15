@@ -8,11 +8,12 @@ import com.tobi.mc.type.IntType
 object FunctionReadInt : InbuiltFunction("readInt", emptyList(), IntType) {
 
     override suspend fun compute(context: Context, environment: ExecutionEnvironment): DataTypeInt {
-        var result: Int? = null
+        var result: Long? = null
         while(result == null) {
-            result = environment.readLine().toIntOrNull()
+            result = environment.readLine().toLongOrNull()
             if(result == null) environment.println("Invalid integer. Enter again:")
         }
+        environment.println(result.toString())
         return DataTypeInt(result)
     }
 }

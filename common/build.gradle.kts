@@ -5,6 +5,9 @@ plugins {
 kotlin {
     jvm {
         withJava()
+        for(target in arrayOf("main", "test")) {
+            compilations[target].compileKotlinTask.kotlinOptions.jvmTarget = "1.8"
+        }
     }
     js {
         browser()

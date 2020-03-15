@@ -1,8 +1,8 @@
 package com.tobi.mc.parser.ast.parser.runtime
 
-import com.tobi.util.ArrayListStack
-import com.tobi.util.MutableStack
-import com.tobi.util.Stack
+import com.tobi.mc.util.ArrayListStack
+import com.tobi.mc.util.MutableStack
+import com.tobi.mc.util.Stack
 
 internal class VirtualParseStack(private val stack: Stack<Symbol>) {
 

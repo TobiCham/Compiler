@@ -3,7 +3,7 @@ package com.tobi.mc.parser.ast.parser
 import com.tobi.mc.parser.ast.parser.runtime.ComplexSymbol
 import com.tobi.mc.parser.ast.parser.runtime.LRParser
 import com.tobi.mc.parser.ast.parser.runtime.Symbol
-import com.tobi.util.Stack
+import com.tobi.mc.util.Stack
 
 /**
  * Cup generated class to encapsulate user supplied action code.

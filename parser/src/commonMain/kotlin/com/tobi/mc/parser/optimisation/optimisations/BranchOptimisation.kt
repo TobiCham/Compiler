@@ -4,7 +4,7 @@ import com.tobi.mc.computable.*
 import com.tobi.mc.computable.data.DataTypeInt
 import com.tobi.mc.parser.optimisation.Optimisation
 import com.tobi.mc.parser.util.SimpleDescription
-import com.tobi.util.DescriptionMeta
+import com.tobi.mc.util.DescriptionMeta
 
 internal object BranchOptimisation : Optimisation<Computable> {
 
@@ -39,7 +39,7 @@ internal object BranchOptimisation : Optimisation<Computable> {
 
     private fun checkType(computable: DataComputable) = when {
         computable !is DataTypeInt -> CheckType.UNKNOWN
-        computable.value == 0 -> CheckType.FAIL
+        computable.value == 0L -> CheckType.FAIL
         else -> CheckType.SUCCEED
     }
 

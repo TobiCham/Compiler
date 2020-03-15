@@ -15,7 +15,8 @@ class DefaultContext : Context(null) {
             FunctionReadString,
             FunctionIntToString,
             FunctionFunctionToString,
-            FunctionConcat
+            FunctionConcat,
+            FunctionUnixTime
         )
     }
 

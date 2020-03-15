@@ -12,4 +12,8 @@ class ReturnExpression(var toReturn: Computable?): Computable {
         }
         return ReturnResult(result)
     }
+
+    override fun toString(): String {
+        return "return{$toReturn}"
+    }
 }

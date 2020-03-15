@@ -4,32 +4,39 @@ import com.tobi.mc.computable.*
 import com.tobi.mc.parser.optimisation.InstanceOptimisation
 import com.tobi.mc.parser.util.SimpleDescription
 import com.tobi.mc.parser.util.getComponents
-import com.tobi.util.DescriptionMeta
-import com.tobi.util.copyAndReplaceIndex
+import com.tobi.mc.util.DescriptionMeta
+import com.tobi.mc.util.copyAndReplaceIndex
 
-object RedundantVariablesOptimisation : InstanceOptimisation<ExpressionSequence>(ExpressionSequence::class) {
+internal object RedundantVariablesOptimisation : InstanceOptimisation<ExpressionSequence>(ExpressionSequence::class) {
 
     override val description: DescriptionMeta = SimpleDescription("Redundant variable remover", """
         Removes any unused variables and function declarations
     """.trimIndent())
 
     override fun ExpressionSequence.optimise(replace: (Computable) -> Boolean): Boolean {
-        for((i, operation) in operations.withIndex()) {
-            if(operation is DefineVariable || operation is FunctionDeclaration) {
-                if(!ExpressionSequence(operations.subList(i + 1, operations.size)).usesVariable((operation as VariableReference).name)) {
-                    val newOps = if(operation is DefineVariable) {
-                        operations.copyAndReplaceIndex(i, operation.value)
-                    } else {
-                        operations.filterIndexed { index, _ -> index != i }
-                    }
-                    return replace(ExpressionSequence(newOps))
-                }
+        for ((i, operation) in this.operations.withIndex()) {
+            if(hasUsages(i, operation)) {
+                continue
             }
+            val newOps = if(operation is DefineVariable) {
+                operations.copyAndReplaceIndex(i, operation.value)
+            } else {
+                operations.filterIndexed { index, _ -> index != i }
+            }
+            return replace(ExpressionSequence(newOps))
         }
         return false
     }
 
-    private fun Computable.usesVariable(name: String): Boolean {
+    private fun ExpressionSequence.hasUsages(index: Int, computable: Computable): Boolean {
+        if(computable !is DefineVariable && computable !is FunctionDeclaration) {
+            return true
+        }
+        return this.usesVariable(index + 1, (computable as VariableReference).name)
+    }
+
+
+    private fun Computable.usesVariable(startIndex: Int, name: String): Boolean {
         if(this is GetVariable || this is SetVariable) {
             if((this as VariableReference).name == name) {
                 return true
@@ -41,14 +48,15 @@ object RedundantVariablesOptimisation : InstanceOptimisation<ExpressionSequence>
                 return false
             }
         }
-        for(component in getComponents()) {
+        for((i, component) in getComponents().withIndex()) {
+            if(i < startIndex) continue
             if(component is DefineVariable || component is FunctionDeclaration) {
                 if((component as VariableReference).name == name) {
                     //The variable we're looking for has been redefined
                     return false
                 }
             }
-            if(component.usesVariable(name)) {
+            if(component.usesVariable(0, name)) {
                 return true
             }
         }

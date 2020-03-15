@@ -3,14 +3,17 @@ package com.tobi.mc
 import com.tobi.mc.computable.*
 import com.tobi.mc.computable.data.DataTypeInt
 import com.tobi.mc.computable.data.DataTypeString
-import com.tobi.util.TabbedBuilder
+import com.tobi.mc.util.TabbedBuilder
 
 class ProgramToString(val styler: ProgramToStringStyler = Stylers.NONE) {
 
     fun toString(program: Program): String {
         val builder = TabbedBuilder()
-        for(func in program) {
+        for(func in program.code.operations) {
             func.toString(builder)
+            if(func.requiresSemiColon()) {
+                builder.print(";")
+            }
             builder.println("")
         }
         return builder.toString()
@@ -69,6 +72,7 @@ class ProgramToString(val styler: ProgramToStringStyler = Stylers.NONE) {
             builder.print(styler.style(StyleType.BRACKET, ")"))
             builder.print(" ")
             body.toString(builder)
+            builder.println("")
         }
         is DefineVariable -> {
             builder.print(styler.style(StyleType.TYPE_DECLARATION, expectedType?.toString() ?: "auto"))
@@ -99,6 +103,15 @@ class ProgramToString(val styler: ProgramToStringStyler = Stylers.NONE) {
             }
             builder.print(styler.style(StyleType.BRACKET, ")"))
         }
+        is Multiply -> {
+            builder.print(styler.style(StyleType.BRACKET, "("))
+            arg1.toString(builder)
+            builder.print(" ")
+            builder.print(styler.style(StyleType.MATH, operationString))
+            builder.print(" ")
+            arg2.toString(builder)
+            builder.print(styler.style(StyleType.BRACKET, ")"))
+        }
         is MathOperation -> {
             arg1.toString(builder)
             builder.print(" ")
@@ -121,6 +134,16 @@ class ProgramToString(val styler: ProgramToStringStyler = Stylers.NONE) {
             }
             builder.outdent()
             builder.print(styler.style(StyleType.CURLY_BRACKET, "}"))
+        }
+        is Negation -> {
+            builder.print(styler.style(StyleType.NEGATION, "!"))
+            if(negation !is DataTypeInt) {
+                builder.print(styler.style(StyleType.BRACKET, "("))
+                negation.toString(builder)
+                builder.print(styler.style(StyleType.BRACKET, ")"))
+            } else {
+                negation.toString(builder)
+            }
         }
         else -> throw IllegalStateException("Unknown value $this")
     }

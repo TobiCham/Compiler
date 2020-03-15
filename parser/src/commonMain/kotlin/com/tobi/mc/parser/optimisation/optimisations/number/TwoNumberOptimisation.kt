@@ -5,7 +5,7 @@ import com.tobi.mc.computable.MathOperation
 import com.tobi.mc.computable.data.DataTypeInt
 import com.tobi.mc.parser.optimisation.InstanceOptimisation
 import com.tobi.mc.parser.util.SimpleDescription
-import com.tobi.util.DescriptionMeta
+import com.tobi.mc.util.DescriptionMeta
 
 internal object TwoNumberOptimisation : InstanceOptimisation<MathOperation>(MathOperation::class) {
 

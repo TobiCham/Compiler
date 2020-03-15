@@ -5,7 +5,7 @@ import com.tobi.mc.computable.*
 import com.tobi.mc.computable.data.DataTypeInt
 import com.tobi.mc.parser.syntax.VariablesState
 
-object TailRecursionConverter {
+internal object TailRecursionConverter {
 
     fun convert(function: FunctionDeclaration): FunctionDeclaration {
         val newBody = ExpressionSequence(listOf(
@@ -23,10 +23,10 @@ object TailRecursionConverter {
                 }
 
                 for((i, value) in tailRecFunc.parameters.withIndex()) {
-                    var newValue = (this.toReturn as FunctionCall).arguments[i]
+                    val newValue = (this.toReturn as FunctionCall).arguments[i]
                     println(ProgramToString().toString(newValue))
                     for((name, _) in tailRecFunc.parameters) {
-                        newValue = VariableRenamer.renameVariable(newValue, name, "old_$name") as DataComputable
+                        VariableRenamer.renameVariable(newValue, name, "old_$name")
                         println(ProgramToString().toString(newValue))
                     }
                     println()

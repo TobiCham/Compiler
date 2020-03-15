@@ -7,7 +7,7 @@ open class MathOperation(
     var arg1: Computable,
     var arg2: Computable,
     val operationString: String,
-    val computation: (Int, Int) -> Int
+    val computation: (Long, Long) -> Long
 ) : DataComputable {
 
     override suspend fun compute(context: Context, environment: ExecutionEnvironment): Data {
@@ -15,11 +15,15 @@ open class MathOperation(
         return DataTypeInt(result)
     }
 
-    private suspend fun getValue(computable: Computable, context: Context, environment: ExecutionEnvironment): Int {
+    private suspend fun getValue(computable: Computable, context: Context, environment: ExecutionEnvironment): Long {
         val value = computable.compute(context, environment)
         if(value !is DataTypeInt) {
             throw ScriptException("Expected int, got ${value.description}")
         }
         return value.value
+    }
+
+    override fun toString(): String {
+        return "${this::class.simpleName}{$arg1, $arg2}"
     }
 }

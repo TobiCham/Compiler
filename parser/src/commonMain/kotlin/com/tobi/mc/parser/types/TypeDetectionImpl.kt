@@ -7,7 +7,7 @@ import com.tobi.mc.parser.TypeDetection
 import com.tobi.mc.parser.util.SimpleDescription
 import com.tobi.mc.parser.util.getComponents
 import com.tobi.mc.type.*
-import com.tobi.util.DescriptionMeta
+import com.tobi.mc.util.DescriptionMeta
 
 internal object TypeDetectionImpl : TypeDetection {
 
@@ -15,16 +15,11 @@ internal object TypeDetectionImpl : TypeDetection {
         Infers types when the 'auto' keyword is used, and ensures types are and operations are possible
     """.trimIndent())
 
-    override fun processProgram(program: Program): Program = program.apply {
-        val defaultContext = DefaultContext()
-        val state = createNewState(defaultContext)
-
-        forEach {
-            it.detectTypes(state, null)
-        }
+    override fun processProgram(program: Program) {
+        inferAndValidateTypes(program, program.context)
     }
 
-    override fun <T : Computable> inferAndValidateTypes(computable: T, defaultContext: DefaultContext) {
+    override fun inferAndValidateTypes(computable: Computable, defaultContext: DefaultContext) {
         computable.detectTypes(createNewState(defaultContext), null)
     }
 
@@ -39,11 +34,17 @@ internal object TypeDetectionImpl : TypeDetection {
     private fun Computable.detectTypes(state: VariableTypeState, currentFunction: FunctionTypeData?) {
         var newState = state
         when(this) {
-            is SetVariable -> this.handle(state)
-            is DefineVariable -> this.handle(state)
             is FunctionCall -> this.handle(state)
             is ReturnExpression -> this.handle(state, currentFunction!!)
             is ExpressionSequence -> newState = VariableTypeState(state)
+            is MathOperation -> {
+                val name = this::class.simpleName!!.toLowerCase()
+                arg1.ensureNumeric(name, state)
+                arg2.ensureNumeric(name, state)
+            }
+            is Negation -> negation.ensureNumeric("negation", state)
+            is IfStatement -> check.ensureNumeric("if", state)
+            is WhileLoop -> check.ensureNumeric("while", state)
             is FunctionDeclaration -> {
                 this.handle(state)
                 return
@@ -51,6 +52,11 @@ internal object TypeDetectionImpl : TypeDetection {
         }
         for (component in this.getComponents()) {
             component.detectTypes(newState, currentFunction)
+        }
+
+        when(this) {
+            is SetVariable -> this.handle(state)
+            is DefineVariable -> this.handle(state)
         }
     }
 
@@ -125,6 +131,13 @@ internal object TypeDetectionImpl : TypeDetection {
         }
     }
 
+    private fun Computable.ensureNumeric(name: String, state: VariableTypeState) {
+        val type = this.calculateType(state)
+        if(!TypeMerger.canBeAssignedTo(IntType, type)) {
+            throw ParseException("Expected int expression for $name, got $type")
+        }
+    }
+
     private fun Computable.calculateType(state: VariableTypeState): ExpandedType = when (this) {
         is Data -> type.mapToType()
         is FunctionDeclaration -> {
@@ -132,7 +145,7 @@ internal object TypeDetectionImpl : TypeDetection {
             returnType.mapToType()
         }
         is GetVariable -> state.getType(name)!!
-        is MathOperation -> IntType
+        is MathOperation, is Negation -> IntType
         is FunctionCall -> {
             val function = function.calculateType(state)
             val args = this.arguments.map { it.calculateType(state) }

@@ -17,7 +17,7 @@ interface ParserContext {
      * Executes all operations in [getParserOperationFlow] to produce a resulting valid program which can be executed
      * @return A new program
      */
-    fun processProgram(program: Program): Program
+    fun processProgram(program: Program)
 
     companion object {
 

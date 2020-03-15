@@ -2,7 +2,7 @@ package com.tobi.mc.computable.data
 
 import com.tobi.mc.computable.Data
 
-class DataTypeInt(val value: Int) : Data() {
+data class DataTypeInt(val value: Long) : Data() {
 
     override val type: DataType = DataType.INT
 
