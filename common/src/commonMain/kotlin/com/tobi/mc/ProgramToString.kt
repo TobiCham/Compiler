@@ -103,15 +103,6 @@ class ProgramToString(val styler: ProgramToStringStyler = Stylers.NONE) {
             }
             builder.print(styler.style(StyleType.BRACKET, ")"))
         }
-        is Multiply -> {
-            builder.print(styler.style(StyleType.BRACKET, "("))
-            arg1.toString(builder)
-            builder.print(" ")
-            builder.print(styler.style(StyleType.MATH, operationString))
-            builder.print(" ")
-            arg2.toString(builder)
-            builder.print(styler.style(StyleType.BRACKET, ")"))
-        }
         is MathOperation -> {
             arg1.toString(builder)
             builder.print(" ")

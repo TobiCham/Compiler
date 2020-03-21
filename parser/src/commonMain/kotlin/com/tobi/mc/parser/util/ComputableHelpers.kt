@@ -2,6 +2,7 @@ package com.tobi.mc.parser.util
 
 import com.tobi.mc.computable.*
 import com.tobi.mc.computable.data.DataTypeInt
+import com.tobi.mc.util.ArrayListStack
 import com.tobi.mc.util.copyAndReplaceIndex
 import com.tobi.mc.util.typeName
 import kotlin.reflect.KMutableProperty0
@@ -35,7 +36,7 @@ fun <T : Computable> T.clone(): T = when(this) {
 } as T
 
 @Suppress("UNCHECKED_CAST")
-internal fun Computable.updateComponentAtIndex(index: Int, component: Computable) {
+fun Computable.updateComponentAtIndex(index: Int, component: Computable) {
     fun update(vararg properties: KMutableProperty0<out Computable?>): Boolean {
         (properties[index] as KMutableProperty0<Computable>).set(component)
         if(index < 0 || index >= properties.size) {
@@ -77,7 +78,7 @@ private fun newList(list: List<Computable>, index: Int, newValue: Computable) = 
     if(i == index) newValue else computable
 }
 
-internal fun Computable.getComponents(): Array<Computable> = when(this) {
+fun Computable.getComponents(): Array<Computable> = when(this) {
     is ContinueStatement, BreakStatement -> emptyArray()
     is Data -> emptyArray()
     is ReturnExpression -> if(toReturn == null) emptyArray() else arrayOf(toReturn!!)
@@ -94,6 +95,24 @@ internal fun Computable.getComponents(): Array<Computable> = when(this) {
     is Program -> arrayOf(code)
     else -> throw IllegalStateException("Can't get components for ${this.typeName}")
 }
+
+fun Computable.traverseAllNodes(): Sequence<Computable> = sequence {
+    yield(this@traverseAllNodes)
+
+    val stack = ArrayListStack<Computable>()
+    stack.push(this@traverseAllNodes)
+
+    while(!stack.isEmpty()) {
+        val computable = stack.pop()
+        yield(computable)
+
+        val components = computable.getComponents()
+        for(i in components.size - 1 downTo 0) {
+            stack.push(components[i])
+        }
+    }
+}
+
 
 internal fun Computable.isNumber(number: Long) = this is DataTypeInt && this.value == number
 internal fun Computable.isZero() = this.isNumber(0)

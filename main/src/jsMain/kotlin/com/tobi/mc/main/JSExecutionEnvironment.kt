@@ -19,7 +19,9 @@ object JSExecutionEnvironment : ExecutionEnvironment {
         TextInput.element.focus()
 
         try {
-            return tryReadLine()
+            val line = tryReadLine()
+            println(line)
+            return line
         } finally {
             SubmitInputButton.disabled = true
             TextInput.disabled = true

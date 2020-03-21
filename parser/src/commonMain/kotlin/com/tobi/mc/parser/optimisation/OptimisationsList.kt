@@ -22,6 +22,7 @@ internal object OptimisationsList {
         BranchOptimisation,
         FlowInterruptOptimisation,
         RedundantOperationOptimisation,
-        ConstantReferenceOptimisation
+        ConstantReferenceOptimisation,
+        TailRecursionOptimisation
     )
 }

@@ -13,7 +13,6 @@ object FunctionReadInt : InbuiltFunction("readInt", emptyList(), IntType) {
             result = environment.readLine().toLongOrNull()
             if(result == null) environment.println("Invalid integer. Enter again:")
         }
-        environment.println(result.toString())
         return DataTypeInt(result)
     }
 }

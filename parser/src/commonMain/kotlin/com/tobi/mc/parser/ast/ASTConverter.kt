@@ -11,17 +11,6 @@ import com.tobi.mc.util.typeName
 
 internal object ASTConverter {
 
-    private fun convertFunctionDeclarations(rootNode: ParserNode) = ExpressionSequence(recurse(rootNode) { node, result, recurse ->
-        when(node.type) {
-            ParserNodeType.FUNCTION_DEF -> result.add(convertFunction(node))
-            ParserNodeType.TILDE -> {
-                recurse(node.left!!)
-                recurse(node.right!!)
-            }
-            else -> throw makeException("Unknown node ${node.type}", node)
-        }
-    })
-
     fun convert(node: ParserNode): Computable  = when(node.type) {
         ParserNodeType.IDENTIFIER -> GetVariable(node.value as String)
         ParserNodeType.STRING -> DataTypeString(node.value as String)
@@ -81,12 +70,7 @@ internal object ASTConverter {
 
     private fun convertFunction(node: ParserNode): FunctionDeclaration {
         val left = node.left!!
-        val right = node.right
-        val sequence = when {
-            right == null -> ExpressionSequence(emptyList())
-            right.type == ParserNodeType.END_STATEMENT -> convertSequence(right)
-            else -> ExpressionSequence(listOf(convert(right)))
-        }
+        val sequence = convertSequence(node.right)
         val returnType = left.left?.mapIfNotNull(this::getDataType)
         val functionName = left.right!!.left!!.value as String
         val parameterList = left.right.right.mapIfNotNull(this::getParameterList) ?: emptyList()
@@ -144,14 +128,17 @@ internal object ASTConverter {
         }
     }
 
-    private fun convertSequence(sequenceNode: ParserNode) = ExpressionSequence(recurse(sequenceNode) { node, result, recurse ->
-        if(node.type == ParserNodeType.END_STATEMENT) {
-            recurse(node.left!!)
-            recurse(node.right!!)
-        } else {
-            result.add(convert(node))
-        }
-    })
+    private fun convertSequence(sequenceNode: ParserNode?): ExpressionSequence {
+        if(sequenceNode == null) return ExpressionSequence(emptyList())
+        return ExpressionSequence(recurse(sequenceNode) { node, result, recurse ->
+            if(node.type == ParserNodeType.END_STATEMENT) {
+                recurse(node.left!!)
+                recurse(node.right!!)
+            } else {
+                result.add(convert(node))
+            }
+        })
+    }
 
     private fun convertVariableDefinition(node: ParserNode): DefineVariable {
         val type = if(node.left == null) null else getDataType(node.left)
@@ -184,34 +171,19 @@ internal object ASTConverter {
 
     private fun convertIfStatement(node: ParserNode): IfStatement {
         val check = convert(node.left!!).asData("a condition", node.left)
+
         if(node.right!!.type == ParserNodeType.ELSE) {
-            var ifSequence = convert(node.right.left!!)
-            if(ifSequence !is ExpressionSequence) {
-                ifSequence = ExpressionSequence(listOf(ifSequence))
-            }
-            var elseSequence = if(node.right.right == null) {
-                ExpressionSequence(emptyList())
-            } else {
-                convert(node.right.right)
-            }
-            if(elseSequence !is ExpressionSequence) {
-                elseSequence = ExpressionSequence(listOf(elseSequence))
-            }
+            val ifSequence = convertSequence(node.right.left)
+            val elseSequence = convertSequence(node.right.right)
             return IfStatement(check, ifSequence, elseSequence)
         }
-        var ifSequence = convert(node.right)
-        if(ifSequence !is ExpressionSequence) {
-            ifSequence = ExpressionSequence(listOf(ifSequence))
-        }
+        val ifSequence = convertSequence(node.right)
         return IfStatement(check, ifSequence, null)
     }
 
     private fun convertWhileLoop(node: ParserNode): WhileLoop {
         val check = convert(node.left!!)
-        var body = convert(node.right!!)
-        if(body !is ExpressionSequence) {
-            body = ExpressionSequence(listOf(body))
-        }
+        val body = convertSequence(node.right)
         return WhileLoop(check.asData("a condition", node.left), body)
     }
 

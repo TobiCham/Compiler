@@ -16,7 +16,10 @@ internal object TypeDetectionImpl : TypeDetection {
     """.trimIndent())
 
     override fun processProgram(program: Program) {
-        inferAndValidateTypes(program, program.context)
+        program.detectTypes(
+            createNewState(program.context),
+            FunctionTypeData(FunctionDeclaration("__main__", emptyList(), program.code, DataType.VOID), VoidType)
+        )
     }
 
     override fun inferAndValidateTypes(computable: Computable, defaultContext: DefaultContext) {
