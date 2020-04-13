@@ -26,3 +26,12 @@ fun <T> List<T>.getAfterIndex(index: Int): List<T> {
 
 inline val Any.typeName: String?
     get() = this::class.simpleName
+
+fun String.escapeForPrinting(): String {
+    var result = this
+    result = result.replace("\n", "\\n")
+    result = result.replace("\t", "\\t")
+    result = result.replace("\"", "\\\"")
+
+    return result
+}

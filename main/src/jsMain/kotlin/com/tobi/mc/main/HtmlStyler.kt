@@ -33,6 +33,7 @@ object HtmlStyler : ProgramToStringStyler {
         StyleType.ASSIGNMENT -> "assignment"
         StyleType.PARAMS_SEPARATOR -> "params"
         StyleType.NEGATION -> "math"
+        StyleType.STRING_CONCAT -> "math"
     }
 
     private fun escapeHtml(input: String) = replacements.entries.fold(input) { acc, (toReplace, replacement) ->

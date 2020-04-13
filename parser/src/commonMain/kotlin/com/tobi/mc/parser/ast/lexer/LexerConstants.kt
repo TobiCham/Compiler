@@ -43,7 +43,7 @@ internal object LexerConstants {
     fun getCMapAtIndex(index: Int): Int {
         var i = 0 /* index in packed string  */
         var j = 0 /* index in unpacked array */
-        while (i < 180) {
+        while (i < ZZ_CMAP_PACKED.size) {
             val count = ZZ_CMAP_PACKED[i++]
             val value = ZZ_CMAP_PACKED[i++]
 

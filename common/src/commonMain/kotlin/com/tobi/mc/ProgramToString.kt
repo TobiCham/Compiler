@@ -50,7 +50,13 @@ class ProgramToString(val styler: ProgramToStringStyler = Stylers.NONE) {
                 builder.print(" ")
                 builder.print(styler.style(StyleType.ELSE, "else"))
                 builder.print(" ")
-                elseBody!!.toString(builder)
+
+                val elseOps = elseBody!!.operations
+                if(elseOps.size == 1 && elseOps[0] is IfStatement) {
+                    elseOps[0].toString(builder)
+                } else {
+                    elseBody!!.toString(builder)
+                }
             } else Unit
         }
         is WhileLoop -> {
@@ -67,7 +73,7 @@ class ProgramToString(val styler: ProgramToStringStyler = Stylers.NONE) {
             builder.print(styler.style(StyleType.NAME, name))
             builder.print(styler.style(StyleType.BRACKET, "("))
             builder.print(parameters.joinToString(styler.style(StyleType.PARAMS_SEPARATOR, ",") + " ") {
-                "${styler.style(StyleType.TYPE_DECLARATION, it.second.toString())} ${styler.style(StyleType.NAME, it.first)}"
+                "${styler.style(StyleType.TYPE_DECLARATION, it.type.toString())} ${styler.style(StyleType.NAME, it.name)}"
             })
             builder.print(styler.style(StyleType.BRACKET, ")"))
             builder.print(" ")
@@ -136,6 +142,14 @@ class ProgramToString(val styler: ProgramToStringStyler = Stylers.NONE) {
                 negation.toString(builder)
             }
         }
+        is StringConcat -> {
+            str1.toString(builder)
+            builder.print(" ")
+            builder.print(styler.style(StyleType.STRING_CONCAT, "++"))
+            builder.print(" ")
+            str2.toString(builder)
+        }
+//        else -> builder.print(this.toString())
         else -> throw IllegalStateException("Unknown value $this")
     }
 

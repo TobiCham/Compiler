@@ -12,10 +12,12 @@ import com.tobi.mc.util.typeName
 internal object ASTConverter {
 
     fun convert(node: ParserNode): Computable  = when(node.type) {
-        ParserNodeType.IDENTIFIER -> GetVariable(node.value as String)
+        ParserNodeType.IDENTIFIER -> GetVariable(node.value as String, -1)
         ParserNodeType.STRING -> DataTypeString(node.value as String)
         ParserNodeType.CONSTANT -> DataTypeInt(node.value as Long)
-        ParserNodeType.RETURN -> ReturnExpression(if (node.left == null) null else convert(node.left))
+        ParserNodeType.RETURN -> ReturnExpression(
+            if (node.left == null) null else convert(node.left).asData("return", node.left)
+        )
         ParserNodeType.BREAK -> BreakStatement
         ParserNodeType.CONTINUE -> ContinueStatement
         ParserNodeType.FUNCTION_DEF -> convertFunction(node)
@@ -40,10 +42,13 @@ internal object ASTConverter {
         else -> throw makeException("Invalid node ${node.type}", node)
     }
 
-    private fun <T : Computable> convertArithmetic(node: ParserNode, createExpression: (first: Computable, second: Computable) -> T): T {
+    private fun <T : Computable> convertArithmetic(node: ParserNode, createExpression: (first: DataComputable, second: DataComputable) -> T): T {
         val left = node.left ?: throw makeException("Missing left hand side for expression", node)
         val right = node.right ?: throw makeException("Missing right hand side for expression", node)
-        return createExpression(convert(left), convert(right))
+        return createExpression(
+            convert(left).asData("math operation", left),
+            convert(right).asData("math operation", right)
+        )
     }
 
     private fun convertUnaryExpression(node: ParserNode): DataComputable {
@@ -80,12 +85,11 @@ internal object ASTConverter {
 
     private fun convertFunctionCall(functionCallNode: ParserNode): FunctionCall {
         val left = functionCallNode.left
-
-        val getFunction = when(left!!.type) {
-            ParserNodeType.APPLY -> convertFunctionCall(left)
-            ParserNodeType.IDENTIFIER -> GetVariable(left.value as String)
-            else -> throw makeException("Unknown function application to ${functionCallNode.type}", functionCallNode)
+        if(left!!.type != ParserNodeType.APPLY && left.type != ParserNodeType.IDENTIFIER) {
+            throw makeException("Unknown function application to ${functionCallNode.type}", functionCallNode)
         }
+
+        val getFunction = convert(left).asData("function", left)
         if(functionCallNode.right == null) {
             return FunctionCall(getFunction, emptyList())
         }
@@ -122,7 +126,7 @@ internal object ASTConverter {
                 if(type == null) throw makeException("Parameter cannot be auto", node)
                 if(type == DataType.VOID) throw makeException("Parameter cannot be void", node)
 
-                result.add(name to type)
+                result.add(Parameter(type, name))
             }
             else -> throw makeException("Unexpected node ${node.type}", node)
         }
@@ -153,7 +157,10 @@ internal object ASTConverter {
             convertVariableAssignment(node.right)
         } else {
             if(type == null) throw makeException("Cannot have an auto variable with no assignment", node.right)
-            SetVariable(node.right.value as String, when (type) {
+            if(node.right.value == null) {
+                println("aa")
+            }
+            SetVariable(node.right.value as String, -1, when (type) {
                 DataType.INT -> DataTypeInt(0)
                 DataType.STRING -> DataTypeString("")
                 else -> throw makeException("No default type for $type", node.right)
@@ -166,13 +173,16 @@ internal object ASTConverter {
     private fun convertVariableAssignment(node: ParserNode): SetVariable {
         val name = node.left!!.value as String
         val value = convert(node.right!!)
-        return SetVariable(name, value.asData("a variable assignment", node.right))
+        return SetVariable(name, -1, value.asData("a variable assignment", node.right))
     }
 
     private fun convertIfStatement(node: ParserNode): IfStatement {
         val check = convert(node.left!!).asData("a condition", node.left)
+        if(node.right == null) {
+            return IfStatement(check, convertSequence(null), null)
+        }
 
-        if(node.right!!.type == ParserNodeType.ELSE) {
+        if(node.right.type == ParserNodeType.ELSE) {
             val ifSequence = convertSequence(node.right.left)
             val elseSequence = convertSequence(node.right.right)
             return IfStatement(check, ifSequence, elseSequence)

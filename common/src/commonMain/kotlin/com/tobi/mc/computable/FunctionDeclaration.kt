@@ -8,7 +8,7 @@ class FunctionDeclaration(
     var parameters: ParameterList,
     var body: ExpressionSequence,
     var returnType: DataType?
-) : VariableReference, DataComputable {
+) : VariableReference, Computable {
 
     override suspend fun compute(context: Context, environment: ExecutionEnvironment): DataTypeClosure {
         val closure = DataTypeClosure(parameters, context, body, returnType)

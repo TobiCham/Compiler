@@ -15,7 +15,7 @@ abstract class InbuiltFunction(
 
     override fun computeData(context: Context): Data {
         val simpleParams = params.map { (name, type) ->
-            Pair(name, (type as CompleteType).type)
+            Parameter((type as CompleteType).type, name)
         }
         return DataTypeClosure(simpleParams, context, ExpressionSequence(listOf(
             ReturnExpression(InbuiltFunctionComputable())

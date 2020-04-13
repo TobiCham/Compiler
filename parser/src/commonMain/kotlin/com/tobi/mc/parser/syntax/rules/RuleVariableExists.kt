@@ -37,7 +37,7 @@ internal object RuleVariableExists : InstanceSyntaxRule<Program>(Program::class)
             is FunctionDeclaration -> {
                 state.define(name)
                 newState = VariablesState(state)
-                for ((paramName, _) in parameters) {
+                for ((_, paramName) in parameters) {
                     newState.define(paramName)
                 }
             }

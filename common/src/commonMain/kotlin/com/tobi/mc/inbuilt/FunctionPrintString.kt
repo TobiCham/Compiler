@@ -10,7 +10,7 @@ import com.tobi.mc.type.VoidType
 object FunctionPrintString : InbuiltFunction("printString", listOf("value" to StringType), VoidType) {
 
     override suspend fun compute(context: Context, environment: ExecutionEnvironment): DataTypeVoid {
-        environment.print(context.getDataOfType<DataTypeString>("value").toScriptString())
+        environment.print(context.getDataOfType<DataTypeString>("value", 1).toScriptString())
         return DataTypeVoid
     }
 }

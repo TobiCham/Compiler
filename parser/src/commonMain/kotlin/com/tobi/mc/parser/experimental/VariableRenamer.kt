@@ -11,7 +11,7 @@ internal object VariableRenamer {
     
     fun renameFunctionArgument(function: FunctionDeclaration, from: String, to: String) {
         function.parameters = function.parameters.map {
-            if(it.first == from) Pair(to, it.second) else it
+            if(it.name == from) Parameter(it.type, to) else it
         }
         function.body.rename(from, to)
     }
@@ -26,11 +26,11 @@ internal object VariableRenamer {
             }
             is VariableReference -> this.name = getNewName(this.name, from, to)
             is FunctionDeclaration -> {
-                if(name == to || parameters.any { it.first == to }) {
+                if(name == to || parameters.any { it.name == to }) {
                     throw IllegalStateException("Conflict - function already uses variable '$to'")
                 }
 
-                if(name == from || parameters.any { it.first == from }) {
+                if(name == from || parameters.any { it.name == from }) {
                     //'from' is being redefined, nothing left to do
                     return
                 }

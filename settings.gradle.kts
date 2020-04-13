@@ -1,2 +1,2 @@
 rootProject.name = "minusc"
-include(":main", ":parser", ":common")
+include(":main", "intermediate", ":parser", ":common")

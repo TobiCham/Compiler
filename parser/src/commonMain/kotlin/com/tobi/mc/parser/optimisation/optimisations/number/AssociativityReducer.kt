@@ -1,24 +1,24 @@
 package com.tobi.mc.parser.optimisation.optimisations.number
 
-import com.tobi.mc.computable.Computable
+import com.tobi.mc.computable.DataComputable
 import com.tobi.mc.computable.GetVariable
 import com.tobi.mc.computable.data.DataTypeInt
 import com.tobi.mc.parser.util.getComponents
 import kotlin.reflect.KClass
 
-internal class AssociativityReducer<T : Computable>(val type: KClass<T>, val createType: (Computable, Computable) -> T, val operation: (Long, Long) -> Long) {
+internal class AssociativityReducer<T : DataComputable>(val type: KClass<T>, val createType: (DataComputable, DataComputable) -> T, val operation: (Long, Long) -> Long) {
 
-    fun reduce(input: T): Computable {
+    fun reduce(input: T): DataComputable {
         val mergingList = MergingList()
         input.traverse(mergingList)
 
         if(!mergingList.hasModified) {
             return input
         }
-        return mergingList.mergeResults(createType)
+        return mergingList.mergeResults()
     }
 
-    private fun Computable.traverse(items: MergingList) {
+    private fun DataComputable.traverse(items: MergingList) {
         if(!type.isInstance(this)) {
             items.add(this)
 
@@ -27,15 +27,15 @@ internal class AssociativityReducer<T : Computable>(val type: KClass<T>, val cre
             }
         }
         for (component in this.getComponents()) {
-            component.traverse(items)
+            (component as DataComputable).traverse(items)
         }
     }
 
     private inner class MergingList {
-        val list = ArrayList<Computable>()
+        val list = ArrayList<DataComputable>()
         var hasModified: Boolean = false
 
-        fun add(computable: Computable) {
+        fun add(computable: DataComputable) {
             if(computable is DataTypeInt) {
                 if(list.isEmpty()) list.add(computable)
                 else {
@@ -50,11 +50,11 @@ internal class AssociativityReducer<T : Computable>(val type: KClass<T>, val cre
             }
         }
 
-        fun mergeResults(make: (c1: Computable, c2: Computable) -> Computable): Computable {
+        fun mergeResults(): DataComputable {
             if(list.isEmpty()) {
                 throw IllegalStateException("List empty")
             }
-            return list.reduce(make)
+            return list.reduce(createType)
         }
     }
 }

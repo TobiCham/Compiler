@@ -1,10 +1,10 @@
 package com.tobi.mc.computable
 
-class SetVariable(override var name: String, var value: DataComputable) : Computable, VariableReference {
+class SetVariable(override var name: String, var contextIndex: Int, var value: DataComputable) : Computable, VariableReference {
 
     override suspend fun compute(context: Context, environment: ExecutionEnvironment): Data {
         val data = value.compute(context, environment)
-        context.setVariable(name, data)
+        context.setVariable(name, contextIndex, data)
         return data
     }
 }

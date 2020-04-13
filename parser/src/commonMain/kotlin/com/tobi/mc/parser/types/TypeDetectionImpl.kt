@@ -18,7 +18,7 @@ internal object TypeDetectionImpl : TypeDetection {
     override fun processProgram(program: Program) {
         program.detectTypes(
             createNewState(program.context),
-            FunctionTypeData(FunctionDeclaration("__main__", emptyList(), program.code, DataType.VOID), VoidType)
+            FunctionTypeData(FunctionDeclaration("main", emptyList(), program.code, DataType.VOID), VoidType)
         )
     }
 
@@ -46,6 +46,10 @@ internal object TypeDetectionImpl : TypeDetection {
                 arg2.ensureNumeric(name, state)
             }
             is Negation -> negation.ensureNumeric("negation", state)
+            is StringConcat -> {
+                str1.ensureString("string concatenation", state)
+                str2.ensureString("string concatenation", state)
+            }
             is IfStatement -> check.ensureNumeric("if", state)
             is WhileLoop -> check.ensureNumeric("while", state)
             is FunctionDeclaration -> {
@@ -135,9 +139,17 @@ internal object TypeDetectionImpl : TypeDetection {
     }
 
     private fun Computable.ensureNumeric(name: String, state: VariableTypeState) {
-        val type = this.calculateType(state)
-        if(!TypeMerger.canBeAssignedTo(IntType, type)) {
-            throw ParseException("Expected int expression for $name, got $type")
+        ensureType(name, StringType, "int", state)
+    }
+
+    private fun Computable.ensureString(name: String, state: VariableTypeState) {
+        ensureType(name, StringType, "string", state)
+    }
+
+    private fun Computable.ensureType(name: String, type: ExpandedType, typeDescription: String, state: VariableTypeState) {
+        val thisType = this.calculateType(state)
+        if(!TypeMerger.canBeAssignedTo(type, thisType)) {
+            throw ParseException("Expected $typeDescription expression for $name, got $type")
         }
     }
 
@@ -149,6 +161,7 @@ internal object TypeDetectionImpl : TypeDetection {
         }
         is GetVariable -> state.getType(name)!!
         is MathOperation, is Negation -> IntType
+        is StringConcat -> StringType
         is FunctionCall -> {
             val function = function.calculateType(state)
             val args = this.arguments.map { it.calculateType(state) }

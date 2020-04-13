@@ -29,7 +29,7 @@ internal class VariableTypeState(private val parent: VariableTypeState?) {
      * @return the new state
      */
     fun initialiseFunction(function: FunctionDeclaration, mapping: (DataType) -> ExpandedType): Pair<VariableTypeState, FunctionType> {
-        val params = function.parameters.map { (_, type) -> mapping(type) }
+        val params = function.parameters.map { (type, _) -> mapping(type) }
 
         val returnType = if(function.returnType != null) mapping(function.returnType!!) else UnknownType
         val functionType = FunctionType(
@@ -39,7 +39,7 @@ internal class VariableTypeState(private val parent: VariableTypeState?) {
         define(function.name, functionType)
 
         val newState = VariableTypeState(this)
-        for ((paramName, paramType) in function.parameters) {
+        for ((paramType, paramName) in function.parameters) {
             newState.define(paramName, mapping(paramType))
         }
         return Pair(newState, functionType)

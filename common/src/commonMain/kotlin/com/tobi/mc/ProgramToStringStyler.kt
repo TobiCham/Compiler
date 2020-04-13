@@ -21,7 +21,8 @@ enum class StyleType {
     NAME,
     ASSIGNMENT,
     PARAMS_SEPARATOR,
-    NEGATION
+    NEGATION,
+    STRING_CONCAT
 }
 
 object Stylers {

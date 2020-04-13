@@ -4,8 +4,8 @@ import com.tobi.mc.ScriptException
 import com.tobi.mc.computable.data.DataTypeInt
 
 open class MathOperation(
-    var arg1: Computable,
-    var arg2: Computable,
+    var arg1: DataComputable,
+    var arg2: DataComputable,
     val operationString: String,
     val computation: (Long, Long) -> Long
 ) : DataComputable {

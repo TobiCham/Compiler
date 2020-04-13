@@ -1,5 +1,5 @@
 package com.tobi.mc.util
 
 actual object TimeUtils {
-    actual fun unixTimeMillis(): Long = System.currentTimeMillis() / 1000
+    actual fun unixTimeMillis(): Long = System.currentTimeMillis()
 }

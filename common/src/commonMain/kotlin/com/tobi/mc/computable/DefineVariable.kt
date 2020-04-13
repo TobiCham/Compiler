@@ -3,7 +3,7 @@ package com.tobi.mc.computable
 import com.tobi.mc.ScriptException
 import com.tobi.mc.computable.data.DataType
 
-class DefineVariable(override var name: String, var value: DataComputable, var expectedType: DataType?): VariableReference, DataComputable {
+class DefineVariable(override var name: String, var value: DataComputable, var expectedType: DataType?): VariableReference, Computable {
 
     override suspend fun compute(context: Context, environment: ExecutionEnvironment): Data {
         val value = value.compute(context, environment)

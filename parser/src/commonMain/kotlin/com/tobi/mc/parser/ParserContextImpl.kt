@@ -19,12 +19,12 @@ import com.tobi.mc.parser.types.TypeDetectionImpl
 
 internal class ParserContextImpl : ParserContext {
 
-    private val optimiser = OptimisationImpl(OptimisationsList.DEFAULT_OPTIMISATIONS)
-    private val syntaxValidator = SyntaxValidatorImpl(SyntaxRulesList.RULES)
-    private val typeDetection = TypeDetectionImpl
+    override val optimiser = OptimisationImpl(OptimisationsList.DEFAULT_OPTIMISATIONS)
+    override val validator = SyntaxValidatorImpl(SyntaxRulesList.RULES)
+    override val typeDetection = TypeDetectionImpl
 
-    private val allOperations = setOf(optimiser, syntaxValidator, typeDetection)
-    private val orderedOperations = listOf(syntaxValidator, optimiser, typeDetection)
+    private val allOperations = setOf(optimiser, validator, typeDetection)
+    private val orderedOperations = listOf(validator, optimiser, typeDetection, ContextIndexResolver)
 
     override fun getAllOperations(): Set<ParserOperation> = allOperations
 
@@ -62,7 +62,7 @@ internal class ParserContextImpl : ParserContext {
         val symbol = parser.parse()
         val result = symbol.value as ParserNode
         val rawAst = ASTConverter.convert(result) as FunctionDeclaration
-
+//
         return Program(rawAst.body, context)
     }
 

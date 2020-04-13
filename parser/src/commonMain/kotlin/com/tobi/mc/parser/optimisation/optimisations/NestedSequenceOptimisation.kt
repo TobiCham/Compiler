@@ -75,7 +75,7 @@ internal object NestedSequenceOptimisation : InstanceOptimisation<ExpressionSequ
             else names.add(name)
         }
         if(this is FunctionDeclaration) {
-            definedVariables.addAll(this.parameters.map { it.first })
+            definedVariables.addAll(this.parameters.map { it.name })
         }
         if(this is SetVariable || this is GetVariable) {
             if(!definedVariables.contains((this as VariableReference).name)) {

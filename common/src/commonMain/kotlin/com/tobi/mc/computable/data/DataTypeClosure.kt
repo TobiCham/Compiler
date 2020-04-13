@@ -14,11 +14,11 @@ class DataTypeClosure(
 
     override val type: DataType = DataType.FUNCTION
 
-    override val description: String = "function<$returnType>(${parameters.joinToString(", ") { "${it.second} ${it.first}" }})"
+    override val description: String = "function<$returnType>(${parameters.joinToString(", ") { "${it.type} ${it.name}" }})"
 
     override fun toScriptString(): String {
         val paramList = parameters.joinToString(", ") {
-            "${it.second} ${it.first}"
+            "${it.type} ${it.name}"
         }
         return "[${returnType.toString()} function($paramList)]"
     }

@@ -30,5 +30,6 @@ object JVMConsoleStyler : ProgramToStringStyler {
         StyleType.ASSIGNMENT -> ""
         StyleType.PARAMS_SEPARATOR -> ""
         StyleType.NEGATION -> ANSI_YELLOW
+        StyleType.STRING_CONCAT -> ANSI_YELLOW
     }
 }

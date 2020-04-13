@@ -18,6 +18,7 @@ kotlin {
             dependencies {
                 implementation(kotlin("stdlib-common"))
                 implementation(project(":parser"))
+                implementation(project(":intermediate"))
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core-common:1.3.3")
             }
         }

@@ -3,6 +3,7 @@ package com.tobi.mc.parser.optimisation.optimisations
 import com.tobi.mc.computable.Computable
 import com.tobi.mc.computable.Data
 import com.tobi.mc.computable.ExpressionSequence
+import com.tobi.mc.computable.MathOperation
 import com.tobi.mc.parser.optimisation.InstanceOptimisation
 import com.tobi.mc.parser.util.SimpleDescription
 import com.tobi.mc.util.DescriptionMeta
@@ -18,9 +19,20 @@ internal object RedundantOperationOptimisation : InstanceOptimisation<Expression
     """.trimIndent())
 
     override fun ExpressionSequence.optimise(replace: (Computable) -> Boolean): Boolean {
-        val newOperations = this.operations.filter(this@RedundantOperationOptimisation::isRequired)
-        if(newOperations.size == this.operations.size) {
-            //No operations were redundant
+        val newOperations = ArrayList<Computable>(this.operations.size)
+        var modified = false
+        for(operation in this.operations) {
+            if(!isRequired(operation)) {
+                modified = true
+            } else if(operation is MathOperation) {
+                modified = true
+                newOperations.add(operation.arg1)
+                newOperations.add(operation.arg2)
+            } else {
+                newOperations.add(operation)
+            }
+        }
+        if(!modified) {
             return false
         }
         return replace(ExpressionSequence(newOperations))

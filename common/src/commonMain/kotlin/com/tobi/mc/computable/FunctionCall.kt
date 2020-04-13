@@ -21,12 +21,12 @@ class FunctionCall(var function: DataComputable, var arguments: List<DataComputa
         }
 
         val newContext = Context(function.context)
-        for((i, pair) in function.parameters.withIndex()) {
+        for((i, parameter) in function.parameters.withIndex()) {
             val value = arguments[i].compute(context, environment)
-            if(value.type != pair.second) {
-                throw ScriptException("Invalid type on parameter index $i: Expected ${pair.second}, got ${value.type}")
+            if(value.type != parameter.type) {
+                throw ScriptException("Invalid type on parameter index $i: Expected ${parameter.type}, got ${value.type}")
             }
-            newContext.defineVariable(pair.first, value)
+            newContext.defineVariable(parameter.name, value)
         }
 
         val result = function.body.compute(newContext, environment)

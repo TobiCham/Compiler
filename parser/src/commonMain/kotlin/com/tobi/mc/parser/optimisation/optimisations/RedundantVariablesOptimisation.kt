@@ -43,7 +43,7 @@ internal object RedundantVariablesOptimisation : InstanceOptimisation<Expression
             }
         }
         if(this is FunctionDeclaration) {
-            if(this.name == name || this.parameters.any { it.first == name }) {
+            if(this.name == name || this.parameters.any { it.name == name }) {
                 //The variable we're looking for has been redefined
                 return false
             }

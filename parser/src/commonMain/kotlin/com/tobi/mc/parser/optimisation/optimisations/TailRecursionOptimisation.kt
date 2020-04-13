@@ -21,14 +21,16 @@ internal object TailRecursionOptimisation : InstanceOptimisation<FunctionDeclara
         val names = HashSet<String>()
         for(component in traverseAllNodes()) {
             if(component is FunctionDeclaration) {
-                component.parameters.forEach { names.add(it.first) }
+                for (parameter in component.parameters) {
+                    names.add(parameter.name)
+                }
             }
             if(component is VariableReference) {
                 names.add(component.name)
             }
         }
         val paramNames = HashMap<String, String>()
-        for((name, _) in parameters) {
+        for((_, name) in parameters) {
             paramNames[name] = findVariableName("tail_$name", names)
         }
 
@@ -70,10 +72,10 @@ internal object TailRecursionOptimisation : InstanceOptimisation<FunctionDeclara
         }
         val list = ArrayList<Computable>()
         for((i, value) in tailRecFunc.parameters.withIndex()) {
-            list.add(DefineVariable(tempParamNames[value.first]!!, (this.toReturn as FunctionCall).arguments[i], value.second))
+            list.add(DefineVariable(tempParamNames[value.name]!!, (this.toReturn as FunctionCall).arguments[i], value.type))
         }
-        for((name, _) in tailRecFunc.parameters) {
-            list.add(SetVariable(name, GetVariable(tempParamNames[name]!!)))
+        for((_, name) in tailRecFunc.parameters) {
+            list.add(SetVariable(name, 0, GetVariable(tempParamNames[name]!!, 0)))
         }
         list.add(ContinueStatement)
         return ExpressionSequence(list)
@@ -97,7 +99,7 @@ internal object TailRecursionOptimisation : InstanceOptimisation<FunctionDeclara
 
     private fun Computable.violatesTailRec(mainFunc: FunctionDeclaration): Boolean {
         if(this is FunctionDeclaration) {
-            if(this.parameters.any { it.first == mainFunc.name }) {
+            if(this.parameters.any { it.name == mainFunc.name }) {
                 return true
             }
             if(this === mainFunc) {

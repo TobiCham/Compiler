@@ -8,30 +8,30 @@ import com.tobi.mc.util.typeName
 import kotlin.reflect.KMutableProperty0
 
 @Suppress("UNCHECKED_CAST")
-fun <T : Computable> T.clone(): T = when(this) {
+fun <T : Computable> T.copy(): T = when(this) {
     is Data -> this
     is ContinueStatement, BreakStatement -> this
-    is ReturnExpression -> ReturnExpression(toReturn?.clone())
-    is IfStatement -> IfStatement(check.clone(), ifBody.clone(), elseBody?.clone())
-    is WhileLoop -> WhileLoop(check.clone(), body.clone())
-    is ExpressionSequence -> ExpressionSequence(operations.map(Computable::clone).toMutableList())
-    is GetVariable -> GetVariable(name)
-    is SetVariable -> SetVariable(name, value.clone())
-    is DefineVariable -> DefineVariable(name, value.clone(), expectedType)
-    is FunctionDeclaration -> FunctionDeclaration(name, ArrayList(parameters), body.clone(), returnType)
-    is FunctionCall -> FunctionCall(function.clone(), arguments.map(DataComputable::clone).toMutableList())
-    is Add -> Add(arg1.clone(), arg2.clone())
-    is Subtract -> Subtract(arg1.clone(), arg2.clone())
-    is Multiply -> Multiply(arg1.clone(), arg2.clone())
-    is Divide -> Divide(arg1.clone(), arg2.clone())
-    is Mod -> Mod(arg1.clone(), arg2.clone())
-    is GreaterThan -> GreaterThan(arg1.clone(), arg2.clone())
-    is LessThan -> LessThan(arg1.clone(), arg2.clone())
-    is GreaterThanOrEqualTo -> GreaterThanOrEqualTo(arg1.clone(), arg2.clone())
-    is LessThanOrEqualTo -> LessThanOrEqualTo(arg1.clone(), arg2.clone())
-    is Equals -> Equals(arg1.clone(), arg2.clone())
-    is NotEquals -> NotEquals(arg1.clone(), arg2.clone())
-    is Negation -> Negation(negation.clone())
+    is ReturnExpression -> ReturnExpression(toReturn?.copy())
+    is IfStatement -> IfStatement(check.copy(), ifBody.copy(), elseBody?.copy())
+    is WhileLoop -> WhileLoop(check.copy(), body.copy())
+    is ExpressionSequence -> ExpressionSequence(operations.map(Computable::copy).toMutableList())
+    is GetVariable -> GetVariable(name, contextIndex)
+    is SetVariable -> SetVariable(name, contextIndex, value.copy())
+    is DefineVariable -> DefineVariable(name, value.copy(), expectedType)
+    is FunctionDeclaration -> FunctionDeclaration(name, ArrayList(parameters), body.copy(), returnType)
+    is FunctionCall -> FunctionCall(function.copy(), arguments.map(DataComputable::copy).toMutableList())
+    is Add -> Add(arg1.copy(), arg2.copy())
+    is Subtract -> Subtract(arg1.copy(), arg2.copy())
+    is Multiply -> Multiply(arg1.copy(), arg2.copy())
+    is Divide -> Divide(arg1.copy(), arg2.copy())
+    is Mod -> Mod(arg1.copy(), arg2.copy())
+    is GreaterThan -> GreaterThan(arg1.copy(), arg2.copy())
+    is LessThan -> LessThan(arg1.copy(), arg2.copy())
+    is GreaterThanOrEqualTo -> GreaterThanOrEqualTo(arg1.copy(), arg2.copy())
+    is LessThanOrEqualTo -> LessThanOrEqualTo(arg1.copy(), arg2.copy())
+    is Equals -> Equals(arg1.copy(), arg2.copy())
+    is NotEquals -> NotEquals(arg1.copy(), arg2.copy())
+    is Negation -> Negation(negation.copy())
     else -> throw IllegalStateException("Invalid value ${this.typeName}")
 } as T
 
@@ -66,6 +66,7 @@ fun Computable.updateComponentAtIndex(index: Int, component: Computable) {
         }
         is MathOperation -> update(this::arg1, this::arg2)
         is Negation -> update(this::negation)
+        is StringConcat -> update(this::str1, this::str2)
         is Program -> update(this::code)
         else -> throw IllegalStateException("Can't update components for ${this.typeName}")
     }
@@ -81,7 +82,7 @@ private fun newList(list: List<Computable>, index: Int, newValue: Computable) = 
 fun Computable.getComponents(): Array<Computable> = when(this) {
     is ContinueStatement, BreakStatement -> emptyArray()
     is Data -> emptyArray()
-    is ReturnExpression -> if(toReturn == null) emptyArray() else arrayOf(toReturn!!)
+    is ReturnExpression -> if(toReturn == null) emptyArray() else arrayOf<Computable>(toReturn!!)
     is IfStatement -> if(elseBody == null) arrayOf(check, ifBody) else arrayOf(check, ifBody, elseBody!!)
     is WhileLoop -> arrayOf(check, body)
     is ExpressionSequence -> operations.toTypedArray()
@@ -92,6 +93,7 @@ fun Computable.getComponents(): Array<Computable> = when(this) {
     is FunctionCall -> arrayOf(function, *arguments.toTypedArray())
     is MathOperation -> arrayOf(arg1, arg2)
     is Negation -> arrayOf(negation)
+    is StringConcat -> arrayOf(str1, str2)
     is Program -> arrayOf(code)
     else -> throw IllegalStateException("Can't get components for ${this.typeName}")
 }

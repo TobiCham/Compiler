@@ -12,7 +12,7 @@ import com.tobi.mc.type.UnknownType
 object FunctionFunctionToString : InbuiltFunction("functionToString", listOf("value" to FunctionType(UnknownType, UnknownParameters)), StringType) {
 
     override suspend fun compute(context: Context, environment: ExecutionEnvironment): DataTypeString {
-        val value = context.getDataOfType<DataTypeClosure>("value")
+        val value = context.getDataOfType<DataTypeClosure>("value", 1)
         return DataTypeString(value.toScriptString())
     }
 }

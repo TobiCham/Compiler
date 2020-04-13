@@ -10,7 +10,7 @@ import com.tobi.mc.type.StringType
 object FunctionIntToString : InbuiltFunction("intToString", listOf("value" to IntType), StringType) {
 
     override suspend fun compute(context: Context, environment: ExecutionEnvironment): DataTypeString {
-        val value = context.getDataOfType<Data>("value")
+        val value = context.getDataOfType<Data>("value", 1)
         return DataTypeString(value.toScriptString())
     }
 }

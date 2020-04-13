@@ -4,6 +4,12 @@ import com.tobi.mc.computable.Program
 
 interface ParserContext {
 
+    val validator: SyntaxValidator
+
+    val typeDetection: TypeDetection
+
+    val optimiser: SyntaxOptimiser
+
     fun getAllOperations(): Set<ParserOperation>
 
     fun getParserOperationFlow(): List<ParserOperation>

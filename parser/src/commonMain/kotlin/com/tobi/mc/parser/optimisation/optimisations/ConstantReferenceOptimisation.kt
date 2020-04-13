@@ -34,7 +34,7 @@ internal object ConstantReferenceOptimisation : InstanceOptimisation<ExpressionS
 
     private fun Computable.replaceReferences(startIndex: Int, name: String, value: Data) {
         if(this is FunctionDeclaration) {
-            if(this.name == name || this.parameters.any { it.first == name }) {
+            if(this.name == name || this.parameters.any { it.name == name }) {
                 //The variable we're looking for has been redefined
                 return
             }
@@ -59,7 +59,7 @@ internal object ConstantReferenceOptimisation : InstanceOptimisation<ExpressionS
             return true
         }
         if(this is FunctionDeclaration) {
-            if(this.name == name || this.parameters.any { it.first == name }) {
+            if(this.name == name || this.parameters.any { it.name == name }) {
                 //The variable we're looking for has been redefined
                 return false
             }

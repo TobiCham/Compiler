@@ -3,6 +3,8 @@ package com.tobi.mc.main
 import com.tobi.mc.ProgramToString
 import com.tobi.mc.computable.Program
 import com.tobi.mc.computable.data.DataTypeInt
+import com.tobi.mc.intermediate.TacGenerator
+import com.tobi.mc.intermediate.TacToString
 import com.tobi.mc.parser.ParserContext
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
@@ -12,6 +14,7 @@ fun main() {
 
     CompileButton.element.addEventListener("click", { compileAndRun() })
     OptimiseButton.element.addEventListener("click", { showOptimisations() })
+    GenerateTacButton.element.addEventListener("click", { showTac() })
 }
 
 private fun compileAndRun() = handleAction {
@@ -26,8 +29,12 @@ private fun compileAndRun() = handleAction {
 }
 
 private fun showOptimisations() = handleAction {
-    OutputWindow.text =
-        ProgramToString(HtmlStyler).toString(it)
+    OutputWindow.text = ProgramToString(HtmlStyler).toString(it)
+}
+
+private fun showTac() = handleAction {
+    val tacProgram = TacGenerator(it).toTac()
+    OutputWindow.text = TacToString.toString(tacProgram)
 }
 
 private fun handleAction(action: suspend (Program) -> Unit) {
