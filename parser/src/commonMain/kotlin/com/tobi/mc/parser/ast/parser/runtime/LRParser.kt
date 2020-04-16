@@ -10,7 +10,6 @@ internal abstract class LRParser(
     val symbolFactory: SymbolFactory,
     private val symbolIdNameMapping: (Int) -> String
 ) {
-
     abstract fun production_table(): Array<ShortArray>
     abstract fun action_table(): Array<ShortArray>
     abstract fun reduce_table(): Array<ShortArray>
@@ -21,7 +20,7 @@ internal abstract class LRParser(
     private var _done_parsing = false
     private var tos = 0
     private var cur_token: Symbol? = null
-    private val stack = ArrayListStack<Symbol>()
+    val stack = ArrayListStack<Symbol>()
 
     private var production_tab: Array<ShortArray> = emptyArray()
     private var action_tab: Array<ShortArray> = emptyArray()
@@ -45,7 +44,7 @@ internal abstract class LRParser(
     }
 
     fun reportError(message: String, info: Any?) {
-        if (info is ComplexSymbol) {
+        if (info is Symbol) {
             var actualMessage = if(info.symbol == EOF_sym()) "Unexpected end of file" else message
             actualMessage += ". Valid tokens: "
             actualMessage += expectedTokenIds().joinToString(", ", transform = symbolIdNameMapping)
@@ -72,7 +71,7 @@ internal abstract class LRParser(
                 i += 2
                 continue
             }
-            if (!validateExpectedSymbol(row[i].toInt())) {
+            if (!validateExpectedComplexSymbol(row[i].toInt())) {
                 i += 2
                 continue
             }
@@ -82,7 +81,7 @@ internal abstract class LRParser(
         return ret
     }
 
-    private fun validateExpectedSymbol(id: Int): Boolean {
+    private fun validateExpectedComplexSymbol(id: Int): Boolean {
         var lhs: Short
         var rhs_size: Short
         var act: Int
@@ -96,7 +95,7 @@ internal abstract class LRParser(
                 /* advance simulated input, if we run off the end, we are done */if (!advancedLookahead()) return true
             } else { /* if this is a reduce with the start production we are done */
                 if (-act - 1 == start_production()) return true
-                /* get the lhs Symbol and the rhs size */lhs = production_tab[-act - 1][0]
+                /* get the lhs ComplexSymbol and the rhs size */lhs = production_tab[-act - 1][0]
                 rhs_size = production_tab[-act - 1][1]
                 /* pop handle off the stack */for (i in 0 until rhs_size) vstack.pop()
                 vstack.push(getReduce(vstack.top(), lhs.toInt()).toInt())
@@ -113,7 +112,7 @@ internal abstract class LRParser(
         /* linear search if we are < 10 entries */if (row.size < 20) {
             probe = 0
             while (probe < row.size) {
-                /* is this entry labeled with our Symbol or the default? */tag = row[probe++]
+                /* is this entry labeled with our ComplexSymbol or the default? */tag = row[probe++]
                 if (tag.toInt() == sym || tag.toInt() == -1) { /* return the next entry */
                     return row[probe]
                 }
@@ -140,7 +139,7 @@ internal abstract class LRParser(
         /* if we have a null row we go with the default */
         var probe = 0
         while (probe < row.size) {
-            /* is this entry labeled with our Symbol or the default? */tag = row[probe++]
+            /* is this entry labeled with our ComplexSymbol or the default? */tag = row[probe++]
             if (tag.toInt() == sym || tag.toInt() == -1) { /* return the next entry */
                 return row[probe]
             }
@@ -151,7 +150,7 @@ internal abstract class LRParser(
 
     fun parse(): Symbol { /* the current action code */
         var act: Int
-        /* the Symbol/stack element returned by a reduce */
+        /* the ComplexSymbol/stack element returned by a reduce */
         var lhs_sym: Symbol? = null
         /* information about production being reduced with */
         var handle_size: Short
@@ -162,22 +161,19 @@ internal abstract class LRParser(
         action_tab = action_table()
         reduce_tab = reduce_table()
         /* get the first token */cur_token = scan()
-        /* push dummy Symbol with start state to get us underway */stack.clear()
+        /* push dummy ComplexSymbol with start state to get us underway */stack.clear()
         stack.push(symbolFactory.startSymbol("START", 0, start_state()))
         tos = 0
         /* continue until we are told to stop */_done_parsing = false
         while (!_done_parsing) {
-            /* Check current token for freshness. */if (cur_token!!.used_by_parser) {
-                throw RuntimeException("Symbol recycling detected (fix your scanner).")
-            }
-            /* current state is always on the top of the stack */ /* look up action out of the current state with the current input */act =
-                getAction(stack.peek().parseState, cur_token!!.symbol).toInt()
-            /* decode the action -- > 0 encodes shift */if (act > 0) { /* shift to the encoded state by pushing it on the stack */
+            /* current state is always on the top of the stack */ /* look up action out of the current state with the current input */
+            act = getAction(stack.peek().parseState, cur_token!!.symbol).toInt()
+            /* decode the action -- > 0 encodes shift */
+            if (act > 0) { /* shift to the encoded state by pushing it on the stack */
                 cur_token!!.parseState = act - 1
-                cur_token!!.used_by_parser = true
                 stack.push(cur_token!!)
                 tos++
-                /* advance to the next Symbol */cur_token = scan()
+                /* advance to the next ComplexSymbol */cur_token = scan()
             } else if (act < 0) { /* perform the action for the reduce */
                 lhs_sym = do_action(-act - 1, this, stack, tos)
                 /* look up information about the production */
@@ -190,7 +186,6 @@ internal abstract class LRParser(
                 /* look up the state to go to from the one popped back to */
                 act = getReduce(stack.peek().parseState, lhs_sym_num.toInt()).toInt()
                 /* shift to that state */lhs_sym.parseState = act
-                lhs_sym.used_by_parser = true
                 stack.push(lhs_sym)
                 tos++
             } else { /* call user syntax error reporting routine */
@@ -216,7 +211,7 @@ internal abstract class LRParser(
             if (lookahead[0].symbol == EOF_sym()) {
                 return false
             }
-            /* otherwise, we consume another Symbol and try again */ // BUG FIX by Bruce Hutton
+            /* otherwise, we consume another ComplexSymbol and try again */ // BUG FIX by Bruce Hutton
 // Computer Science Department, University of Auckland,
 // Auckland, New Zealand.
 // It is the first token that is being consumed, not the one
@@ -228,17 +223,17 @@ internal abstract class LRParser(
     }
     /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
     /**
-     * Determine if we can shift under the special error Symbol out of the
+     * Determine if we can shift under the special error ComplexSymbol out of the
      * state currently on the top of the (real) parse stack.
      */
-    private fun shiftUnderError(): Boolean { /* is there a shift under error Symbol */
+    private fun shiftUnderError(): Boolean { /* is there a shift under error ComplexSymbol */
         return getAction(stack.peek().parseState, error_sym()) > 0
     }
 
     /**
      * Put the (real) parse stack into error recovery configuration by
      * popping the stack down to a state that can shift on the special
-     * error Symbol, then doing the shift.  If no suitable state exists on
+     * error ComplexSymbol, then doing the shift.  If no suitable state exists on
      * the stack we return false
      */
     private fun findRecoveryConfig(): Boolean {
@@ -247,7 +242,7 @@ internal abstract class LRParser(
         /* Remember the right-position of the top symbol on the stack */
         val right = stack.peek() // TUM 20060327 removed .right
         var left = right // TUM 20060327 removed .left
-        /* pop down until we can shift under error Symbol */while (!shiftUnderError()) { /* pop the stack */
+        /* pop down until we can shift under error ComplexSymbol */while (!shiftUnderError()) { /* pop the stack */
             left = stack.pop() // TUM 20060327 removed .left
             tos--
             /* if we have hit bottom, we fail */if (stack.isEmpty()) {
@@ -256,17 +251,16 @@ internal abstract class LRParser(
         }
         /* state on top of the stack can shift under error, find the shift */act =
             getAction(stack.peek().parseState, error_sym()).toInt()
-        /* build and shift a special error Symbol */error_token =
+        /* build and shift a special error ComplexSymbol */error_token =
             symbolFactory.newSymbol("ERROR", error_sym(), left, right)
         error_token.parseState = act - 1
-        error_token.used_by_parser = true
         stack.push(error_token)
         tos++
         return true
     }
     /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
     /**
-     * Lookahead Symbols used for attempting error recovery "parse aheads".
+     * Lookahead ComplexSymbols used for attempting error recovery "parse aheads".
      */
     private var lookahead: Array<Symbol> = emptyArray()
     /**
@@ -293,14 +287,14 @@ internal abstract class LRParser(
     }
     /*. . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
     /**
-     * Reset the parse ahead input to one Symbol past where we started error
-     * recovery (this consumes one new Symbol from the real input).
+     * Reset the parse ahead input to one ComplexSymbol past where we started error
+     * recovery (this consumes one new ComplexSymbol from the real input).
      */
     private fun restartLookahead() { /* move all the existing input over */
         if (ERROR_SYNC_SIZE - 1 >= 0) {
             ReaderHelpers.copyArray(lookahead, 1, lookahead, 0, ERROR_SYNC_SIZE - 1)
         }
-        /* read a new Symbol into the last spot */ // BUG Fix by Bruce Hutton
+        /* read a new ComplexSymbol into the last spot */ // BUG Fix by Bruce Hutton
 // Computer Science Department, University of Auckland,
 // Auckland, New Zealand. [applied 5-sep-1999 by csa]
 // The following two lines were out of order!!
@@ -333,7 +327,7 @@ internal abstract class LRParser(
                 if (-act - 1 == start_production()) {
                     return true
                 }
-                /* get the lhs Symbol and the rhs size */lhs = production_tab[-act - 1][0]
+                /* get the lhs ComplexSymbol and the rhs size */lhs = production_tab[-act - 1][0]
                 rhs_size = production_tab[-act - 1][1]
                 /* pop handle off the stack */for (i in 0 until rhs_size) {
                     vstack.pop()
@@ -345,7 +339,7 @@ internal abstract class LRParser(
 
     private fun parseLookahead() { /* the current action code */
         var act: Int
-        /* the Symbol/stack element returned by a reduce */
+        /* the ComplexSymbol/stack element returned by a reduce */
         var lhs_sym: Symbol? = null
         /* information about production being reduced with */
         var handle_size: Short
@@ -355,10 +349,9 @@ internal abstract class LRParser(
             act = getAction(stack.peek().parseState, cur_err_token()!!.symbol).toInt()
             /* decode the action -- > 0 encodes shift */if (act > 0) { /* shift to the encoded state by pushing it on the stack */
                 cur_err_token()!!.parseState = act - 1
-                cur_err_token()!!.used_by_parser = true
                 stack.push(cur_err_token()!!)
                 tos++
-                /* advance to the next Symbol, if there is none, we are done */if (!advancedLookahead()) { /* scan next Symbol so we can continue parse */ // BUGFIX by Chris Harris <ckharris@ucsd.edu>:
+                /* advance to the next ComplexSymbol, if there is none, we are done */if (!advancedLookahead()) { /* scan next ComplexSymbol so we can continue parse */ // BUGFIX by Chris Harris <ckharris@ucsd.edu>:
 //   correct a one-off error by commenting out
 //   this next line.
 /*cur_token = scan();*/ /* go back to normal parser */
@@ -375,7 +368,6 @@ internal abstract class LRParser(
                 /* look up the state to go to from the one popped back to */act =
                     getReduce(stack.peek().parseState, lhs_sym_num.toInt()).toInt()
                 /* shift to that state */lhs_sym.parseState = act
-                lhs_sym.used_by_parser = true
                 stack.push(lhs_sym)
                 tos++
             } else {
@@ -389,24 +381,7 @@ internal abstract class LRParser(
         _done_parsing = true
     }
 
-    companion object {
-        private const val ERROR_SYNC_SIZE = 3
-
-        fun unpackFromString(str: String): Array<ShortArray> {
-            var n = 0 // location in initialization string
-            val size1 = str[n].toInt() shl 16 or str[n + 1].toInt()
-            n += 2
-            val result = Array(size1) {
-                val size2 = str[n].toInt() shl 16 or str[n + 1].toInt()
-                n += 2
-                ShortArray(size2) {
-                    (str[n++] - 2).toShort()
-                }
-            }
-            println("""
-                arrayOf(${result.joinToString(", ") { arr -> "shortArrayOf(${arr.joinToString(", ")})" }})
-            """.trimIndent())
-            return result
-        }
+    private companion object {
+        const val ERROR_SYNC_SIZE = 3
     }
 }

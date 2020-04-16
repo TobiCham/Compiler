@@ -8,6 +8,10 @@ internal class SimpleStringReader(private val input: String) : SimpleReader {
     private val length = input.length
     private var next = 0
 
+    override fun read(): Int {
+        return if (next >= length) -1 else input[next++].toInt()
+    }
+
     override fun read(buffer: CharArray, offset: Int, maxLength: Int): Int {
         if(closed) {
             throw ReaderException("Reader closed")

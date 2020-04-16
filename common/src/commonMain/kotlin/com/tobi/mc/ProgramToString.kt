@@ -132,6 +132,16 @@ class ProgramToString(val styler: ProgramToStringStyler = Stylers.NONE) {
             builder.outdent()
             builder.print(styler.style(StyleType.CURLY_BRACKET, "}"))
         }
+        is UnaryMinus -> {
+            builder.print(styler.style(StyleType.MATH, "-"))
+            if(expression !is DataTypeInt) {
+                builder.print(styler.style(StyleType.BRACKET, "("))
+                expression.toString(builder)
+                builder.print(styler.style(StyleType.BRACKET, ")"))
+            } else {
+                expression.toString(builder)
+            }
+        }
         is Negation -> {
             builder.print(styler.style(StyleType.NEGATION, "!"))
             if(negation !is DataTypeInt) {

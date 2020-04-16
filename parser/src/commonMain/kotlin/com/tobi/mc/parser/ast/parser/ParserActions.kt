@@ -1,2015 +1,292 @@
 package com.tobi.mc.parser.ast.parser
 
-import com.tobi.mc.parser.ast.parser.runtime.ComplexSymbol
+import com.tobi.mc.computable.*
+import com.tobi.mc.computable.data.DataType
+import com.tobi.mc.computable.data.DataTypeInt
+import com.tobi.mc.computable.data.DataTypeString
+import com.tobi.mc.parser.ParseException
 import com.tobi.mc.parser.ast.parser.runtime.LRParser
 import com.tobi.mc.parser.ast.parser.runtime.Symbol
 import com.tobi.mc.util.Stack
 
-/**
- * Cup generated class to encapsulate user supplied action code.
- */
-internal class ParserActions {
+internal class ParserActions(private val parser: Parser) {
 
-    /**
-     * Method 0 with the actual generated action code for actions 0 to 300.
-     */
-    fun doAction(
-        act_num: Int,
-        parser: LRParser,
-        stack: Stack<ComplexSymbol>,
-        top: Int
-    ): Symbol { /* Symbol object for return from actions */
-        var parserResult: Symbol
-        return when (act_num) {
-            0 -> {
-                run {
-                    val RESULT = (stack.get(top - 1)).value as ParserNode?
-                    parserResult = parser.symbolFactory.newSymbol(
-                        "\$START",
-                        0,
-                        stack.get(top - 1),
-                        stack.peek(),
-                        RESULT
-                    )
-                }
-                /* ACCEPT */parser.done_parsing()
-                parserResult
-            }
-            1 -> {
-                run {
-                    val unitleft = (stack.peek()).left
-                    val unitright = (stack.peek()).right
-                    val RESULT = (stack.peek()).value as ParserNode?
-                    parserResult = parser.symbolFactory.newSymbol(
-                        "goal",
-                        0,
-                        stack.peek(),
-                        stack.peek(),
-                        RESULT
-                    )
-                }
-                parserResult
-            }
-            2 -> {
-                run {
-                    var RESULT: ParserNode? = null
-                    val valueleft = (stack.peek()).left
-                    val valueright = (stack.peek()).right
-                    RESULT = ParserNode(ParserNodeType.IDENTIFIER, null, null, (stack.peek()).value)
-                    parserResult = parser.symbolFactory.newSymbol(
-                        "primary_expression",
-                        1,
-                        stack.peek(),
-                        stack.peek(),
-                        RESULT
-                    )
-                }
-                parserResult
-            }
-            3 -> {
-                run {
-                    var RESULT: ParserNode? = null
-                    val valueleft = (stack.peek()).left
-                    val valueright = (stack.peek()).right
-                    RESULT = ParserNode(ParserNodeType.CONSTANT, null, null, (stack.peek()).value)
-                    parserResult = parser.symbolFactory.newSymbol(
-                        "primary_expression",
-                        1,
-                        stack.peek(),
-                        stack.peek(),
-                        RESULT
-                    )
-                }
-                parserResult
-            }
-            4 -> {
-                run {
-                    var RESULT: ParserNode? = null
-                    val valueleft = (stack.peek()).left
-                    val valueright = (stack.peek()).right
-                    RESULT = ParserNode(ParserNodeType.STRING, null, null, (stack.peek()).value)
-                    parserResult = parser.symbolFactory.newSymbol(
-                        "primary_expression",
-                        1,
-                        stack.peek(),
-                        stack.peek(),
-                        RESULT
-                    )
-                }
-                parserResult
-            }
-            5 -> {
-                run {
-                    var RESULT: ParserNode? = null
-                    val expleft =
-                        (stack.get(top - 1)).left
-                    val expright =
-                        (stack.get(top - 1)).right
-                    val exp =
-                        (stack.get(top - 1)).value as ParserNode?
-                    RESULT = exp
-                    parserResult = parser.symbolFactory.newSymbol(
-                        "primary_expression",
-                        1,
-                        stack.get(top - 2),
-                        stack.peek(),
-                        RESULT
-                    )
-                }
-                parserResult
-            }
-            6 -> {
-                run {
-                    var RESULT: ParserNode? = null
-                    val expleft = (stack.peek()).left
-                    val expright = (stack.peek()).right
-                    val exp = (stack.peek()).value as ParserNode?
-                    RESULT = exp
-                    parserResult = parser.symbolFactory.newSymbol(
-                        "postfix_expression",
-                        2,
-                        stack.peek(),
-                        stack.peek(),
-                        RESULT
-                    )
-                }
-                parserResult
-            }
-            7 -> {
-                run {
-                    val expleft =
-                        (stack.get(top - 2)).left
-                    val expright =
-                        (stack.get(top - 2)).right
-                    val exp =
-                        (stack.get(top - 2)).value as ParserNode?
-                    val RESULT = ParserNode(ParserNodeType.APPLY, exp, null)
-                    parserResult = parser.symbolFactory.newSymbol(
-                        "postfix_expression",
-                        2,
-                        stack.get(top - 2),
-                        stack.peek(),
-                        RESULT
-                    )
-                }
-                parserResult
-            }
-            8 -> {
-                run {
-                    val expleft =
-                        (stack.get(top - 3)).left
-                    val expright =
-                        (stack.get(top - 3)).right
-                    val exp =
-                        (stack.get(top - 3)).value as ParserNode?
-                    val argsleft =
-                        (stack.get(top - 1)).left
-                    val argsright =
-                        (stack.get(top - 1)).right
-                    val args =
-                        (stack.get(top - 1)).value as ParserNode?
-                    val RESULT = ParserNode(ParserNodeType.APPLY, exp, args)
-                    parserResult = parser.symbolFactory.newSymbol(
-                        "postfix_expression",
-                        2,
-                        stack.get(top - 3),
-                        stack.peek(),
-                        RESULT
-                    )
-                }
-                parserResult
-            }
-            9 -> {
-                run {
-                    var RESULT: ParserNode? = null
-                    val expleft = (stack.peek()).left
-                    val expright = (stack.peek()).right
-                    val exp = (stack.peek()).value as ParserNode?
-                    RESULT = exp
-                    parserResult = parser.symbolFactory.newSymbol(
-                        "argument_expression_list",
-                        3,
-                        stack.peek(),
-                        stack.peek(),
-                        RESULT
-                    )
-                }
-                parserResult
-            }
-            10 -> {
-                run {
-                    var RESULT: ParserNode? = null
-                    val e1left =
-                        (stack.get(top - 2)).left
-                    val e1right =
-                        (stack.get(top - 2)).right
-                    val e1 =
-                        (stack.get(top - 2)).value as ParserNode?
-                    val e2left = (stack.peek()).left
-                    val e2right = (stack.peek()).right
-                    val e2 = (stack.peek()).value as ParserNode?
-                    RESULT = ParserNode(ParserNodeType.PARAMS_SEPARATOR, e1, e2)
-                    parserResult = parser.symbolFactory.newSymbol(
-                        "argument_expression_list",
-                        3,
-                        stack.get(top - 2),
-                        stack.peek(),
-                        RESULT
-                    )
-                }
-                parserResult
-            }
-            11 -> {
-                run {
-                    var RESULT: ParserNode? = null
-                    val expleft = (stack.peek()).left
-                    val expright = (stack.peek()).right
-                    val exp = (stack.peek()).value as ParserNode?
-                    RESULT = exp
-                    parserResult = parser.symbolFactory.newSymbol(
-                        "unary_expression",
-                        4,
-                        stack.peek(),
-                        stack.peek(),
-                        RESULT
-                    )
-                }
-                parserResult
-            }
-            12 -> {
-                run {
-                    var RESULT: ParserNode? = null
-                    val opleft =
-                        (stack.get(top - 1)).left
-                    val opright =
-                        (stack.get(top - 1)).right
-                    val op =
-                        (stack.get(top - 1)).value as ParserNode?
-                    val expleft = (stack.peek()).left
-                    val expright = (stack.peek()).right
-                    val exp = (stack.peek()).value as ParserNode?
-                    RESULT = ParserNode(ParserNodeType.INT, op, exp)
-                    parserResult = parser.symbolFactory.newSymbol(
-                        "unary_expression",
-                        4,
-                        stack.get(top - 1),
-                        stack.peek(),
-                        RESULT
-                    )
-                }
-                parserResult
-            }
-            13 -> {
-                run {
-                    var RESULT: ParserNode? = null
-                    val opleft = (stack.peek()).left
-                    val opright = (stack.peek()).right
-                    val op = (stack.peek()).value
-                    RESULT = ParserNode(ParserNodeType.MULTIPLY)
-                    parserResult = parser.symbolFactory.newSymbol(
-                        "unary_operator",
-                        5,
-                        stack.peek(),
-                        stack.peek(),
-                        RESULT
-                    )
-                }
-                parserResult
-            }
-            14 -> {
-                run {
-                    var RESULT: ParserNode? = null
-                    val opleft = (stack.peek()).left
-                    val opright = (stack.peek()).right
-                    val op = (stack.peek()).value
-                    RESULT = ParserNode(ParserNodeType.ADD)
-                    parserResult = parser.symbolFactory.newSymbol(
-                        "unary_operator",
-                        5,
-                        stack.peek(),
-                        stack.peek(),
-                        RESULT
-                    )
-                }
-                parserResult
-            }
-            15 -> {
-                run {
-                    var RESULT: ParserNode? = null
-                    val opleft = (stack.peek()).left
-                    val opright = (stack.peek()).right
-                    val op = (stack.peek()).value
-                    RESULT = ParserNode(ParserNodeType.SUBTRACT)
-                    parserResult = parser.symbolFactory.newSymbol(
-                        "unary_operator",
-                        5,
-                        stack.peek(),
-                        stack.peek(),
-                        RESULT
-                    )
-                }
-                parserResult
-            }
-            16 -> {
-                run {
-                    var RESULT: ParserNode? = null
-                    val opleft = (stack.peek()).left
-                    val opright = (stack.peek()).right
-                    val op = (stack.peek()).value
-                    RESULT = ParserNode(ParserNodeType.NOT)
-                    parserResult = parser.symbolFactory.newSymbol(
-                        "unary_operator",
-                        5,
-                        stack.peek(),
-                        stack.peek(),
-                        RESULT
-                    )
-                }
-                parserResult
-            }
-            17 -> {
-                run {
-                    var RESULT: ParserNode? = null
-                    val expressionleft = (stack.peek()).left
-                    val expressionright = (stack.peek()).right
-                    val expression =
-                        (stack.peek()).value as ParserNode?
-                    RESULT = expression
-                    parserResult = parser.symbolFactory.newSymbol(
-                        "multiplicative_expression",
-                        6,
-                        stack.peek(),
-                        stack.peek(),
-                        RESULT
-                    )
-                }
-                parserResult
-            }
-            18 -> {
-                run {
-                    var RESULT: ParserNode? = null
-                    val e1left =
-                        (stack.get(top - 2)).left
-                    val e1right =
-                        (stack.get(top - 2)).right
-                    val e1 =
-                        (stack.get(top - 2)).value as ParserNode?
-                    val e2left = (stack.peek()).left
-                    val e2right = (stack.peek()).right
-                    val e2 = (stack.peek()).value as ParserNode?
-                    RESULT = ParserNode(ParserNodeType.MULTIPLY, e1, e2)
-                    parserResult = parser.symbolFactory.newSymbol(
-                        "multiplicative_expression",
-                        6,
-                        stack.get(top - 2),
-                        stack.peek(),
-                        RESULT
-                    )
-                }
-                parserResult
-            }
-            19 -> {
-                run {
-                    var RESULT: ParserNode? = null
-                    val e1left =
-                        (stack.get(top - 2)).left
-                    val e1right =
-                        (stack.get(top - 2)).right
-                    val e1 =
-                        (stack.get(top - 2)).value as ParserNode?
-                    val e2left = (stack.peek()).left
-                    val e2right = (stack.peek()).right
-                    val e2 = (stack.peek()).value as ParserNode?
-                    RESULT = ParserNode(ParserNodeType.DIVIDE, e1, e2)
-                    parserResult = parser.symbolFactory.newSymbol(
-                        "multiplicative_expression",
-                        6,
-                        stack.get(top - 2),
-                        stack.peek(),
-                        RESULT
-                    )
-                }
-                parserResult
-            }
-            20 -> {
-                run {
-                    var RESULT: ParserNode? = null
-                    val e1left =
-                        (stack.get(top - 2)).left
-                    val e1right =
-                        (stack.get(top - 2)).right
-                    val e1 =
-                        (stack.get(top - 2)).value as ParserNode?
-                    val e2left = (stack.peek()).left
-                    val e2right = (stack.peek()).right
-                    val e2 = (stack.peek()).value as ParserNode?
-                    RESULT = ParserNode(ParserNodeType.MOD, e1, e2)
-                    parserResult = parser.symbolFactory.newSymbol(
-                        "multiplicative_expression",
-                        6,
-                        stack.get(top - 2),
-                        stack.peek(),
-                        RESULT
-                    )
-                }
-                parserResult
-            }
-            21 -> {
-                run {
-                    var RESULT: ParserNode? = null
-                    val expressionleft = (stack.peek()).left
-                    val expressionright = (stack.peek()).right
-                    val expression =
-                        (stack.peek()).value as ParserNode?
-                    RESULT = expression
-                    parserResult = parser.symbolFactory.newSymbol(
-                        "additive_expression",
-                        7,
-                        stack.peek(),
-                        stack.peek(),
-                        RESULT
-                    )
-                }
-                parserResult
-            }
-            22 -> {
-                run {
-                    var RESULT: ParserNode? = null
-                    val e1left =
-                        (stack.get(top - 2)).left
-                    val e1right =
-                        (stack.get(top - 2)).right
-                    val e1 =
-                        (stack.get(top - 2)).value as ParserNode?
-                    val e2left = (stack.peek()).left
-                    val e2right = (stack.peek()).right
-                    val e2 = (stack.peek()).value as ParserNode?
-                    RESULT = ParserNode(ParserNodeType.ADD, e1, e2)
-                    parserResult = parser.symbolFactory.newSymbol(
-                        "additive_expression",
-                        7,
-                        stack.get(top - 2),
-                        stack.peek(),
-                        RESULT
-                    )
-                }
-                parserResult
-            }
-            23 -> {
-                run {
-                    var RESULT: ParserNode? = null
-                    val e1left =
-                        (stack.get(top - 2)).left
-                    val e1right =
-                        (stack.get(top - 2)).right
-                    val e1 =
-                        (stack.get(top - 2)).value as ParserNode?
-                    val e2left = (stack.peek()).left
-                    val e2right = (stack.peek()).right
-                    val e2 = (stack.peek()).value as ParserNode?
-                    RESULT = ParserNode(ParserNodeType.SUBTRACT, e1, e2)
-                    parserResult = parser.symbolFactory.newSymbol(
-                        "additive_expression",
-                        7,
-                        stack.get(top - 2),
-                        stack.peek(),
-                        RESULT
-                    )
-                }
-                parserResult
-            }
-            24 -> {
-                run {
-                    var RESULT: ParserNode? = null
-                    val expleft = (stack.peek()).left
-                    val expright = (stack.peek()).right
-                    val exp = (stack.peek()).value as ParserNode?
-                    RESULT = exp
-                    parserResult = parser.symbolFactory.newSymbol(
-                        "relational_expression",
-                        8,
-                        stack.peek(),
-                        stack.peek(),
-                        RESULT
-                    )
-                }
-                parserResult
-            }
-            25 -> {
-                run {
-                    var RESULT: ParserNode? = null
-                    val e1left =
-                        (stack.get(top - 2)).left
-                    val e1right =
-                        (stack.get(top - 2)).right
-                    val e1 =
-                        (stack.get(top - 2)).value as ParserNode?
-                    val e2left = (stack.peek()).left
-                    val e2right = (stack.peek()).right
-                    val e2 = (stack.peek()).value as ParserNode?
-                    RESULT = ParserNode(ParserNodeType.LESS_THAN, e1, e2)
-                    parserResult = parser.symbolFactory.newSymbol(
-                        "relational_expression",
-                        8,
-                        stack.get(top - 2),
-                        stack.peek(),
-                        RESULT
-                    )
-                }
-                parserResult
-            }
-            26 -> {
-                run {
-                    var RESULT: ParserNode? = null
-                    val e1left =
-                        (stack.get(top - 2)).left
-                    val e1right =
-                        (stack.get(top - 2)).right
-                    val e1 =
-                        (stack.get(top - 2)).value as ParserNode?
-                    val e2left = (stack.peek()).left
-                    val e2right = (stack.peek()).right
-                    val e2 = (stack.peek()).value as ParserNode?
-                    RESULT = ParserNode(ParserNodeType.MORE_THAN, e1, e2)
-                    parserResult = parser.symbolFactory.newSymbol(
-                        "relational_expression",
-                        8,
-                        stack.get(top - 2),
-                        stack.peek(),
-                        RESULT
-                    )
-                }
-                parserResult
-            }
-            27 -> {
-                run {
-                    var RESULT: ParserNode? = null
-                    val e1left =
-                        (stack.get(top - 2)).left
-                    val e1right =
-                        (stack.get(top - 2)).right
-                    val e1 =
-                        (stack.get(top - 2)).value as ParserNode?
-                    val e2left = (stack.peek()).left
-                    val e2right = (stack.peek()).right
-                    val e2 = (stack.peek()).value as ParserNode?
-                    RESULT = ParserNode(ParserNodeType.LESS_EQ_TO, e1, e2)
-                    parserResult = parser.symbolFactory.newSymbol(
-                        "relational_expression",
-                        8,
-                        stack.get(top - 2),
-                        stack.peek(),
-                        RESULT
-                    )
-                }
-                parserResult
-            }
-            28 -> {
-                run {
-                    var RESULT: ParserNode? = null
-                    val e1left =
-                        (stack.get(top - 2)).left
-                    val e1right =
-                        (stack.get(top - 2)).right
-                    val e1 =
-                        (stack.get(top - 2)).value as ParserNode?
-                    val e2left = (stack.peek()).left
-                    val e2right = (stack.peek()).right
-                    val e2 = (stack.peek()).value as ParserNode?
-                    RESULT = ParserNode(ParserNodeType.MORE_EQ_TO, e1, e2)
-                    parserResult = parser.symbolFactory.newSymbol(
-                        "relational_expression",
-                        8,
-                        stack.get(top - 2),
-                        stack.peek(),
-                        RESULT
-                    )
-                }
-                parserResult
-            }
-            29 -> {
-                run {
-                    var RESULT: ParserNode? = null
-                    val expleft = (stack.peek()).left
-                    val expright = (stack.peek()).right
-                    val exp = (stack.peek()).value as ParserNode?
-                    RESULT = exp
-                    parserResult = parser.symbolFactory.newSymbol(
-                        "equality_expression",
-                        9,
-                        stack.peek(),
-                        stack.peek(),
-                        RESULT
-                    )
-                }
-                parserResult
-            }
-            30 -> {
-                run {
-                    val e1left =
-                        (stack.get(top - 2)).left
-                    val e1right =
-                        (stack.get(top - 2)).right
-                    val e1 =
-                        (stack.get(top - 2)).value as ParserNode?
-                    val e2left = (stack.peek()).left
-                    val e2right = (stack.peek()).right
-                    val e2 = (stack.peek()).value as ParserNode?
-                    val RESULT = ParserNode(ParserNodeType.EQUALS, e1, e2)
-                    parserResult = parser.symbolFactory.newSymbol(
-                        "equality_expression",
-                        9,
-                        stack.get(top - 2),
-                        stack.peek(),
-                        RESULT
-                    )
-                }
-                parserResult
-            }
-            31 -> {
-                run {
-                    val e1left =
-                        (stack.get(top - 2)).left
-                    val e1right =
-                        (stack.get(top - 2)).right
-                    val e1 =
-                        (stack.get(top - 2)).value as ParserNode?
-                    val e2left = (stack.peek()).left
-                    val e2right = (stack.peek()).right
-                    val e2 = (stack.peek()).value as ParserNode?
-                    val RESULT = ParserNode(ParserNodeType.NOT_EQUALS, e1, e2)
-                    parserResult = parser.symbolFactory.newSymbol(
-                        "equality_expression",
-                        9,
-                        stack.get(top - 2),
-                        stack.peek(),
-                        RESULT
-                    )
-                }
-                parserResult
-            }
-            32 -> {
-                run {
-                    var RESULT: ParserNode? = null
-                    val expleft = (stack.peek()).left
-                    val expright = (stack.peek()).right
-                    val exp = (stack.peek()).value as ParserNode?
-                    RESULT = exp
-                    parserResult = parser.symbolFactory.newSymbol(
-                        "assignment_expression",
-                        10,
-                        stack.peek(),
-                        stack.peek(),
-                        RESULT
-                    )
-                }
-                parserResult
-            }
-            33 -> {
-                run {
-                    val e1left =
-                        (stack.get(top - 2)).left
-                    val e1right =
-                        (stack.get(top - 2)).right
-                    val e1 =
-                        (stack.get(top - 2)).value as ParserNode?
-                    val e2left = (stack.peek()).left
-                    val e2right = (stack.peek()).right
-                    val e2 = (stack.peek()).value as ParserNode?
-                    val RESULT = ParserNode(ParserNodeType.ASSIGNMENT, e1, e2)
-                    parserResult = parser.symbolFactory.newSymbol(
-                        "assignment_expression",
-                        10,
-                        stack.get(top - 2),
-                        stack.peek(),
-                        RESULT
-                    )
-                }
-                parserResult
-            }
-            34 -> {
-                run {
-                    var RESULT: ParserNode? = null
-                    val expleft = (stack.peek()).left
-                    val expright = (stack.peek()).right
-                    val exp = (stack.peek()).value as ParserNode?
-                    RESULT = exp
-                    parserResult = parser.symbolFactory.newSymbol(
-                        "expression",
-                        11,
-                        stack.peek(),
-                        stack.peek(),
-                        RESULT
-                    )
-                }
-                parserResult
-            }
-            35 -> {
-                run {
-                    val e1left =
-                        (stack.get(top - 2)).left
-                    val e1right =
-                        (stack.get(top - 2)).right
-                    val e1 =
-                        (stack.get(top - 2)).value as ParserNode?
-                    val e2left = (stack.peek()).left
-                    val e2right = (stack.peek()).right
-                    val e2 = (stack.peek()).value as ParserNode?
-                    val RESULT = ParserNode(ParserNodeType.PARAMS_SEPARATOR, e1, e2)
-                    parserResult = parser.symbolFactory.newSymbol(
-                        "expression",
-                        11,
-                        stack.get(top - 2),
-                        stack.peek(),
-                        RESULT
-                    )
-                }
-                parserResult
-            }
-            36 -> {
-                run {
-                    var RESULT: ParserNode? = null
-                    val decleft =
-                        (stack.get(top - 1)).left
-                    val decright =
-                        (stack.get(top - 1)).right
-                    val dec =
-                        (stack.get(top - 1)).value as ParserNode?
-                    RESULT = dec
-                    parserResult = parser.symbolFactory.newSymbol(
-                        "declaration",
-                        12,
-                        stack.get(top - 1),
-                        stack.peek(),
-                        RESULT
-                    )
-                }
-                parserResult
-            }
-            37 -> {
-                run {
-                    var RESULT: ParserNode? = null
-                    val defleft = (stack.peek()).left
-                    val defright = (stack.peek()).right
-                    val def = (stack.peek()).value as ParserNode?
-                    RESULT = def
-                    parserResult = parser.symbolFactory.newSymbol(
-                        "declaration",
-                        12,
-                        stack.peek(),
-                        stack.peek(),
-                        RESULT
-                    )
-                }
-                parserResult
-            }
-            38 -> {
-                run {
-                    var RESULT: ParserNode? = null
-                    val decleft =
-                        (stack.get(top - 2)).left
-                    val decright =
-                        (stack.get(top - 2)).right
-                    val dec =
-                        (stack.get(top - 2)).value as ParserNode?
-                    val listleft =
-                        (stack.get(top - 1)).left
-                    val listright =
-                        (stack.get(top - 1)).right
-                    val list =
-                        (stack.get(top - 1)).value as ParserNode?
-                    RESULT = ParserNode(ParserNodeType.TILDE, dec, list)
-                    parserResult = parser.symbolFactory.newSymbol(
-                        "declaration",
-                        12,
-                        stack.get(top - 2),
-                        stack.peek(),
-                        RESULT
-                    )
-                }
-                parserResult
-            }
-            39 -> {
-                run {
-                    var RESULT: ParserNode? = null
-                    val specleft = (stack.peek()).left
-                    val specright = (stack.peek()).right
-                    val spec = (stack.peek()).value as ParserNode?
-                    RESULT = spec
-                    parserResult = parser.symbolFactory.newSymbol(
-                        "declaration_specifiers",
-                        13,
-                        stack.peek(),
-                        stack.peek(),
-                        RESULT
-                    )
-                }
-                parserResult
-            }
-            40 -> {
-                run {
-                    var RESULT: ParserNode? = null
-                    val spec1left =
-                        (stack.get(top - 1)).left
-                    val spec1right =
-                        (stack.get(top - 1)).right
-                    val spec1 =
-                        (stack.get(top - 1)).value as ParserNode?
-                    val spec2left = (stack.peek()).left
-                    val spec2right = (stack.peek()).right
-                    val spec2 = (stack.peek()).value as ParserNode?
-                    RESULT = ParserNode(ParserNodeType.TILDE, spec1, spec2)
-                    parserResult = parser.symbolFactory.newSymbol(
-                        "declaration_specifiers",
-                        13,
-                        stack.get(top - 1),
-                        stack.peek(),
-                        RESULT
-                    )
-                }
-                parserResult
-            }
-            41 -> {
-                run {
-                    var RESULT: ParserNode? = null
-                    val specleft = (stack.peek()).left
-                    val specright = (stack.peek()).right
-                    val spec = (stack.peek()).value as ParserNode?
-                    RESULT = spec
-                    parserResult = parser.symbolFactory.newSymbol(
-                        "declaration_specifiers",
-                        13,
-                        stack.peek(),
-                        stack.peek(),
-                        RESULT
-                    )
-                }
-                parserResult
-            }
-            42 -> {
-                run {
-                    val spec1 =
-                        (stack.get(top - 1)).value as ParserNode?
-                    val spec2 = (stack.peek()).value as ParserNode?
-                    val RESULT = ParserNode(ParserNodeType.TILDE, spec1, spec2)
-                    parserResult = parser.symbolFactory.newSymbol(
-                        "declaration_specifiers",
-                        13,
-                        stack.get(top - 1),
-                        stack.peek(),
-                        RESULT
-                    )
-                }
-                parserResult
-            }
-            43 -> {
-                run {
-                    var RESULT: ParserNode? = null
-                    val decleft = (stack.peek()).left
-                    val decright = (stack.peek()).right
-                    val dec = (stack.peek()).value as ParserNode?
-                    RESULT = dec
-                    parserResult = parser.symbolFactory.newSymbol(
-                        "init_declarator_list",
-                        14,
-                        stack.peek(),
-                        stack.peek(),
-                        RESULT
-                    )
-                }
-                parserResult
-            }
-            44 -> {
-                run {
-                    var RESULT: ParserNode? = null
-                    val listleft =
-                        (stack.get(top - 2)).left
-                    val listright =
-                        (stack.get(top - 2)).right
-                    val list =
-                        (stack.get(top - 2)).value as ParserNode?
-                    val decleft = (stack.peek()).left
-                    val decright = (stack.peek()).right
-                    val dec = (stack.peek()).value as ParserNode?
-                    RESULT = ParserNode(ParserNodeType.PARAMS_SEPARATOR, list, dec)
-                    parserResult = parser.symbolFactory.newSymbol(
-                        "init_declarator_list",
-                        14,
-                        stack.get(top - 2),
-                        stack.peek(),
-                        RESULT
-                    )
-                }
-                parserResult
-            }
-            45 -> {
-                run {
-                    var RESULT: ParserNode? = null
-                    val decleft = (stack.peek()).left
-                    val decright = (stack.peek()).right
-                    val dec = (stack.peek()).value as ParserNode?
-                    RESULT = dec
-                    parserResult = parser.symbolFactory.newSymbol(
-                        "init_declarator",
-                        15,
-                        stack.peek(),
-                        stack.peek(),
-                        RESULT
-                    )
-                }
-                parserResult
-            }
-            46 -> {
-                run {
-                    var RESULT: ParserNode? = null
-                    val decleft =
-                        (stack.get(top - 2)).left
-                    val decright =
-                        (stack.get(top - 2)).right
-                    val dec =
-                        (stack.get(top - 2)).value as ParserNode?
-                    val expleft = (stack.peek()).left
-                    val expright = (stack.peek()).right
-                    val exp = (stack.peek()).value as ParserNode?
-                    RESULT = ParserNode(ParserNodeType.ASSIGNMENT, dec, exp)
-                    parserResult = parser.symbolFactory.newSymbol(
-                        "init_declarator",
-                        15,
-                        stack.get(top - 2),
-                        stack.peek(),
-                        RESULT
-                    )
-                }
-                parserResult
-            }
-            47 -> {
-                run {
-                    var RESULT: ParserNode? = null
-                    RESULT = ParserNode(ParserNodeType.EXTERN)
-                    parserResult = parser.symbolFactory.newSymbol(
-                        "storage_class_specifier",
-                        16,
-                        stack.peek(),
-                        stack.peek(),
-                        RESULT
-                    )
-                }
-                parserResult
-            }
-            48 -> {
-                run {
-                    var RESULT: ParserNode? = null
-                    RESULT = ParserNode(ParserNodeType.AUTO)
-                    parserResult = parser.symbolFactory.newSymbol(
-                        "storage_class_specifier",
-                        16,
-                        stack.peek(),
-                        stack.peek(),
-                        RESULT
-                    )
-                }
-                parserResult
-            }
-            49 -> {
-                run {
-                    var RESULT: ParserNode? = null
-                    RESULT = ParserNode(ParserNodeType.VOID)
-                    parserResult = parser.symbolFactory.newSymbol(
-                        "type_specifier",
-                        17,
-                        stack.peek(),
-                        stack.peek(),
-                        RESULT
-                    )
-                }
-                parserResult
-            }
-            50 -> {
-                run {
-                    var RESULT: ParserNode? = null
-                    RESULT = ParserNode(ParserNodeType.INT)
-                    parserResult = parser.symbolFactory.newSymbol(
-                        "type_specifier",
-                        17,
-                        stack.peek(),
-                        stack.peek(),
-                        RESULT
-                    )
-                }
-                parserResult
-            }
-            51 -> {
-                run {
-                    var RESULT: ParserNode? = null
-                    RESULT = ParserNode(ParserNodeType.FUNCTION)
-                    parserResult = parser.symbolFactory.newSymbol(
-                        "type_specifier",
-                        17,
-                        stack.peek(),
-                        stack.peek(),
-                        RESULT
-                    )
-                }
-                parserResult
-            }
-            52 -> {
-                run {
-                    var RESULT: ParserNode? = null
-                    val decleft = (stack.peek()).left
-                    val decright = (stack.peek()).right
-                    val dec = (stack.peek()).value as ParserNode?
-                    RESULT = dec
-                    parserResult = parser.symbolFactory.newSymbol(
-                        "declarator",
-                        18,
-                        stack.peek(),
-                        stack.peek(),
-                        RESULT
-                    )
-                }
-                parserResult
-            }
-            53 -> {
-                run {
-                    var RESULT: ParserNode? = null
-                    val valueleft = (stack.peek()).left
-                    val valueright = (stack.peek()).right
-                    RESULT = ParserNode(ParserNodeType.IDENTIFIER, null, null, (stack.peek()).value)
-                    parserResult = parser.symbolFactory.newSymbol(
-                        "direct_declarator",
-                        19,
-                        stack.peek(),
-                        stack.peek(),
-                        RESULT
-                    )
-                }
-                parserResult
-            }
-            54 -> {
-                run {
-                    var RESULT: ParserNode? = null
-                    val decleft =
-                        (stack.get(top - 1)).left
-                    val decright =
-                        (stack.get(top - 1)).right
-                    val dec =
-                        (stack.get(top - 1)).value as ParserNode?
-                    RESULT = dec
-                    parserResult = parser.symbolFactory.newSymbol(
-                        "direct_declarator",
-                        19,
-                        stack.get(top - 2),
-                        stack.peek(),
-                        RESULT
-                    )
-                }
-                parserResult
-            }
-            55 -> {
-                run {
-                    val decleft =
-                        (stack.get(top - 3)).left
-                    val decright =
-                        (stack.get(top - 3)).right
-                    val dec =
-                        (stack.get(top - 3)).value as ParserNode?
-                    val paramsleft =
-                        (stack.get(top - 1)).left
-                    val paramsright =
-                        (stack.get(top - 1)).right
-                    val params =
-                        (stack.get(top - 1)).value as ParserNode?
-                    val RESULT = ParserNode(ParserNodeType.FUNCTION_PARAMS, dec, params)
-                    parserResult = parser.symbolFactory.newSymbol(
-                        "direct_declarator",
-                        19,
-                        stack.get(top - 3),
-                        stack.peek(),
-                        RESULT
-                    )
-                }
-                parserResult
-            }
-            56 -> {
-                run {
-                    val decleft =
-                        (stack.get(top - 3)).left
-                    val decright =
-                        (stack.get(top - 3)).right
-                    val dec =
-                        (stack.get(top - 3)).value as ParserNode?
-                    val paramsleft =
-                        (stack.get(top - 1)).left
-                    val paramsright =
-                        (stack.get(top - 1)).right
-                    val params =
-                        (stack.get(top - 1)).value as ParserNode?
-                    val RESULT = ParserNode(ParserNodeType.FUNCTION_PARAMS, dec, params)
-                    parserResult = parser.symbolFactory.newSymbol(
-                        "direct_declarator",
-                        19,
-                        stack.get(top - 3),
-                        stack.peek(),
-                        RESULT
-                    )
-                }
-                parserResult
-            }
-            57 -> {
-                run {
-                    val decleft =
-                        (stack.get(top - 2)).left
-                    val decright =
-                        (stack.get(top - 2)).right
-                    val dec =
-                        (stack.get(top - 2)).value as ParserNode?
-                    val RESULT = ParserNode(ParserNodeType.FUNCTION_PARAMS, dec, null)
-                    parserResult = parser.symbolFactory.newSymbol(
-                        "direct_declarator",
-                        19,
-                        stack.get(top - 2),
-                        stack.peek(),
-                        RESULT
-                    )
-                }
-                parserResult
-            }
-            58 -> {
-                run {
-                    var RESULT: ParserNode? = null
-                    val decleft = (stack.peek()).left
-                    val decright = (stack.peek()).right
-                    val dec = (stack.peek()).value as ParserNode?
-                    RESULT = dec
-                    parserResult = parser.symbolFactory.newSymbol(
-                        "parameter_list",
-                        20,
-                        stack.peek(),
-                        stack.peek(),
-                        RESULT
-                    )
-                }
-                parserResult
-            }
-            59 -> {
-                run {
-                    var RESULT: ParserNode? = null
-                    val listleft =
-                        (stack.get(top - 2)).left
-                    val listright =
-                        (stack.get(top - 2)).right
-                    val list =
-                        (stack.get(top - 2)).value as ParserNode?
-                    val decleft = (stack.peek()).left
-                    val decright = (stack.peek()).right
-                    val dec = (stack.peek()).value as ParserNode?
-                    RESULT = ParserNode(ParserNodeType.PARAMS_SEPARATOR, list, dec)
-                    parserResult = parser.symbolFactory.newSymbol(
-                        "parameter_list",
-                        20,
-                        stack.get(top - 2),
-                        stack.peek(),
-                        RESULT
-                    )
-                }
-                parserResult
-            }
-            60 -> {
-                run {
-                    var RESULT: ParserNode? = null
-                    val specleft =
-                        (stack.get(top - 1)).left
-                    val specright =
-                        (stack.get(top - 1)).right
-                    val spec =
-                        (stack.get(top - 1)).value as ParserNode?
-                    val decleft = (stack.peek()).left
-                    val decright = (stack.peek()).right
-                    val dec = (stack.peek()).value as ParserNode?
-                    RESULT = ParserNode(ParserNodeType.TILDE, spec, dec)
-                    parserResult = parser.symbolFactory.newSymbol(
-                        "parameter_declaration",
-                        21,
-                        stack.get(top - 1),
-                        stack.peek(),
-                        RESULT
-                    )
-                }
-                parserResult
-            }
-            61 -> {
-                run {
-                    var RESULT: ParserNode? = null
-                    val specleft =
-                        (stack.get(top - 1)).left
-                    val specright =
-                        (stack.get(top - 1)).right
-                    val spec =
-                        (stack.get(top - 1)).value as ParserNode?
-                    val decleft = (stack.peek()).left
-                    val decright = (stack.peek()).right
-                    val dec = (stack.peek()).value as ParserNode?
-                    RESULT = ParserNode(ParserNodeType.TILDE, spec, dec)
-                    parserResult = parser.symbolFactory.newSymbol(
-                        "parameter_declaration",
-                        21,
-                        stack.get(top - 1),
-                        stack.peek(),
-                        RESULT
-                    )
-                }
-                parserResult
-            }
-            62 -> {
-                run {
-                    var RESULT: ParserNode? = null
-                    val decleft = (stack.peek()).left
-                    val decright = (stack.peek()).right
-                    val dec = (stack.peek()).value as ParserNode?
-                    RESULT = dec
-                    parserResult = parser.symbolFactory.newSymbol(
-                        "parameter_declaration",
-                        21,
-                        stack.peek(),
-                        stack.peek(),
-                        RESULT
-                    )
-                }
-                parserResult
-            }
-            63 -> {
-                run {
-                    var RESULT: ParserNode? = null
-                    val valueleft = (stack.peek()).left
-                    val valueright = (stack.peek()).right
-                    RESULT = ParserNode(ParserNodeType.IDENTIFIER, null, null, (stack.peek()).value)
-                    parserResult = parser.symbolFactory.newSymbol(
-                        "identifier_list",
-                        22,
-                        stack.peek(),
-                        stack.peek(),
-                        RESULT
-                    )
-                }
-                parserResult
-            }
-            64 -> {
-                run {
-                    var RESULT: ParserNode? = null
-                    val listleft =
-                        (stack.get(top - 2)).left
-                    val listright =
-                        (stack.get(top - 2)).right
-                    val list =
-                        (stack.get(top - 2)).value as ParserNode?
-                    val valueleft = (stack.peek()).left
-                    val valueright = (stack.peek()).right
-                    RESULT =
-                        ParserNode(ParserNodeType.PARAMS_SEPARATOR, list, ParserNode(ParserNodeType.IDENTIFIER, null, null, (stack.peek()).value))
-                    parserResult = parser.symbolFactory.newSymbol(
-                        "identifier_list",
-                        22,
-                        stack.get(top - 2),
-                        stack.peek(),
-                        RESULT
-                    )
-                }
-                parserResult
-            }
-            65 -> {
-                run {
-                    var RESULT: ParserNode? = null
-                    val decleft = (stack.peek()).left
-                    val decright = (stack.peek()).right
-                    val dec = (stack.peek()).value as ParserNode?
-                    RESULT = dec
-                    parserResult = parser.symbolFactory.newSymbol(
-                        "abstract_declarator",
-                        23,
-                        stack.peek(),
-                        stack.peek(),
-                        RESULT
-                    )
-                }
-                parserResult
-            }
-            66 -> {
-                run {
-                    var RESULT: ParserNode? = null
-                    val decleft =
-                        (stack.get(top - 1)).left
-                    val decright =
-                        (stack.get(top - 1)).right
-                    val dec =
-                        (stack.get(top - 1)).value as ParserNode?
-                    RESULT = dec
-                    parserResult = parser.symbolFactory.newSymbol(
-                        "direct_abstract_declarator",
-                        24,
-                        stack.get(top - 2),
-                        stack.peek(),
-                        RESULT
-                    )
-                }
-                parserResult
-            }
-            67 -> {
-                run {
-                    var RESULT: ParserNode? = null
-                    RESULT = null
-                    parserResult = parser.symbolFactory.newSymbol(
-                        "direct_abstract_declarator",
-                        24,
-                        stack.get(top - 1),
-                        stack.peek(),
-                        RESULT
-                    )
-                }
-                parserResult
-            }
-            68 -> {
-                run {
-                    var RESULT: ParserNode? = null
-                    val listleft =
-                        (stack.get(top - 1)).left
-                    val listright =
-                        (stack.get(top - 1)).right
-                    val list =
-                        (stack.get(top - 1)).value as ParserNode?
-                    RESULT = list
-                    parserResult = parser.symbolFactory.newSymbol(
-                        "direct_abstract_declarator",
-                        24,
-                        stack.get(top - 2),
-                        stack.peek(),
-                        RESULT
-                    )
-                }
-                parserResult
-            }
-            69 -> {
-                run {
-                    var RESULT: ParserNode? = null
-                    val decleft =
-                        (stack.get(top - 2)).left
-                    val decright =
-                        (stack.get(top - 2)).right
-                    val dec =
-                        (stack.get(top - 2)).value as ParserNode?
-                    RESULT = ParserNode(ParserNodeType.APPLY, dec, null)
-                    parserResult = parser.symbolFactory.newSymbol(
-                        "direct_abstract_declarator",
-                        24,
-                        stack.get(top - 2),
-                        stack.peek(),
-                        RESULT
-                    )
-                }
-                parserResult
-            }
-            70 -> {
-                run {
-                    var RESULT: ParserNode? = null
-                    val decleft =
-                        (stack.get(top - 3)).left
-                    val decright =
-                        (stack.get(top - 3)).right
-                    val dec =
-                        (stack.get(top - 3)).value as ParserNode?
-                    val paramsleft =
-                        (stack.get(top - 1)).left
-                    val paramsright =
-                        (stack.get(top - 1)).right
-                    val params =
-                        (stack.get(top - 1)).value as ParserNode?
-                    RESULT = ParserNode(ParserNodeType.APPLY, dec, params)
-                    parserResult = parser.symbolFactory.newSymbol(
-                        "direct_abstract_declarator",
-                        24,
-                        stack.get(top - 3),
-                        stack.peek(),
-                        RESULT
-                    )
-                }
-                parserResult
-            }
-            71 -> {
-                run {
-                    var RESULT: ParserNode? = null
-                    val statementleft = (stack.peek()).left
-                    val statementright = (stack.peek()).right
-                    val statement =
-                        (stack.peek()).value as ParserNode?
-                    RESULT = statement
-                    parserResult = parser.symbolFactory.newSymbol(
-                        "statement",
-                        25,
-                        stack.peek(),
-                        stack.peek(),
-                        RESULT
-                    )
-                }
-                parserResult
-            }
-            72 -> {
-                run {
-                    var RESULT: ParserNode? = null
-                    val statementleft = (stack.peek()).left
-                    val statementright = (stack.peek()).right
-                    val statement =
-                        (stack.peek()).value as ParserNode?
-                    RESULT = statement
-                    parserResult = parser.symbolFactory.newSymbol(
-                        "statement",
-                        25,
-                        stack.peek(),
-                        stack.peek(),
-                        RESULT
-                    )
-                }
-                parserResult
-            }
-            73 -> {
-                run {
-                    var RESULT: ParserNode? = null
-                    val statementleft = (stack.peek()).left
-                    val statementright = (stack.peek()).right
-                    val statement =
-                        (stack.peek()).value as ParserNode?
-                    RESULT = statement
-                    parserResult = parser.symbolFactory.newSymbol(
-                        "statement",
-                        25,
-                        stack.peek(),
-                        stack.peek(),
-                        RESULT
-                    )
-                }
-                parserResult
-            }
-            74 -> {
-                run {
-                    var RESULT: ParserNode? = null
-                    val statementleft = (stack.peek()).left
-                    val statementright = (stack.peek()).right
-                    val statement =
-                        (stack.peek()).value as ParserNode?
-                    RESULT = statement
-                    parserResult = parser.symbolFactory.newSymbol(
-                        "statement",
-                        25,
-                        stack.peek(),
-                        stack.peek(),
-                        RESULT
-                    )
-                }
-                parserResult
-            }
-            75 -> {
-                run {
-                    var RESULT: ParserNode? = null
-                    val statementleft = (stack.peek()).left
-                    val statementright = (stack.peek()).right
-                    val statement =
-                        (stack.peek()).value as ParserNode?
-                    RESULT = statement
-                    parserResult = parser.symbolFactory.newSymbol(
-                        "statement",
-                        25,
-                        stack.peek(),
-                        stack.peek(),
-                        RESULT
-                    )
-                }
-                parserResult
-            }
-            76 -> {
-                run {
-                    var RESULT: ParserNode? = null
-                    RESULT = null
-                    parserResult = parser.symbolFactory.newSymbol(
-                        "compound_statement",
-                        26,
-                        stack.get(top - 1),
-                        stack.peek(),
-                        RESULT
-                    )
-                }
-                parserResult
-            }
-            77 -> {
-                run {
-                    var RESULT: ParserNode? = null
-                    val listleft =
-                        (stack.get(top - 1)).left
-                    val listright =
-                        (stack.get(top - 1)).right
-                    val list =
-                        (stack.get(top - 1)).value as ParserNode?
-                    RESULT = list
-                    parserResult = parser.symbolFactory.newSymbol(
-                        "compound_statement",
-                        26,
-                        stack.get(top - 2),
-                        stack.peek(),
-                        RESULT
-                    )
-                }
-                parserResult
-            }
-            78 -> {
-                run {
-                    var RESULT: ParserNode? = null
-                    val listleft =
-                        (stack.get(top - 1)).left
-                    val listright =
-                        (stack.get(top - 1)).right
-                    val list =
-                        (stack.get(top - 1)).value as ParserNode?
-                    RESULT = list
-                    parserResult = parser.symbolFactory.newSymbol(
-                        "compound_statement",
-                        26,
-                        stack.get(top - 2),
-                        stack.peek(),
-                        RESULT
-                    )
-                }
-                parserResult
-            }
-            79 -> {
-                run {
-                    var RESULT: ParserNode? = null
-                    val decleft =
-                        (stack.get(top - 2)).left
-                    val decright =
-                        (stack.get(top - 2)).right
-                    val dec =
-                        (stack.get(top - 2)).value as ParserNode?
-                    val statementsleft =
-                        (stack.get(top - 1)).left
-                    val statementsright =
-                        (stack.get(top - 1)).right
-                    val statements =
-                        (stack.get(top - 1)).value as ParserNode?
-                    RESULT = ParserNode(ParserNodeType.END_STATEMENT, dec, statements)
-                    parserResult = parser.symbolFactory.newSymbol(
-                        "compound_statement",
-                        26,
-                        stack.get(top - 3),
-                        stack.peek(),
-                        RESULT
-                    )
-                }
-                parserResult
-            }
-            80 -> {
-                run {
-                    var RESULT: ParserNode? = null
-                    val decleft = (stack.peek()).left
-                    val decright = (stack.peek()).right
-                    val dec = (stack.peek()).value as ParserNode?
-                    RESULT = dec
-                    parserResult = parser.symbolFactory.newSymbol(
-                        "declaration_list",
-                        27,
-                        stack.peek(),
-                        stack.peek(),
-                        RESULT
-                    )
-                }
-                parserResult
-            }
-            81 -> {
-                run {
-                    var RESULT: ParserNode? = null
-                    val listleft =
-                        (stack.get(top - 1)).left
-                    val listright =
-                        (stack.get(top - 1)).right
-                    val list =
-                        (stack.get(top - 1)).value as ParserNode?
-                    val decleft = (stack.peek()).left
-                    val decright = (stack.peek()).right
-                    val dec = (stack.peek()).value as ParserNode?
-                    RESULT = ParserNode(ParserNodeType.END_STATEMENT, list, dec)
-                    parserResult = parser.symbolFactory.newSymbol(
-                        "declaration_list",
-                        27,
-                        stack.get(top - 1),
-                        stack.peek(),
-                        RESULT
-                    )
-                }
-                parserResult
-            }
-            82 -> {
-                run {
-                    var RESULT: ParserNode? = null
-                    val statementleft = (stack.peek()).left
-                    val statementright = (stack.peek()).right
-                    val statement =
-                        (stack.peek()).value as ParserNode?
-                    RESULT = statement
-                    parserResult = parser.symbolFactory.newSymbol(
-                        "statement_list",
-                        28,
-                        stack.peek(),
-                        stack.peek(),
-                        RESULT
-                    )
-                }
-                parserResult
-            }
-            83 -> {
-                run {
-                    var RESULT: ParserNode? = null
-                    val listleft =
-                        (stack.get(top - 1)).left
-                    val listright =
-                        (stack.get(top - 1)).right
-                    val list =
-                        (stack.get(top - 1)).value as ParserNode?
-                    val statementleft = (stack.peek()).left
-                    val statementright = (stack.peek()).right
-                    val statement =
-                        (stack.peek()).value as ParserNode?
-                    RESULT = ParserNode(ParserNodeType.END_STATEMENT, list, statement)
-                    parserResult = parser.symbolFactory.newSymbol(
-                        "statement_list",
-                        28,
-                        stack.get(top - 1),
-                        stack.peek(),
-                        RESULT
-                    )
-                }
-                parserResult
-            }
-            84 -> {
-                run {
-                    var RESULT: ParserNode? = null
-                    RESULT = null
-                    parserResult = parser.symbolFactory.newSymbol(
-                        "expression_statement",
-                        29,
-                        stack.peek(),
-                        stack.peek(),
-                        RESULT
-                    )
-                }
-                parserResult
-            }
-            85 -> {
-                run {
-                    var RESULT: ParserNode? = null
-                    val expleft =
-                        (stack.get(top - 1)).left
-                    val expright =
-                        (stack.get(top - 1)).right
-                    val exp =
-                        (stack.get(top - 1)).value as ParserNode?
-                    RESULT = exp
-                    parserResult = parser.symbolFactory.newSymbol(
-                        "expression_statement",
-                        29,
-                        stack.get(top - 1),
-                        stack.peek(),
-                        RESULT
-                    )
-                }
-                parserResult
-            }
-            86 -> {
-                run {
-                    var RESULT: ParserNode? = null
-                    val expleft =
-                        (stack.get(top - 2)).left
-                    val expright =
-                        (stack.get(top - 2)).right
-                    val exp =
-                        (stack.get(top - 2)).value as ParserNode?
-                    val statementleft = (stack.peek()).left
-                    val statementright = (stack.peek()).right
-                    val statement =
-                        (stack.peek()).value as ParserNode?
-                    RESULT = ParserNode(ParserNodeType.IF, exp, statement)
-                    parserResult = parser.symbolFactory.newSymbol(
-                        "selection_statement",
-                        30,
-                        stack.get(top - 4),
-                        stack.peek(),
-                        RESULT
-                    )
-                }
-                parserResult
-            }
-            87 -> {
-                run {
-                    var RESULT: ParserNode? = null
-                    val expleft =
-                        (stack.get(top - 4)).left
-                    val expright =
-                        (stack.get(top - 4)).right
-                    val exp =
-                        (stack.get(top - 4)).value as ParserNode?
-                    val ifsleft =
-                        (stack.get(top - 2)).left
-                    val ifsright =
-                        (stack.get(top - 2)).right
-                    val ifs =
-                        (stack.get(top - 2)).value as ParserNode?
-                    val elsesleft = (stack.peek()).left
-                    val elsesright = (stack.peek()).right
-                    val elses = (stack.peek()).value as ParserNode?
-                    RESULT = ParserNode(ParserNodeType.IF, exp, ParserNode(ParserNodeType.ELSE, ifs, elses))
-                    parserResult = parser.symbolFactory.newSymbol(
-                        "selection_statement",
-                        30,
-                        stack.get(top - 6),
-                        stack.peek(),
-                        RESULT
-                    )
-                }
-                parserResult
-            }
-            88 -> {
-                run {
-                    var RESULT: ParserNode? = null
-                    val expleft =
-                        (stack.get(top - 2)).left
-                    val expright =
-                        (stack.get(top - 2)).right
-                    val exp =
-                        (stack.get(top - 2)).value as ParserNode?
-                    val bodyleft = (stack.peek()).left
-                    val bodyright = (stack.peek()).right
-                    val body = (stack.peek()).value as ParserNode?
-                    RESULT = ParserNode(ParserNodeType.WHILE, exp, body)
-                    parserResult = parser.symbolFactory.newSymbol(
-                        "iteration_statement",
-                        31,
-                        stack.get(top - 4),
-                        stack.peek(),
-                        RESULT
-                    )
-                }
-                parserResult
-            }
-            89 -> {
-                run {
-                    var RESULT: ParserNode? = null
-                    RESULT = ParserNode(ParserNodeType.CONTINUE)
-                    parserResult = parser.symbolFactory.newSymbol(
-                        "jump_statement",
-                        32,
-                        stack.get(top - 1),
-                        stack.peek(),
-                        RESULT
-                    )
-                }
-                parserResult
-            }
-            90 -> {
-                run {
-                    var RESULT: ParserNode? = null
-                    RESULT = ParserNode(ParserNodeType.BREAK)
-                    parserResult = parser.symbolFactory.newSymbol(
-                        "jump_statement",
-                        32,
-                        stack.get(top - 1),
-                        stack.peek(),
-                        RESULT
-                    )
-                }
-                parserResult
-            }
-            91 -> {
-                run {
-                    var RESULT: ParserNode? = null
-                    RESULT = ParserNode(ParserNodeType.RETURN)
-                    parserResult = parser.symbolFactory.newSymbol(
-                        "jump_statement",
-                        32,
-                        stack.get(top - 1),
-                        stack.peek(),
-                        RESULT
-                    )
-                }
-                parserResult
-            }
-            92 -> {
-                run {
-                    var RESULT: ParserNode? = null
-                    val expleft =
-                        (stack.get(top - 1)).left
-                    val expright =
-                        (stack.get(top - 1)).right
-                    val exp =
-                        (stack.get(top - 1)).value as ParserNode?
-                    RESULT = ParserNode(ParserNodeType.RETURN, exp, null)
-                    parserResult = parser.symbolFactory.newSymbol(
-                        "jump_statement",
-                        32,
-                        stack.get(top - 2),
-                        stack.peek(),
-                        RESULT
-                    )
-                }
-                parserResult
-            }
-            93 -> {
-                run {
-                    var RESULT: ParserNode? = null
-                    val decleft = (stack.peek()).left
-                    val decright = (stack.peek()).right
-                    val dec = (stack.peek()).value as ParserNode?
-                    RESULT = dec
-                    parserResult = parser.symbolFactory.newSymbol(
-                        "translation_unit",
-                        33,
-                        stack.peek(),
-                        stack.peek(),
-                        RESULT
-                    )
-                }
-                parserResult
-            }
-            94 -> {
-                run {
-                    var RESULT: ParserNode? = null
-                    val unitleft =
-                        (stack.get(top - 1)).left
-                    val unitright =
-                        (stack.get(top - 1)).right
-                    val unit =
-                        (stack.get(top - 1)).value as ParserNode?
-                    val decleft = (stack.peek()).left
-                    val decright = (stack.peek()).right
-                    val dec = (stack.peek()).value as ParserNode?
-                    RESULT = ParserNode(ParserNodeType.TILDE, unit, dec)
-                    parserResult = parser.symbolFactory.newSymbol(
-                        "translation_unit",
-                        33,
-                        stack.get(top - 1),
-                        stack.peek(),
-                        RESULT
-                    )
-                }
-                parserResult
-            }
-            95 -> {
-                run {
-                    var RESULT: ParserNode? = null
-                    val decleft = (stack.peek()).left
-                    val decright = (stack.peek()).right
-                    val dec = (stack.peek()).value as ParserNode?
-                    RESULT = dec
-                    parserResult = parser.symbolFactory.newSymbol(
-                        "external_declaration",
-                        34,
-                        stack.peek(),
-                        stack.peek(),
-                        RESULT
-                    )
-                }
-                parserResult
-            }
-            96 -> {
-                run {
-                    var RESULT: ParserNode? = null
-                    val specleft =
-                        (stack.get(top - 3)).left
-                    val specright =
-                        (stack.get(top - 3)).right
-                    val spec =
-                        (stack.get(top - 3)).value as ParserNode?
-                    val decleft =
-                        (stack.get(top - 2)).left
-                    val decright =
-                        (stack.get(top - 2)).right
-                    val dec =
-                        (stack.get(top - 2)).value as ParserNode?
-                    val listleft =
-                        (stack.get(top - 1)).left
-                    val listright =
-                        (stack.get(top - 1)).right
-                    val list =
-                        (stack.get(top - 1)).value as ParserNode?
-                    val statementleft = (stack.peek()).left
-                    val statementright = (stack.peek()).right
-                    val statement =
-                        (stack.peek()).value as ParserNode?
-                    RESULT = ParserNode(
-                        ParserNodeType.FUNCTION_DEF,
-                        ParserNode(ParserNodeType.FUNCTION_DATA, spec, ParserNode(ParserNodeType.EXTERN, dec, list)),
-                        statement
-                    )
-                    parserResult = parser.symbolFactory.newSymbol(
-                        "function_definition",
-                        35,
-                        stack.get(top - 3),
-                        stack.peek(),
-                        RESULT
-                    )
-                }
-                parserResult
-            }
-            97 -> {
-                run {
-                    var RESULT: ParserNode? = null
-                    val specleft =
-                        (stack.get(top - 2)).left
-                    val specright =
-                        (stack.get(top - 2)).right
-                    val spec =
-                        (stack.get(top - 2)).value as ParserNode?
-                    val decleft =
-                        (stack.get(top - 1)).left
-                    val decright =
-                        (stack.get(top - 1)).right
-                    val dec =
-                        (stack.get(top - 1)).value as ParserNode?
-                    val statementleft = (stack.peek()).left
-                    val statementright = (stack.peek()).right
-                    val statement =
-                        (stack.peek()).value as ParserNode?
-                    RESULT = ParserNode(
-                        ParserNodeType.FUNCTION_DEF,
-                        ParserNode(ParserNodeType.FUNCTION_DATA, spec, dec),
-                        statement
-                    )
-                    parserResult = parser.symbolFactory.newSymbol(
-                        "function_definition",
-                        35,
-                        stack.get(top - 2),
-                        stack.peek(),
-                        RESULT
-                    )
-                }
-                parserResult
-            }
-            98 -> {
-                run {
-                    var RESULT: ParserNode? = null
-                    val decleft =
-                        (stack.get(top - 2)).left
-                    val decright =
-                        (stack.get(top - 2)).right
-                    val dec =
-                        (stack.get(top - 2)).value as ParserNode?
-                    val listleft =
-                        (stack.get(top - 1)).left
-                    val listright =
-                        (stack.get(top - 1)).right
-                    val list =
-                        (stack.get(top - 1)).value as ParserNode?
-                    val statementleft = (stack.peek()).left
-                    val statementright = (stack.peek()).right
-                    val statement =
-                        (stack.peek()).value as ParserNode?
-                    RESULT = ParserNode(
-                        ParserNodeType.FUNCTION_DEF,
-                        ParserNode(ParserNodeType.FUNCTION_DATA, dec, list),
-                        statement
-                    )
-                    parserResult = parser.symbolFactory.newSymbol(
-                        "function_definition",
-                        35,
-                        stack.get(top - 2),
-                        stack.peek(),
-                        RESULT
-                    )
-                }
-                parserResult
-            }
-            99 -> {
-                run {
-                    var RESULT: ParserNode? = null
-                    val decleft =
-                        (stack.get(top - 1)).left
-                    val decright =
-                        (stack.get(top - 1)).right
-                    val dec =
-                        (stack.get(top - 1)).value as ParserNode?
-                    val statementleft = (stack.peek()).left
-                    val statementright = (stack.peek()).right
-                    val statement =
-                        (stack.peek()).value as ParserNode?
-                    RESULT = ParserNode(ParserNodeType.FUNCTION_DATA, dec, statement)
-                    parserResult = parser.symbolFactory.newSymbol(
-                        "function_definition",
-                        35,
-                        stack.get(top - 1),
-                        stack.peek(),
-                        RESULT
-                    )
-                }
-                parserResult
-            }
-            else -> throw RuntimeException(
-                "Invalid action number " + act_num + "found in internal parse table"
-            )
+    private fun makeException(message: String): ParseException {
+        val symbol = parser.stack.peek()
+        return ParseException(message, null, symbol.locationRight)
+    }
+
+    private fun makeException(message: String, stackIndex: Int): ParseException {
+        val symbol = parser.stack[stackIndex]
+        return ParseException(message, null, symbol.locationRight)
+    }
+
+    private fun isString(computable: DataComputable?): Boolean {
+        return computable is DataTypeString || computable is StringConcat || computable is GetVariable || computable is FunctionCall
+    }
+
+    private fun isMath(computable: DataComputable?): Boolean {
+        return computable is DataTypeInt || computable is MathOperation || computable is UnaryMinus || computable is Negation || computable is GetVariable || computable is FunctionCall
+    }
+
+    private fun isCallable(computable: DataComputable?): Boolean {
+        return computable is GetVariable || computable is FunctionCall
+    }
+
+    private fun <T : MathOperation> createMath(
+        stackTop: Int,
+        arg1: DataComputable,
+        arg2: DataComputable,
+        createMath: (DataComputable, DataComputable) -> T
+    ): T {
+        if (!isMath(arg1)) throw makeException("Invalid math expression", stackTop - 2)
+        if (!isMath(arg2)) throw makeException("Invalid math expression")
+        return createMath(arg1, arg2)
+    }
+
+    private fun createMath(arg: DataComputable, createMath: (DataComputable) -> DataComputable): DataComputable {
+        if (!isMath(arg)) throw makeException("Invalid math expression")
+        return createMath(arg)
+    }
+
+    private fun <T : MathOperation> makeMath(stackTop: Int, createMath: (DataComputable, DataComputable) -> T): Symbol {
+        val stack = this.parser.stack
+        val arg1 = stack[stackTop - 2].value as DataComputable
+        val arg2 = stack.peek().value as DataComputable
+        val RESULT = createMath(stackTop, arg1, arg2, createMath)
+        return this.parser.symbolFactory.newSymbol("mathComputable", 12, stack[stackTop - 2], stack.peek(), RESULT)
+    }
+
+    private fun makeDataType(type: DataType?) = makeSimple("dataType", 0, type)
+
+    private fun makeSimple(name: String, type: Int, value: Any?): Symbol {
+        val symbol = parser.stack.peek()
+        return this.parser.symbolFactory.newSymbol(name, type, symbol, symbol, value)
+    }
+
+    private fun makeExisting(name: String, type: Int): Symbol {
+        val symbol = parser.stack.peek()
+        return this.parser.symbolFactory.newSymbol(name, type, symbol, symbol, symbol.value)
+    }
+
+    fun doAction(actionId: Int, parser: LRParser, stack: Stack<Symbol>, stackTop: Int) = when (actionId) {
+        0 -> {
+            val program = stack[stackTop - 1].value
+            val result = this.parser.symbolFactory.newSymbol("\$START", 0, stack[stackTop - 1], stack.peek(), program)
+            parser.done_parsing()
+            result
         }
-    } /* end of method */
+        1 -> {
+            val list = stack.peek().value as List<Computable>
+            val program = Program(ExpressionSequence(list), DefaultContext())
+            this.parser.symbolFactory.newSymbol("program", 22, stack.peek(), stack.peek(), program)
+        }
+        2 -> makeDataType(DataType.STRING)
+        3 -> makeDataType(DataType.INT)
+        4 -> makeDataType(DataType.FUNCTION)
+        5 -> makeDataType(DataType.VOID)
+        6 -> makeDataType(null)
+        7 -> {
+            val value = stack.peek().value as Long
+            val RESULT = DataTypeInt(value)
+            this.parser.symbolFactory.newSymbol("integer", 1, stack.peek(), stack.peek(), RESULT)
+        }
+        8 -> {
+            val value = stack.peek().value as String
+            val RESULT = DataTypeString(value)
+            this.parser.symbolFactory.newSymbol("string", 2, stack.peek(), stack.peek(), RESULT)
+        }
+        9 -> {
+            val type = stack[stackTop - 1].value as DataType?
+            val name = stack.peek().value as String
 
+            if (type === DataType.VOID) throw makeException("Can't define a parameter type as void")
+            else if (type == null) throw makeException("Can't define a parameter type as auto")
+
+            val RESULT = Parameter(type, name)
+            this.parser.symbolFactory.newSymbol("parameter", 3, stack[stackTop - 1], stack.peek(), RESULT)
+        }
+        10 -> {
+            val param = stack.peek().value as Parameter
+            val RESULT: MutableList<Parameter> = ArrayList()
+            RESULT.add(param)
+            this.parser.symbolFactory.newSymbol("functionParams", 4, stack.peek(), stack.peek(), RESULT)
+        }
+        11 -> {
+            val params = stack[stackTop - 2].value as MutableList<Parameter>
+            val param = stack.peek().value as Parameter
+            params.add(param)
+            this.parser.symbolFactory.newSymbol("functionParams", 4, stack[stackTop - 2], stack.peek(), params)
+        }
+        12 -> {
+            val name = stack.peek().value as String
+            val RESULT = GetVariable(name, -1)
+            this.parser.symbolFactory.newSymbol("getVariable", 7, stack.peek(), stack.peek(), RESULT)
+        }
+        13 -> {
+            val name = stack[stackTop - 2].value as String
+            val assignment = stack.peek().value as DataComputable
+            val RESULT = SetVariable(name, -1, assignment)
+            this.parser.symbolFactory.newSymbol("setVariable", 8, stack[stackTop - 2], stack.peek(), RESULT)
+        }
+        14 -> {
+            val type = stack[stackTop - 3].value as DataType?
+            val name = stack[stackTop - 2].value as String
+            val value = stack.peek().value as DataComputable
+            if (type === DataType.VOID) {
+                throw makeException("Cannot define variables as void")
+            }
+            val RESULT = DefineVariable(name, value, type)
+            this.parser.symbolFactory.newSymbol("defineVariable", 9, stack[stackTop - 3], stack.peek(), RESULT)
+        }
+        15 -> {
+            val type = stack[stackTop - 1].value as DataType?
+            val name = stack.peek().value as String
+            if (type == null) {
+                throw makeException("Cannot define late init variables as auto")
+            }
+            throw makeException("Late init variables are not yet supported")
+//                this.parser.symbolFactory.newSymbol("defineVariable", 9, stack.get(stackTop - 1), stack.peek(), RESULT)
+        }
+        16 -> {
+            val RESULT = stack[stackTop - 1].value as DataComputable
+            this.parser.symbolFactory.newSymbol("dataComputable", 11, stack[stackTop - 2], stack.peek(), RESULT)
+        }
+        17, 18, 19 -> makeExisting("dataComputable", 11)
+        20 -> {
+            val exp1 = stack[stackTop - 2].value as DataComputable
+            val exp2 = stack.peek().value as DataComputable
+            if (!isString(exp1)) throw makeException("Can only concatenate strings", stackTop - 2)
+            if (!isString(exp2)) throw makeException("Can only concatenate strings")
+            val RESULT = StringConcat(exp1, exp2)
+            this.parser.symbolFactory.newSymbol("dataComputable", 11, stack[stackTop - 2], stack.peek(), RESULT)
+        }
+        21, 22 -> makeExisting("mathComputable", 12)
+        23 -> {
+            val math = stack.peek().value as DataComputable
+            val RESULT = createMath(math, ::UnaryMinus)
+            this.parser.symbolFactory.newSymbol("mathComputable", 12, stack[stackTop - 1], stack.peek(), RESULT)
+        }
+        24 -> {
+            val math = stack.peek().value as DataComputable
+            val RESULT = createMath(math, ::Negation)
+            this.parser.symbolFactory.newSymbol("mathComputable", 12, stack[stackTop - 1], stack.peek(), RESULT)
+        }
+        25 -> makeMath(stackTop, ::Add)
+        26 -> makeMath(stackTop, ::Subtract)
+        27 -> makeMath(stackTop, ::Multiply)
+        28 -> makeMath(stackTop, ::Divide)
+        29 -> makeMath(stackTop, ::Mod)
+        30 -> makeMath(stackTop, ::Equals)
+        31 -> makeMath(stackTop, ::NotEquals)
+        32 -> makeMath(stackTop, ::LessThan)
+        33 -> makeMath(stackTop, ::GreaterThan)
+        34 -> makeMath(stackTop, ::LessThanOrEqualTo)
+        35 -> makeMath(stackTop, ::GreaterThanOrEqualTo)
+        36 -> {
+            val func = stack[stackTop - 3].value as DataComputable
+            val args = stack[stackTop - 1].value as List<DataComputable>
+            if (!isCallable(func)) throw makeException("Not callable", stackTop - 3)
+            val RESULT = FunctionCall(func, args)
+            this.parser.symbolFactory.newSymbol("functionCall", 10, stack[stackTop - 3], stack.peek(), RESULT)
+        }
+        37 -> {
+            val func = stack[stackTop - 2].value as DataComputable
+            if (!isCallable(func)) throw makeException("Not callable", stackTop - 2)
+            val RESULT = FunctionCall(func, ArrayList())
+            this.parser.symbolFactory.newSymbol("functionCall", 10, stack[stackTop - 2], stack.peek(), RESULT)
+        }
+        38 -> {
+            val arg = stack.peek().value as DataComputable
+            val RESULT: MutableList<DataComputable> = ArrayList()
+            RESULT.add(arg)
+            this.parser.symbolFactory.newSymbol("functionArgs", 6, stack.peek(), stack.peek(), RESULT)
+        }
+        39 -> {
+            val args = stack[stackTop - 2].value as MutableList<DataComputable>
+            val arg = stack.peek().value as DataComputable
+            args.add(arg)
+            this.parser.symbolFactory.newSymbol("functionArgs", 6, stack[stackTop - 2], stack.peek(), args)
+        }
+        40 -> {
+            val returnType = stack[stackTop - 5].value as DataType?
+            val name = stack[stackTop - 4].value as String
+            val params = stack[stackTop - 2].value as List<Parameter>
+            val body = stack.peek().value as ExpressionSequence
+            val RESULT = FunctionDeclaration(name, params, body, returnType)
+            this.parser.symbolFactory.newSymbol("functionDeclaration", 5, stack[stackTop - 5], stack.peek(), RESULT)
+        }
+        41 -> {
+            val returnType = stack[stackTop - 4].value as DataType?
+            val name = stack[stackTop - 3].value as String
+            val body = stack.peek().value as ExpressionSequence
+            val RESULT = FunctionDeclaration(name, ArrayList(), body, returnType)
+            this.parser.symbolFactory.newSymbol("functionDeclaration", 5, stack[stackTop - 4], stack.peek(), RESULT)
+        }
+        42, 43, 44, 45, 46, 47 -> makeExisting("terminatedExpression", 14)
+        48 -> {
+            val RESULT = stack[stackTop - 1].value as Computable
+            this.parser.symbolFactory.newSymbol("expression", 13, stack[stackTop - 1], stack.peek(), RESULT)
+        }
+        49, 50, 51 -> makeExisting("expression", 13)
+        52 -> {
+            val exp = stack.peek().value as Computable
+            val RESULT: MutableList<Computable> = ArrayList()
+            RESULT.add(exp)
+            this.parser.symbolFactory.newSymbol("expressionList", 16, stack.peek(), stack.peek(), RESULT)
+        }
+        53 -> {
+            val list = stack[stackTop - 1].value as MutableList<Computable>
+            val exp = stack.peek().value as Computable
+            list.add(exp)
+            this.parser.symbolFactory.newSymbol("expressionList", 16, stack[stackTop - 1], stack.peek(), list)
+        }
+        54 -> {
+            val RESULT = ExpressionSequence(ArrayList())
+            this.parser.symbolFactory.newSymbol("expressionSequence", 15, stack[stackTop - 1], stack.peek(), RESULT)
+        }
+        55 -> {
+            val list = stack[stackTop - 1].value as List<Computable>
+            val RESULT = ExpressionSequence(list)
+            this.parser.symbolFactory.newSymbol("expressionSequence", 15, stack[stackTop - 2], stack.peek(), RESULT)
+        }
+        56 -> {
+            val exp = stack.peek().value as Computable
+            val list: MutableList<Computable> = ArrayList()
+            list.add(exp)
+            val RESULT = ExpressionSequence(list)
+            this.parser.symbolFactory.newSymbol("expressionSequence", 15, stack.peek(), stack.peek(), RESULT)
+        }
+        57 -> {
+            val condition = stack[stackTop - 2].value as DataComputable
+            val body = stack.peek().value as ExpressionSequence
+            if (!isMath(condition)) throw makeException("Invalid condition", stackTop - 2)
+            val RESULT = WhileLoop(condition, body)
+            this.parser.symbolFactory.newSymbol("whileLoop", 20, stack[stackTop - 4], stack.peek(), RESULT)
+        }
+        58 -> {
+            val condition = stack[stackTop - 4].value as DataComputable
+            val body = stack[stackTop - 2].value as ExpressionSequence
+            val elseBody = stack.peek().value as ExpressionSequence
+            if (!isMath(condition)) throw makeException("Invalid condition", stackTop - 4)
+            val RESULT = IfStatement(condition, body, elseBody)
+            this.parser.symbolFactory.newSymbol("ifStatement", 21, stack[stackTop - 6], stack.peek(), RESULT)
+        }
+        59 -> {
+            val condition = stack[stackTop - 2].value as DataComputable
+            val body = stack.peek().value as ExpressionSequence
+            if (!isMath(condition)) throw makeException("Invalid condition", stackTop - 2)
+            val RESULT = IfStatement(condition, body, null)
+            this.parser.symbolFactory.newSymbol("ifStatement", 21, stack[stackTop - 4], stack.peek(), RESULT)
+        }
+        60 -> {
+            val toReturn = stack.peek().value as DataComputable
+            val RESULT = ReturnExpression(toReturn)
+            this.parser.symbolFactory.newSymbol("returnExpression", 19, stack[stackTop - 1], stack.peek(), RESULT)
+        }
+        61 -> makeSimple("returnExpression", 19, ReturnExpression(null))
+        62 -> makeSimple("breakStatement", 18, BreakStatement)
+        63 -> makeSimple("continueStatement", 17, ContinueStatement)
+        else -> throw Exception("Invalid action number " + actionId + "found in internal parse table")
+    }
 }

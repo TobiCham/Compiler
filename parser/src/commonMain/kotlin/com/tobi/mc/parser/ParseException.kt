@@ -5,41 +5,31 @@ import com.tobi.mc.parser.ast.parser.runtime.FileLocation
 class ParseException(message: String, val from: FileLocation?, val to: FileLocation?) : Exception(message) {
 
     fun createErrorMessage(originalSource: String): String {
-        val index = if(to != null) findIndex(originalSource, to.line, to.column) else -1
+        val message = if(to == null) {
+            val lines = originalSource.split('\n')
+            ErrorResult(originalSource, lines.last().length)
+        } else getError(originalSource, to.line, to.column)
+
         return buildString {
             append('\n')
-            if(index >= 0) {
-                append(originalSource.substring(0, index + 1))
-                append('\n')
+            append(message.stringToDisplay)
+            append('\n')
 
-                for(i in 0 until to!!.column) append(' ')
-            } else {
-                append(originalSource)
-            }
-            append("^\n")
-            append("Syntax Error - $message")
+            append(String(CharArray(message.errorColumn) { ' ' }))
+            append('^')
+            append('\n')
+
+            append("Syntax Error - ${super.message}")
         }
     }
 
-    private fun findIndex(source: String, line: Int, column: Int): Int {
-        var lineCounter = 0
-        var columnCounter = -1
+    private fun getError(source: String, line: Int, column: Int): ErrorResult {
+        val lines = source.split('\n')
+        val text = if(line >= lines.size) source else lines.subList(0, line + 1).joinToString("\n")
+        return ErrorResult(text, column)
+    }
 
-        for((index, ch) in source.withIndex()) {
-            if(ch == '\n') {
-                lineCounter++
-                columnCounter = 0
-
-                if(lineCounter == line) {
-                    return index
-                }
-            } else {
-                columnCounter++
-            }
-            if(lineCounter == line && columnCounter == column) {
-                return index
-            }
-        }
-        return -1
+    companion object {
+        private data class ErrorResult(val stringToDisplay: String, val errorColumn: Int)
     }
 }

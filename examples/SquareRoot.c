@@ -22,7 +22,7 @@ auto squareRoot(int n) {
     return iterate(n);
 }
 
-auto _ = printString("Enter a number:\n");
+printString("Enter a number:\n");
 auto value = readInt();
 if(value < 0) {
     printString("Not a real number");

@@ -1,159 +1,92 @@
 package com.tobi.mc.parser.ast.lexer
 
-import com.tobi.mc.parser.ParseException
 import com.tobi.mc.parser.ast.ReaderHelpers
 import com.tobi.mc.parser.ast.SimpleReader
-import com.tobi.mc.parser.ast.parser.runtime.FileLocation
+import com.tobi.mc.parser.ast.lexer.LexerConstants.OFFSET_NODES
+import com.tobi.mc.parser.ast.lexer.LexerConstants.YYEOF
+import com.tobi.mc.parser.ast.lexer.LexerConstants.ZZ_ACTION
+import com.tobi.mc.parser.ast.lexer.LexerConstants.ZZ_ATTRIBUTE
+import com.tobi.mc.parser.ast.lexer.LexerConstants.ZZ_BUFFERSIZE
+import com.tobi.mc.parser.ast.lexer.LexerConstants.ZZ_ROWMAP
+import com.tobi.mc.parser.ast.lexer.LexerConstants.ZZ_TRANS
+import com.tobi.mc.parser.ast.lexer.LexerConstants.zzCMap
 
-internal class Lexer(private val reader: SimpleReader) {
-    /**
-     * this buffer contains the current text to be matched and is
-     * the source of the yytext() string
-     */
-    private var zzBuffer = CharArray(LexerConstants.ZZ_BUFFERSIZE)
-    /**
-     * the textposition at the last accepting state
-     */
+internal class Lexer(
+    private val zzReader: SimpleReader
+) {
+    private var zzBuffer = CharArray(ZZ_BUFFERSIZE)
     private var zzMarkedPos = 0
-    /**
-     * the current text position in the buffer
-     */
     private var zzCurrentPos = 0
-    /**
-     * startRead marks the beginning of the yytext() string in the buffer
-     */
     private var zzStartRead = 0
-    /**
-     * endRead marks the last character in the buffer, that has been read
-     * from input
-     */
     private var zzEndRead = 0
-    /**
-     * number of newlines encountered up to the start of the matched text
-     */
-    private var yyline = 0
-    /**
-     * the number of characters from the last newline up to the start of the
-     * matched text
-     */
-    private var yycolumn = 0
-    /**
-     * zzAtEOF == true iff the scanner is at the EOF
-     */
     private var zzAtEOF = false
-    /**
-     * The number of occupied positions in zzBuffer beyond zzEndRead.
-     * When a lead/high surrogate has been read from the input stream
-     * into the final zzBuffer position, this will have a value of 1;
-     * otherwise, it will have a value of 0.
-     */
     private var zzFinalHighSurrogate = 0
+    private var yyline = 0
+    private var yycolumn = 0
 
-    private fun makeNode(type: LexerNodeType, value: Any): LexerNode {
+    private fun makeNode(type: LexerNodeType, value: Any? = null): LexerNode {
         return LexerNode(type, value, yyline, yycolumn)
     }
 
-    /**
-     * Refills the input buffer.
-     *
-     * @return `false`, if there was new input.
-     */
-    private fun zzRefill(): Boolean { /* first: make room (if you can) */
+    private fun zzRefill(): Boolean {
         if (zzStartRead > 0) {
             zzEndRead += zzFinalHighSurrogate
             zzFinalHighSurrogate = 0
-            ReaderHelpers.copyArray(
-                zzBuffer,
-                zzStartRead,
-                zzBuffer,
-                0,
-                zzEndRead - zzStartRead
-            )
-            /* translate stored positions */zzEndRead -= zzStartRead
+            ReaderHelpers.copyArray(zzBuffer, zzStartRead, zzBuffer, 0, zzEndRead - zzStartRead)
+            zzEndRead -= zzStartRead
             zzCurrentPos -= zzStartRead
             zzMarkedPos -= zzStartRead
             zzStartRead = 0
         }
-        /* is the buffer big enough? */if (zzCurrentPos >= zzBuffer.size - zzFinalHighSurrogate) { /* if not: blow it up */
+        if (zzCurrentPos >= zzBuffer.size - zzFinalHighSurrogate) {
             val newBuffer = CharArray(zzBuffer.size * 2)
             ReaderHelpers.copyArray(zzBuffer, 0, newBuffer, 0, zzBuffer.size)
             zzBuffer = newBuffer
             zzEndRead += zzFinalHighSurrogate
             zzFinalHighSurrogate = 0
         }
-        /* fill the buffer with new input */
         val requested = zzBuffer.size - zzEndRead
-        val numRead = reader.read(zzBuffer, zzEndRead, requested)
-        /* not supposed to occur according to specification of java.io.Reader */if (numRead == 0) {
-            throw RuntimeException("Reader returned 0 characters. See JFlex examples for workaround.")
+        val numRead = zzReader.read(zzBuffer, zzEndRead, requested)
+        if (numRead == 0) {
+            throw RuntimeException("Reader returned 0 characters. See JFlex examples/zero-reader for a workaround.")
         }
-        if (numRead > 0) {
-            zzEndRead += numRead
-            /* If numRead == requested, we might have requested to few chars to
-                encode a full Unicode character. We assume that a Reader would
-                otherwise never return half characters. */
-            if (numRead == requested) {
-                val ch = zzBuffer[zzEndRead - 1]
-                if (ch.isHighSurrogate()) {
-                    --zzEndRead
-                    zzFinalHighSurrogate = 1
-                }
+        if(numRead < 0) {
+            return true
+        }
+        zzEndRead += numRead
+        if(zzBuffer[zzEndRead - 1].isHighSurrogate()) {
+            if (numRead == requested) { // We requested too few chars to encode a full Unicode character
+                --zzEndRead
+                zzFinalHighSurrogate = 1
+            } else {     // There is room in the buffer for at least one more char
+                val c = zzReader.read() // Expecting to read a paired low surrogate char
+                if (c == -1) return true
+                else zzBuffer[zzEndRead++] = c.toChar()
             }
-            /* potentially more input available */return false
         }
-        /* numRead < 0 ==> end of stream */return true
+        return false
     }
 
     fun close() {
-        zzAtEOF = true /* indicate end of file */
-        zzEndRead = zzStartRead /* invalidate buffer    */
-        reader.close()
+        zzAtEOF = true // indicate end of file
+        zzEndRead = zzStartRead // invalidate buffer
+        zzReader.close()
     }
 
-    /**
-     * Returns the text matched by the current regular expression.
-     */
     fun yytext(): String {
         return String(zzBuffer, zzStartRead, zzMarkedPos - zzStartRead)
     }
 
-    /**
-     * Returns the character at position <tt>pos</tt> from the
-     * matched text.
-     *
-     *
-     * It is equivalent to yytext().charAt(pos), but faster
-     *
-     * @param pos the position of the character to fetch.
-     * A value from 0 to yylength()-1.
-     * @return the character at position pos
-     */
-    fun yycharat(pos: Int): Char {
-        return zzBuffer[zzStartRead + pos]
-    }
-
-    /**
-     * Returns the length of the matched text region.
-     */
-    fun yylength(): Int {
-        return zzMarkedPos - zzStartRead
-    }
-
-    /**
-     * Resumes scanning until the next regular expression is matched,
-     * the end of input is encountered or an I/O-Error occurs.
-     *
-     * @return the next token
-     */
     fun yylex(): LexerNode? {
         var zzInput: Int
         var zzAction: Int
+
         // cached fields:
         var zzCurrentPosL: Int
         var zzMarkedPosL: Int
         var zzEndReadL = zzEndRead
         var zzBufferL = zzBuffer
-        val zzAttrL = LexerConstants.ZZ_ATTRIBUTE
+        val zzAttrL = ZZ_ATTRIBUTE
         while (true) {
             zzMarkedPosL = zzMarkedPos
             var zzR = false
@@ -161,11 +94,7 @@ internal class Lexer(private val reader: SimpleReader) {
             var zzCharCount: Int
             zzCurrentPosL = zzStartRead
             while (zzCurrentPosL < zzMarkedPosL) {
-                zzCh = ReaderHelpers.codePointAt(
-                    zzBufferL,
-                    zzCurrentPosL,
-                    zzMarkedPosL
-                )
+                zzCh = ReaderHelpers.codePointAt(zzBufferL, zzCurrentPosL, zzMarkedPosL)
                 zzCharCount = ReaderHelpers.charCount(zzCh)
                 when (zzCh.toChar()) {
                     '\u000B', '\u000C', '\u0085', '\u2028', '\u2029' -> {
@@ -189,15 +118,20 @@ internal class Lexer(private val reader: SimpleReader) {
                 }
                 zzCurrentPosL += zzCharCount
             }
-            if (zzR) { // peek one character ahead if it is \n (if we have counted one line too much)
+            if (zzR) {
+                // peek one character ahead if it is
+                // (if we have counted one line too much)
                 var zzPeek: Boolean
-                if (zzMarkedPosL < zzEndReadL) zzPeek = zzBufferL[zzMarkedPosL] == '\n' else if (zzAtEOF) zzPeek =
-                    false else {
-                    val eof = zzRefill()
-                    zzEndReadL = zzEndRead
-                    zzMarkedPosL = zzMarkedPos
-                    zzBufferL = zzBuffer
-                    zzPeek = if (eof) false else zzBufferL[zzMarkedPosL] == '\n'
+                when {
+                    zzMarkedPosL < zzEndReadL -> zzPeek = zzBufferL[zzMarkedPosL] == '\n'
+                    zzAtEOF -> zzPeek = false
+                    else -> {
+                        val eof = zzRefill()
+                        zzEndReadL = zzEndRead
+                        zzMarkedPosL = zzMarkedPos
+                        zzBufferL = zzBuffer
+                        zzPeek = if (eof) false else zzBufferL[zzMarkedPosL] == '\n'
+                    }
                 }
                 if (zzPeek) yyline--
             }
@@ -205,11 +139,8 @@ internal class Lexer(private val reader: SimpleReader) {
             zzStartRead = zzMarkedPosL
             zzCurrentPos = zzStartRead
             zzCurrentPosL = zzCurrentPos
-            // the current state of the DFA
-/*
-             * the current lexical state
-             */
-            var zzState = LexerConstants.ZZ_LEXSTATE[LexerConstants.YYINITIAL]
+            var zzState = 0
+
             // set up zzAction for empty match case:
             var zzAttributes = zzAttrL[zzState]
             if (zzAttributes and 1 == 1) {
@@ -217,16 +148,13 @@ internal class Lexer(private val reader: SimpleReader) {
             }
             while (true) {
                 if (zzCurrentPosL < zzEndReadL) {
-                    zzInput = ReaderHelpers.codePointAt(
-                        zzBufferL,
-                        zzCurrentPosL,
-                        zzEndReadL
-                    )
+                    zzInput = ReaderHelpers.codePointAt(zzBufferL, zzCurrentPosL, zzEndReadL)
                     zzCurrentPosL += ReaderHelpers.charCount(zzInput)
                 } else if (zzAtEOF) {
-                    zzInput = LexerConstants.YYEOF
+                    zzInput = YYEOF
                     break
-                } else { // store back cached positions
+                } else {
+                    // store back cached positions
                     zzCurrentPos = zzCurrentPosL
                     zzMarkedPos = zzMarkedPosL
                     val eof = zzRefill()
@@ -236,95 +164,56 @@ internal class Lexer(private val reader: SimpleReader) {
                     zzBufferL = zzBuffer
                     zzEndReadL = zzEndRead
                     if (eof) {
-                        zzInput = LexerConstants.YYEOF
+                        zzInput = YYEOF
                         break
                     } else {
-                        zzInput = ReaderHelpers.codePointAt(
-                            zzBufferL,
-                            zzCurrentPosL,
-                            zzEndReadL
-                        )
+                        zzInput = ReaderHelpers.codePointAt(zzBufferL, zzCurrentPosL, zzEndReadL)
                         zzCurrentPosL += ReaderHelpers.charCount(zzInput)
                     }
                 }
-                val zzNext = LexerConstants.ZZ_TRANS[LexerConstants.ZZ_ROWMAP[zzState] + LexerConstants.getCMapAtIndex(zzInput)]
+                val zzNext = ZZ_TRANS[ZZ_ROWMAP[zzState] + zzCMap(zzInput)]
                 if (zzNext == -1) break
                 zzState = zzNext
                 zzAttributes = zzAttrL[zzState]
-                if (zzAttributes and 1 == 1) {
+                if ((zzAttributes and 1) == 1) {
                     zzAction = zzState
                     zzMarkedPosL = zzCurrentPosL
                     if (zzAttributes and 8 == 8) break
                 }
             }
+
             // store back cached position
             zzMarkedPos = zzMarkedPosL
-            if (zzInput == LexerConstants.YYEOF && zzStartRead == zzCurrentPos) {
+            if (zzInput == YYEOF && zzStartRead == zzCurrentPos) {
                 zzAtEOF = true
                 return null
             }
-            val switchValue = if (zzAction < 0) zzAction else LexerConstants.ZZ_ACTION[zzAction]
-            if (switchValue in 37..72) {
-                break
+            when(val actualAction = if (zzAction < 0) zzAction else ZZ_ACTION[zzAction]) {
+                1, 2 -> {}
+                else -> return resolveAction(actualAction)
             }
-            if (switchValue == 1 || switchValue == 2) {
-                continue
-            }
-            return getNode(switchValue)
         }
-        return null
     }
 
-    private fun getNode(code: Int): LexerNode {
-        if (code == 3) {
-            val text = yytext()
-            return try {
-                makeNode(LexerNodeType.CONSTANT, text.toLong())
-            } catch (e: NumberFormatException) {
-                throw ParseException("Invalid integer", FileLocation(yyline, yycolumn), FileLocation(yyline, yycolumn + text.length))
+    private fun resolveAction(action: Int): LexerNode {
+        if(action < 0 || action - 3 >= OFFSET_NODES.size) {
+            throw RuntimeException("Error: could not match input $action")
+        }
+        return when(action) {
+            12 -> {
+                val text = yytext()
+                try {
+                    makeNode(LexerNodeType.CONSTANT, text.toLong())
+                } catch (e: NumberFormatException) {
+                    throw RuntimeException("Invalid integer $text")
+                }
             }
+            17 -> makeNode(LexerNodeType.IDENTIFIER, yytext())
+            21 -> {                 //Remove the beginning and trailing quotes from the string
+                val text = yytext()
+                makeNode(LexerNodeType.TEXT, StringConverter.convertToString(text))
+            }
+            else -> makeNode(OFFSET_NODES[action - 3]!!)
         }
-        if (code == 4) {
-            return makeNode(LexerNodeType.IDENTIFIER, yytext())
-        }
-        if (code == 22) {
-            return makeNode(LexerNodeType.STRING, StringConverter.convertToString(yytext()))
-        }
-        val typesArray = arrayOf(
-            LexerNodeType.ADD,
-            LexerNodeType.DIVIDE,
-            LexerNodeType.MULTIPLY,
-            LexerNodeType.LESS_THAN,
-            LexerNodeType.ASSIGNMENT,
-            LexerNodeType.GREATER_THAN,
-            LexerNodeType.NOT,
-            LexerNodeType.SEMI_COLON,
-            LexerNodeType.LEFT_CURLY,
-            LexerNodeType.RIGHT_CURLY,
-            LexerNodeType.COMMA,
-            null,
-            LexerNodeType.LEFT_BRACKET,
-            LexerNodeType.RIGHT_BRACKET,
-            LexerNodeType.MINUS,
-            LexerNodeType.MOD,
-            LexerNodeType.IF,
-            null,
-            LexerNodeType.LE_OP,
-            LexerNodeType.EQ_OP,
-            LexerNodeType.GE_OP,
-            LexerNodeType.NE_OP,
-            LexerNodeType.INT,
-            LexerNodeType.AUTO,
-            LexerNodeType.ELSE,
-            LexerNodeType.VOID,
-            LexerNodeType.BREAK,
-            LexerNodeType.WHILE,
-            LexerNodeType.RETURN,
-            LexerNodeType.EXTERN,
-            LexerNodeType.FUNCTION,
-            LexerNodeType.CONTINUE
-        )
-        val type = typesArray.getOrNull(code - 5) ?: throw ParseException(LexerConstants.ERROR_NO_MATCH, null, null)
-        return LexerNode(type, null, yyline, yycolumn)
     }
 }

@@ -1,4 +1,4 @@
-package com.tobi.mc.parser.optimisation.optimisations
+package com.tobi.mc.parser.optimisation.optimisations.number
 
 import com.tobi.mc.computable.Computable
 import com.tobi.mc.computable.Equals

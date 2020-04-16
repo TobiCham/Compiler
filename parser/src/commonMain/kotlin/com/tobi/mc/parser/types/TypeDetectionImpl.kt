@@ -45,6 +45,7 @@ internal object TypeDetectionImpl : TypeDetection {
                 arg1.ensureNumeric(name, state)
                 arg2.ensureNumeric(name, state)
             }
+            is UnaryMinus -> expression.ensureNumeric("unary minus", state)
             is Negation -> negation.ensureNumeric("negation", state)
             is StringConcat -> {
                 str1.ensureString("string concatenation", state)
@@ -139,7 +140,7 @@ internal object TypeDetectionImpl : TypeDetection {
     }
 
     private fun Computable.ensureNumeric(name: String, state: VariableTypeState) {
-        ensureType(name, StringType, "int", state)
+        ensureType(name, IntType, "int", state)
     }
 
     private fun Computable.ensureString(name: String, state: VariableTypeState) {
@@ -160,7 +161,7 @@ internal object TypeDetectionImpl : TypeDetection {
             returnType.mapToType()
         }
         is GetVariable -> state.getType(name)!!
-        is MathOperation, is Negation -> IntType
+        is MathOperation, is Negation, is UnaryMinus -> IntType
         is StringConcat -> StringType
         is FunctionCall -> {
             val function = function.calculateType(state)

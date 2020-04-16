@@ -23,12 +23,10 @@ auto squareRoot(int n) {
 }
 
 auto printResult(int x) {
-    printString("x = ");
-    printInt(x);
-    printString("\n");
+    printString("x = " ++ intToString(x) ++ "\n");
 }
 
-auto _ = printString("Enter 3 integers representing a quadratic in the form: ax^2 + bx + c = 0:\n");
+printString("Enter 3 integers representing a quadratic in the form: ax^2 + bx + c = 0:\n");
 
 auto a = readInt();
 auto b = readInt();

@@ -8,11 +8,9 @@ auto makeRandom() {
 		auto result = 0;
 		start = ((start * multiplier) + increment) % mod;
 
-		if(max > 0) {
-			result = start % max;
-		} else {
-			result = start;
-		}
+		if(max > 0) result = start % max;
+		else result = start;
+
 		if(result < 0) {
 			result = result * -1;
 		}
@@ -41,20 +39,14 @@ auto readGuess() {
 auto printHowToPlay() {
 	printString("Higher or lower!\nTry to guess the number in as few guesses as possible!\n");
 	printString("Enter a maximum:\n");
-	return 0;
 }
 
-auto printGuesses(int guesses) {
-	printInt(guesses);
-
-	if(guesses == 1) {
-		printString(" move");
-	} else {
-		printString(" moves");
-	}
+auto formatGuesses(int guesses) {
+    if(guesses == 1) return "1 guess";
+    else return intToString(guesses) ++ " guesses";
 }
 
-auto _ = printHowToPlay();
+printHowToPlay();
 
 auto gen = makeRandom();
 auto maximum = readMaximum();
@@ -63,10 +55,9 @@ auto numb = gen(maximum);
 auto guesses = 1;
 while(1) {
 	auto guess = readGuess();
-	
-	if(guess == numb) {
-		break;
-	} else if(guess < numb) {
+	if(guess == numb) break;
+
+	if(guess < numb) {
 		printString("Higher!\n");
 	} else {
 		printString("Lower!\n");
@@ -74,7 +65,4 @@ while(1) {
 	guesses = guesses + 1;
 }
 
-printString("Correct! You took ");
-printGuesses(guesses);
-printString("!\nThanks for playing!\n");
-
+printString("Correct! You took " ++ formatGuesses(guesses) ++ "!\nThanks for playing!\n");

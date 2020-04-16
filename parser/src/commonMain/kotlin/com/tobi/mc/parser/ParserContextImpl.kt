@@ -1,16 +1,15 @@
 package com.tobi.mc.parser
 
-import com.tobi.mc.computable.DefaultContext
-import com.tobi.mc.computable.FunctionDeclaration
 import com.tobi.mc.computable.Program
-import com.tobi.mc.parser.ast.ASTConverter
 import com.tobi.mc.parser.ast.SimpleStringReader
 import com.tobi.mc.parser.ast.lexer.Lexer
 import com.tobi.mc.parser.ast.lexer.LexerNode
 import com.tobi.mc.parser.ast.lexer.LexerNodeType
 import com.tobi.mc.parser.ast.parser.Parser
-import com.tobi.mc.parser.ast.parser.ParserNode
-import com.tobi.mc.parser.ast.parser.runtime.*
+import com.tobi.mc.parser.ast.parser.runtime.FileLocation
+import com.tobi.mc.parser.ast.parser.runtime.Scanner
+import com.tobi.mc.parser.ast.parser.runtime.Symbol
+import com.tobi.mc.parser.ast.parser.runtime.SymbolFactory
 import com.tobi.mc.parser.optimisation.OptimisationImpl
 import com.tobi.mc.parser.optimisation.OptimisationsList
 import com.tobi.mc.parser.syntax.SyntaxRulesList
@@ -44,26 +43,17 @@ internal class ParserContextImpl : ParserContext {
         }
     }
 
-    private fun parseProgram(program: String, context: DefaultContext = DefaultContext()): Program {
-        val actualProgram = """
-            void main() {
-                $program
-            }
-        """.trimIndent()
-
-        val lexer = Lexer(SimpleStringReader(actualProgram))
+    private fun parseProgram(program: String): Program {
+        val lexer = Lexer(SimpleStringReader(program))
         val parser = Parser(object : Scanner {
             override fun next_token(): Symbol? {
                 val node = lexer.yylex() ?: return null
                 return convertNodeToToken(node)
             }
-        }, ComplexSymbolFactory(), ::convertIdToName)
+        }, SymbolFactory(), ::convertIdToName)
 
         val symbol = parser.parse()
-        val result = symbol.value as ParserNode
-        val rawAst = ASTConverter.convert(result) as FunctionDeclaration
-//
-        return Program(rawAst.body, context)
+        return symbol.value as Program
     }
 
     private fun convertNodeToToken(node: LexerNode): Symbol {
@@ -71,7 +61,7 @@ internal class ParserContextImpl : ParserContext {
         val endExtra = if(node.value != null) node.value.toString() else node.type.representation
         val endLoc = FileLocation(node.line, node.column + endExtra.length)
 
-        return ComplexSymbol(node.type.representation, node.type.parserId, loc, endLoc, node.value)
+        return Symbol(node.type.representation, node.type.parserId, loc, endLoc, node.value)
     }
 
     private fun convertIdToName(id: Int) = LexerNodeType.values().find { it.parserId == id }?.representation ?: "unknown"

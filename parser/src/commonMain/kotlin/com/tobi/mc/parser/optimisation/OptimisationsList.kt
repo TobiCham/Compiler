@@ -5,6 +5,7 @@ import com.tobi.mc.parser.optimisation.optimisations.number.*
 
 internal object OptimisationsList {
     val NUMBER_OPTIMISATIONS = arrayOf(
+        UnaryMinusOptimisation,
         NegationOptimisation,
         NegationOfEquals,
         AddZeroOptimisation,
@@ -14,7 +15,8 @@ internal object OptimisationsList {
         TwoNumberOptimisation,
         RedundantVariablesOptimisation,
         NestedSequenceOptimisation,
-        AssociativityOptimisation
+        AssociativityOptimisation,
+        StringConcatOptimisation
     )
 
     val DEFAULT_OPTIMISATIONS = arrayOf(

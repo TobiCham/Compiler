@@ -1,249 +1,241 @@
-package test;
+//package com.tobi.mc.parser.ast.parser;
 
-import java_cup.runtime.*;
+import com.tobi.mc.ParseException;
+import com.tobi.mc.computable.*;
+import com.tobi.mc.computable.data.*;
+import java.util.List;
+import java.util.ArrayList;
+import java_cup.runtime.ComplexSymbol;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 
 parser code {:
+    private void throwException(String message) throws ParseException {
+        ComplexSymbol symbol = (ComplexSymbol) this.getStack().peek();
+        throw new ParseException(message, null, symbol.getLocationRight());
+    }
+    private void throwException(String message, int stackIndex) throws ParseException {
+        ComplexSymbol symbol = (ComplexSymbol) this.getStack().elementAt(stackIndex);
+        throw new ParseException(message, null, symbol.getLocationRight());
+    }
+    private boolean isString(DataComputable computable) {
+        return computable instanceof DataTypeString || computable instanceof StringConcat ||computable instanceof GetVariable || computable instanceof FunctionCall;
+    }
+    private boolean isMath(DataComputable computable) {
+        return computable instanceof DataTypeInt || computable instanceof MathOperation || computable instanceof UnaryMinus || computable instanceof Negation ||computable instanceof GetVariable || computable instanceof FunctionCall;
+    }
+    private boolean isCallable(DataComputable computable) {
+        return computable instanceof GetVariable || computable instanceof FunctionCall;
+    }
+    private MathOperation createMath(int stackTop, DataComputable arg1, DataComputable arg2, BiFunction<DataComputable, DataComputable, MathOperation> createMath) throws ParseException {
+        if(!isMath(arg1)) throwException("Invalid math expression", stackTop - 2);
+        if(!isMath(arg2)) throwException("Invalid math expression");
+
+        return createMath.apply(arg1, arg2);
+    }
+    private DataComputable createMath(DataComputable arg, Function<DataComputable, DataComputable> createMath) throws ParseException {
+        if(!isMath(arg)) throwException("Invalid math expression");
+
+        return createMath.apply(arg);
+    }
+:}
+
+terminal IDENTIFIER, CONSTANT, TEXT, LE_OP, GE_OP, EQ_OP, NE_OP, EXTERN, AUTO, INT, STRING, VOID, FUNCTION, IF, ELSE, WHILE, CONTINUE, BREAK, RETURN, COMMA, MINUS, ADD, MULTIPLY, DIVIDE, MOD, GREATER_THAN, LESS_THAN, SEMI_COLON, ASSIGNMENT, LEFT_CURLY, RIGHT_CURLY, LEFT_BRACKET, RIGHT_BRACKET, NOT, STRING_CONCAT;
+
+nonterminal DataType dataType;
+
+nonterminal DataTypeInt integer;
+nonterminal DataTypeString string;
+
+nonterminal Parameter parameter;
+nonterminal List<Parameter> functionParams;
+
+nonterminal FunctionDeclaration functionDeclaration;
+nonterminal List<DataComputable> functionArgs;
+
+nonterminal GetVariable getVariable;
+nonterminal SetVariable setVariable;
+nonterminal DefineVariable defineVariable;
+
+nonterminal FunctionCall functionCall;
+
+nonterminal DataComputable dataComputable;
+nonterminal DataComputable mathComputable;
+
+nonterminal Computable expression;
+nonterminal Computable terminatedExpression;
+
+nonterminal ExpressionSequence expressionSequence;
+nonterminal List<Computable> expressionList;
+
+nonterminal ContinueStatement continueStatement;
+nonterminal BreakStatement breakStatement;
+nonterminal ReturnExpression returnExpression;
+
+nonterminal WhileLoop whileLoop;
+nonterminal IfStatement ifStatement;
+
+nonterminal Program program;
+
+precedence nonassoc IF;
+precedence nonassoc ELSE;
+
+precedence left STRING_CONCAT;
+precedence left EQ_OP, NE_OP, LESS_THAN, GREATER_THAN, LE_OP, GE_OP;
+precedence left ADD, MINUS;
+precedence left MULTIPLY, DIVIDE, MOD;
+precedence right MINUS, NOT;
+precedence nonassoc LEFT_BRACKET;
+
+start with program;
+
+program ::= expressionList:list {: RESULT = new Program(new ExpressionSequence(list), new DefaultContext()); :};
+
+dataType ::=
+    STRING {: RESULT = DataType.STRING; :} |
+    INT {: RESULT = DataType.INT; :} |
+    FUNCTION {: RESULT = DataType.FUNCTION; :} |
+    VOID {: RESULT = DataType.VOID; :} |
+    AUTO {: RESULT = null; :};
+
+integer ::= CONSTANT:value {: RESULT = new DataTypeInt((long) value); :};
+string ::= TEXT:value {: RESULT = new DataTypeString((String) value); :};
+
+parameter ::= dataType:type IDENTIFIER:name {:
+    if(type == DataType.VOID) throwException("Can't define a parameter type as void");
+    else if(type == null) throwException("Can't define a parameter type as auto");
+
+    RESULT = new Parameter(type, (String) name);
 :};
+functionParams ::=
+    parameter:param {: RESULT = new ArrayList<Parameter>(); RESULT.add(param); :} |
+    functionParams:params COMMA parameter:param {: params.add(param); RESULT = params; :};
 
-terminal IDENTIFIER, CONSTANT, STRING, LE_OP, GE_OP, EQ_OP, NE_OP, EXTERN, AUTO, INT, VOID, FUNCTION, IF, ELSE, WHILE, CONTINUE, BREAK, RETURN, COMMA, MINUS, ADD, MULTIPLY, DIVIDE, MOD, GREATER_THAN, LESS_THAN, SEMI_COLON, ASSIGNMENT, LEFT_CURLY, RIGHT_CURLY, LEFT_BRACKET, RIGHT_BRACKET, NOT;
+getVariable ::= IDENTIFIER:name {: RESULT = new GetVariable((String) name, -1); :};
+setVariable ::= IDENTIFIER:name ASSIGNMENT dataComputable:assignment {:
+    RESULT = new SetVariable((String) name, -1, assignment);
+:};
+defineVariable ::=
+    dataType:type IDENTIFIER:name ASSIGNMENT dataComputable:value {:
+        if(type == DataType.VOID) {
+            throwException("Cannot define variables as void");
+        }
+        RESULT = new DefineVariable((String) name, value, type);
+    :}
+    |
+    dataType:type IDENTIFIER:name {:
+        if(type == null) {
+            throwException("Cannot define late init variables as auto");
+        }
+        throwException("Late init variables are not yet supported");
+    :};
 
-non terminal Node goal, primary_expression, postfix_expression, argument_expression_list, unary_expression, unary_operator, multiplicative_expression, additive_expression, relational_expression, equality_expression, assignment_expression, expression, declaration, declaration_specifiers, init_declarator_list, init_declarator, storage_class_specifier, type_specifier, declarator, direct_declarator, parameter_list, parameter_declaration, identifier_list, abstract_declarator, direct_abstract_declarator, statement, compound_statement, declaration_list, statement_list, expression_statement, selection_statement, iteration_statement, jump_statement, translation_unit, external_declaration, function_definition;
+dataComputable ::=
+    LEFT_BRACKET dataComputable:exp RIGHT_BRACKET {: RESULT = exp; :} |
+    string:str {: RESULT = str; :} |
+    functionCall:call {: RESULT = call; :} |
+    getVariable:variable {: RESULT = variable; :} |
+    dataComputable:exp1 STRING_CONCAT dataComputable:exp2 {:
+        if(!isString(exp1)) throwException("Can only concatenate strings", stackTop - 2);
+        if(!isString(exp2)) throwException("Can only concatenate strings");
+        RESULT = new StringConcat(exp1, exp2);
+    :} |
+    mathComputable:math {: RESULT = math; :};
 
-start with goal;
+mathComputable ::=
+    integer:value {: RESULT = value; :} |
+    MINUS dataComputable:math {: RESULT = createMath(math, UnaryMinus::new); :} |
+    NOT dataComputable:math {: RESULT = createMath(math, Negation::new); :} |
+    dataComputable:arg1 ADD dataComputable:arg2 {: RESULT = createMath(stackTop, arg1, arg2, Add::new); :} |
+    dataComputable:arg1 MINUS dataComputable:arg2 {: RESULT = createMath(stackTop, arg1, arg2, Subtract::new); :} |
+    dataComputable:arg1 MULTIPLY dataComputable:arg2 {: RESULT = createMath(stackTop, arg1, arg2, Multiply::new); :} |
+    dataComputable:arg1 DIVIDE dataComputable:arg2 {: RESULT = createMath(stackTop, arg1, arg2, Divide::new); :} |
+    dataComputable:arg1 MOD dataComputable:arg2 {: RESULT = createMath(stackTop, arg1, arg2, Mod::new); :} |
+    dataComputable:arg1 EQ_OP dataComputable:arg2 {: RESULT = createMath(stackTop, arg1, arg2, Equals::new); :} |
+    dataComputable:arg1 NE_OP dataComputable:arg2 {: RESULT = createMath(stackTop, arg1, arg2, NotEquals::new); :} |
+    dataComputable:arg1 LESS_THAN dataComputable:arg2 {: RESULT = createMath(stackTop, arg1, arg2, LessThan::new); :} |
+    dataComputable:arg1 GREATER_THAN dataComputable:arg2 {: RESULT = createMath(stackTop, arg1, arg2, GreaterThan::new); :} |
+    dataComputable:arg1 LE_OP dataComputable:arg2 {: RESULT = createMath(stackTop, arg1, arg2, LessThanOrEqualTo::new); :} |
+    dataComputable:arg1 GE_OP dataComputable:arg2 {: RESULT = createMath(stackTop, arg1, arg2, GreaterThanOrEqualTo::new); :};
 
-goal ::= translation_unit:unit {: RESULT=unit; :};
+functionCall ::=
+    dataComputable:func LEFT_BRACKET functionArgs:args RIGHT_BRACKET {:
+        if(!isCallable(func)) throwException("Not callable", stackTop - 3);
+        RESULT = new FunctionCall(func, args);
+    :} |
+    dataComputable:func LEFT_BRACKET RIGHT_BRACKET {:
+        if(!isCallable(func)) throwException("Not callable", stackTop - 2);
+        RESULT = new FunctionCall(func, new ArrayList<>());
+    :};
 
-primary_expression ::=
-    IDENTIFIER:value {: RESULT = new Node(NodeType.IDENTIFIER, value); :}
+functionArgs ::=
+    dataComputable:arg {:
+        RESULT = new ArrayList<DataComputable>();
+        RESULT.add(arg);
+    :}
     |
-    CONSTANT:value {: RESULT = new Node(NodeType.CONSTANT, value); :}
-    |
-    STRING:value {: RESULT = new Node(NodeType.STRING, value); :}
-    |
-    LEFT_BRACKET expression:exp RIGHT_BRACKET {: RESULT = exp; :};
+    functionArgs:args COMMA dataComputable:arg {:
+        args.add(arg);
+        RESULT = args;
+    :};
 
-postfix_expression ::=
-    primary_expression:exp {: RESULT = exp; :}
+functionDeclaration ::=
+    dataType:returnType IDENTIFIER:name LEFT_BRACKET functionParams:params RIGHT_BRACKET expressionSequence:body {:
+        RESULT = new FunctionDeclaration((String) name, params, body, returnType);
+    :}
     |
-    postfix_expression:exp LEFT_BRACKET RIGHT_BRACKET {: RESULT = new Node(NodeType.APPLY, exp, null); :}
-    |
-    postfix_expression:exp LEFT_BRACKET argument_expression_list:args RIGHT_BRACKET {: RESULT = new Node(NodeType.APPLY, exp, args); :};
+    dataType:returnType IDENTIFIER:name LEFT_BRACKET RIGHT_BRACKET expressionSequence:body {:
+        RESULT = new FunctionDeclaration((String) name, new ArrayList<>(), body, returnType);
+    :};
 
-argument_expression_list ::=
-    assignment_expression:exp {: RESULT = exp; :}
-    |
-    argument_expression_list:e1 COMMA assignment_expression:e2 {: RESULT = new Node(NodeType.PARAMS_SEPARATOR, e1, e2); :};
-
-unary_expression ::=
-    postfix_expression:exp {: RESULT = exp; :}
-    |
-    unary_operator:op unary_expression:exp {: RESULT = new Node(NodeType.INT, op, exp); :};
-
-unary_operator ::=
-    ADD:op {: RESULT = new Node(NodeType.ADD); :}
-    |
-    MINUS:op {: RESULT = new Node(NodeType.SUBTRACT); :}
-    |
-    NOT:op {: RESULT = new Node(NodeType.NOT); :};
-
-multiplicative_expression ::=
-    unary_expression:expression {: RESULT = expression; :}
-    |
-    multiplicative_expression:e1 MULTIPLY unary_expression:e2 {: RESULT = new Node(NodeType.MULTIPLY, e1, e2); :}
-    |
-    multiplicative_expression:e1 DIVIDE unary_expression:e2 {: RESULT = new Node(NodeType.DIVIDE, e1, e2); :}
-    |
-    multiplicative_expression:e1 MOD unary_expression:e2 {: RESULT = new Node(NodeType.MOD, e1, e2); :};
-
-additive_expression ::=
-    multiplicative_expression:expression {: RESULT = expression; :}
-    |
-    additive_expression:e1 ADD multiplicative_expression:e2 {: RESULT = new Node(NodeType.ADD, e1, e2); :}
-    |
-    additive_expression:e1 MINUS multiplicative_expression:e2 {: RESULT = new Node(NodeType.SUBTRACT, e1, e2); :};
-
-relational_expression ::=
-    additive_expression:exp {: RESULT = exp; :}
-    |
-    relational_expression:e1 LESS_THAN additive_expression:e2 {: RESULT = new Node(NodeType.LESS_THAN, e1, e2); :}
-    |
-    relational_expression:e1 GREATER_THAN additive_expression:e2 {: RESULT = new Node(NodeType.MORE_THAN, e1, e2); :}
-    |
-    relational_expression:e1 LE_OP additive_expression:e2 {: RESULT = new Node(NodeType.LESS_EQ_TO, e1, e2); :}
-    |
-    relational_expression:e1 GE_OP additive_expression:e2 {: RESULT = new Node(NodeType.MORE_EQ_TO, e1, e2); :};
-
-equality_expression ::=
-    relational_expression:exp {: RESULT = exp; :}
-    |
-    equality_expression:e1 EQ_OP relational_expression:e2 {: RESULT = new Node(NodeType.EQUALS, e1, e2); :}
-    |
-    equality_expression:e1 NE_OP relational_expression:e2 {: RESULT = new Node(NodeType.NOT_EQUALS, e1, e2); :};
-
-assignment_expression ::=
-    equality_expression:exp {: RESULT = exp; :}
-    |
-    unary_expression:e1 ASSIGNMENT assignment_expression:e2 {: RESULT = new Node(NodeType.ASSIGNMENT, e1, e2); :};
+terminatedExpression ::=
+    setVariable:setVar {: RESULT = setVar; :} |
+    defineVariable:def {: RESULT = def; :} |
+    dataComputable:data {: RESULT = data; :} |
+    breakStatement:statement {: RESULT = statement; :} |
+    continueStatement:statement {: RESULT = statement; :} |
+    returnExpression:exp {: RESULT = exp; :};
 
 expression ::=
-    assignment_expression:exp {: RESULT = exp; :}
-    |
-    expression:e1 COMMA assignment_expression:e2 {: new Node(NodeType.PARAMS_SEPARATOR, e1, e2); :};
+    terminatedExpression:exp SEMI_COLON {: RESULT = exp; :} |
+    functionDeclaration:def {: RESULT = def; :} |
+    whileLoop:loop {: RESULT = loop; :} |
+    ifStatement:ifStatement {: RESULT = ifStatement; :};
 
-declaration ::=
-    declaration_specifiers:dec SEMI_COLON {: RESULT = dec; :}
-    |
-    function_definition:def {: RESULT = def; :}
-    |
-    declaration_specifiers:dec init_declarator_list:list SEMI_COLON {: RESULT = new Node(NodeType.TILDE, dec, list); :};
+expressionList ::=
+    expression:exp {: RESULT = new ArrayList<Computable>(); RESULT.add(exp); :} |
+    expressionList:list expression:exp {: list.add(exp); RESULT = list; :};
 
-declaration_specifiers ::=
-    storage_class_specifier:spec {: RESULT = spec; :}
+expressionSequence ::=
+    LEFT_CURLY RIGHT_CURLY {: RESULT = new ExpressionSequence(new ArrayList<Computable>()); :}
     |
-    storage_class_specifier:spec1 declaration_specifiers:spec2 {: RESULT = new Node(NodeType.TILDE, spec1, spec2); :}
+    LEFT_CURLY expressionList:list RIGHT_CURLY {: RESULT = new ExpressionSequence(list); :}
     |
-    type_specifier:spec {: RESULT = spec; :}
-    |
-    type_specifier:spec1 declaration_specifiers:spec2 {: RESULT = new Node(NodeType.TILDE, spec1, spec2); :};
+    expression:exp {:
+        List<Computable> list = new ArrayList<Computable>();
+        list.add(exp);
+        RESULT = new ExpressionSequence(list);
+    :};
 
-init_declarator_list ::=
-    init_declarator:dec {: RESULT = dec; :}
-    |
-    init_declarator_list:list COMMA init_declarator:dec {: RESULT = new Node(NodeType.PARAMS_SEPARATOR, list, dec); :};
+whileLoop ::= WHILE LEFT_BRACKET dataComputable:condition RIGHT_BRACKET expressionSequence:body {:
+    if(!isMath(condition)) throwException("Invalid condition", stackTop - 2);
+    RESULT = new WhileLoop(condition, body);
+:};
 
-init_declarator ::=
-    declarator:dec {: RESULT = dec; :}
-    |
-    declarator:dec ASSIGNMENT assignment_expression:exp {: RESULT = new Node(NodeType.ASSIGNMENT, dec, exp); :};
-
-storage_class_specifier ::=
-    EXTERN {: RESULT = new Node(NodeType.EXTERN); :}
-    |
-    AUTO {: RESULT = new Node(NodeType.AUTO); :};
-
-type_specifier ::=
-    VOID {: RESULT = new Node(NodeType.VOID); :}
-    |
-    INT {: RESULT = new Node(NodeType.INT); :}
-    |
-    FUNCTION {: RESULT = new Node(NodeType.FUNCTION); :};
-
-declarator ::= direct_declarator:dec {: RESULT = dec; :};
-
-direct_declarator ::=
-    IDENTIFIER:value {: RESULT = new Node(NodeType.IDENTIFIER, value); :}
-    |
-    LEFT_BRACKET declarator:dec RIGHT_BRACKET {: RESULT = dec; :}
-    |
-    direct_declarator:dec LEFT_BRACKET parameter_list:params RIGHT_BRACKET {: RESULT = new Node(NodeType.FUNCTION_PARAMS, dec, params); :}
-    |
-    direct_declarator:dec LEFT_BRACKET identifier_list:params RIGHT_BRACKET {: RESULT = new Node(NodeType.FUNCTION_PARAMS, dec, params); :}
-    |
-    direct_declarator:dec LEFT_BRACKET RIGHT_BRACKET {: RESULT = new Node(NodeType.FUNCTION_PARAMS, dec, null); :};
-
-parameter_list ::=
-    parameter_declaration:dec {: RESULT = dec; :}
-    |
-    parameter_list:list COMMA parameter_declaration:dec {: RESULT = new Node(NodeType.PARAMS_SEPARATOR, list, dec); :};
-
-parameter_declaration ::=
-    declaration_specifiers:spec declarator:dec {: RESULT = new Node(NodeType.TILDE, spec, dec); :}
-    |
-    declaration_specifiers:spec abstract_declarator:dec {: RESULT = new Node(NodeType.TILDE, spec, dec); :}
-    |
-    declaration_specifiers:dec {: RESULT = dec; :};
-
-identifier_list ::=
-    IDENTIFIER:value {: RESULT = new Node(NodeType.IDENTIFIER, value); :}
-    |
-    identifier_list:list COMMA IDENTIFIER:value {: RESULT = new Node(NodeType.PARAMS_SEPARATOR, list, new Node(NodeType.IDENTIFIER, value)); :};
-
-abstract_declarator ::=
-    direct_abstract_declarator:dec {: RESULT = dec; :};
-
-direct_abstract_declarator ::=
-    LEFT_BRACKET abstract_declarator:dec RIGHT_BRACKET {: RESULT = dec; :}
-    |
-    LEFT_BRACKET RIGHT_BRACKET {: RESULT = null; :}
-    |
-    LEFT_BRACKET parameter_list:list RIGHT_BRACKET {: RESULT = list; :}
-    |
-    direct_abstract_declarator:dec LEFT_BRACKET RIGHT_BRACKET {: RESULT = new Node(NodeType.APPLY, dec, null); :}
-    |
-    direct_abstract_declarator:dec LEFT_BRACKET parameter_list:params RIGHT_BRACKET {: RESULT = new Node(NodeType.APPLY, dec, params); :};
-
-statement ::=
-    compound_statement:statement {: RESULT = statement; :}
-    |
-    expression_statement:statement {: RESULT = statement; :}
-    |
-    selection_statement:statement {: RESULT = statement; :}
-    |
-    iteration_statement:statement {: RESULT = statement; :}
-    |
-    jump_statement:statement {: RESULT = statement; :};
-
-compound_statement ::=
-    LEFT_CURLY RIGHT_CURLY {: RESULT = null; :}
-    |
-    LEFT_CURLY statement_list:list RIGHT_CURLY {: RESULT = list; :}
-    |
-    LEFT_CURLY declaration_list:list RIGHT_CURLY {: RESULT = list; :}
-    |
-    LEFT_CURLY declaration_list:dec statement_list:statements RIGHT_CURLY {: RESULT = new Node(NodeType.END_STATEMENT, dec, statements); :};
-
-declaration_list ::=
-    declaration:dec {: RESULT = dec; :}
-    |
-    declaration_list:list declaration:dec {: RESULT = new Node(NodeType.END_STATEMENT, list, dec); :};
-
-statement_list ::=
-    statement:statement {: RESULT = statement; :}
-    |
-    statement_list:list statement:statement {: RESULT = new Node(NodeType.END_STATEMENT, list, statement); :};
-
-expression_statement ::=
-    SEMI_COLON {: RESULT = null; :}
-    |
-    expression:exp SEMI_COLON {: RESULT = exp; :};
-
-selection_statement ::=
-    IF LEFT_BRACKET expression:exp RIGHT_BRACKET statement:statement {: RESULT = new Node(NodeType.IF, exp, statement); :}
-    |
-    IF LEFT_BRACKET expression:exp RIGHT_BRACKET statement:ifs ELSE statement:elses {: RESULT = new Node(NodeType.IF, exp, new Node(NodeType.ELSE, ifs, elses)); :};
-
-iteration_statement ::=
-    WHILE LEFT_BRACKET expression:exp RIGHT_BRACKET statement:body {: RESULT = new Node(NodeType.WHILE, exp, body); :};
-
-jump_statement ::=
-    CONTINUE SEMI_COLON {: RESULT = new Node(NodeType.CONTINUE); :}
-    |
-    BREAK SEMI_COLON {: RESULT = new Node(NodeType.BREAK); :}
-    |
-    RETURN SEMI_COLON {: RESULT = new Node(NodeType.RETURN); :}
-    |
-    RETURN expression:exp SEMI_COLON {: RESULT = new Node(NodeType.RETURN, exp, null); :};
-
-translation_unit ::=
-    external_declaration:dec {: RESULT = dec; :}
-    |
-    translation_unit:unit external_declaration:dec {: RESULT = new Node(NodeType.TILDE, unit, dec); :};
-
-external_declaration ::=
-    declaration:dec {: RESULT = dec; :};
-
-function_definition ::=
-    declaration_specifiers:spec declarator:dec declaration_list:list compound_statement:statement {:
-        RESULT = new Node(NodeType.FUNCTION_DEF, new Node(NodeType.FUNCTION_DATA, spec, new Node(NodeType.EXTERN, dec, list)), statement);
+ifStatement ::=
+    IF LEFT_BRACKET dataComputable:condition RIGHT_BRACKET expressionSequence:body ELSE expressionSequence:elseBody {:
+        if(!isMath(condition)) throwException("Invalid condition", stackTop - 4);
+        RESULT = new IfStatement(condition, body, elseBody);
     :}
     |
-    declaration_specifiers:spec declarator:dec compound_statement:statement {:
-        RESULT = new Node(NodeType.FUNCTION_DEF, new Node(NodeType.FUNCTION_DATA, spec, dec), statement);
-    :}
-    |
-    declarator:dec declaration_list:list compound_statement:statement {:
-        RESULT = new Node(NodeType.FUNCTION_DEF, new Node(NodeType.FUNCTION_DATA, dec, list), statement);
-    :}
-    |
-    declarator:dec compound_statement:statement {: RESULT = new Node(NodeType.FUNCTION_DATA, dec, statement); :};
+    IF LEFT_BRACKET dataComputable:condition RIGHT_BRACKET expressionSequence:body {:
+        if(!isMath(condition)) throwException("Invalid condition", stackTop - 2);
+        RESULT = new IfStatement(condition, body, null);
+    :};
 
+returnExpression ::=
+    RETURN dataComputable:toReturn {: RESULT = new ReturnExpression(toReturn); :} |
+    RETURN {: RESULT = new ReturnExpression(null); :};
+
+breakStatement ::= BREAK {: RESULT = BreakStatement.INSTANCE; :};
+continueStatement ::= CONTINUE {: RESULT = ContinueStatement.INSTANCE; :};

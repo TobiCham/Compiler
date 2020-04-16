@@ -26,6 +26,7 @@ object OutputWindow : PageElement<HTMLPreElement>("output") {
 object CompileButton : PageElement<HTMLButtonElement>("compile")
 object OptimiseButton : PageElement<HTMLButtonElement>("optimise")
 object GenerateTacButton : PageElement<HTMLButtonElement>("tac")
+object FormatButton : PageElement<HTMLButtonElement>("format")
 
 object TextInput : PageElement<HTMLInputElement>("input")
 object SubmitInputButton : PageElement<HTMLButtonElement>("inputButton")

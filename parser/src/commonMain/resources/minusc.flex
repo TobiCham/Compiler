@@ -1,22 +1,22 @@
-package tobi;
+package com.tobi.mc.parser.ast.lexer;
 
-import static tobi.SimpleNodeType.*;
+import static com.tobi.mc.parser.ast.lexer.LexerNodeType.*;
 import java.lang.NumberFormatException;
 
 %%
 
 %public
-%class MinusCLexer
-%type SimpleNode
+%class NewLexer
+%type LexerNode
 %line
 %column
 
 %{
-    private SimpleNode makeNode(SimpleNodeType type) {
+    private LexerNode makeNode(LexerNodeType type) {
         return makeNode(type, null);
     }
-    private SimpleNode makeNode(SimpleNodeType type, Object value) {
-        return new SimpleNode(type, value, yyline, yycolumn);
+    private LexerNode makeNode(LexerNodeType type, Object value) {
+        return new LexerNode(type, value, yyline, yycolumn);
     }
 %}
 
@@ -27,8 +27,6 @@ Digit = [0-9]
 L =	[a-zA-Z_]
 H = [a-fA-F0-9]
 E = [Ee][+-]?{Digit}+
-FS = (f|F|l|L)
-IS = (u|U|l|L)*
 
 Comment = {TraditionalComment} | {EndOfLineComment}
 
@@ -47,32 +45,37 @@ EndOfLineComment     = "//" {InputCharacter}* {LineTerminator}?
     "extern"		{ return makeNode(EXTERN); }
     "if"			{ return makeNode(IF); }
     "int"			{ return makeNode(INT); }
+    "string"        { return makeNode(STRING); }
     "function"		{ return makeNode(FUNCTION); }
     "return"		{ return makeNode(RETURN); }
     "void"			{ return makeNode(VOID); }
     "while"			{ return makeNode(WHILE); }
 
     {L}({L}|{Digit})* { return makeNode(IDENTIFIER, yytext()); }
-    {Digit}+{IS}?	  {
+    -?{Digit}+ {
       String text = yytext();
       try {
-        return makeNode(CONSTANT, Integer.parseInt(text));
+        return makeNode(CONSTANT, Long.parseLong(text));
       } catch(NumberFormatException e) {
         throw new RuntimeException("Invalid integer " + text);
       }
     }
 
-    \"(\\.|[^\\\"])*\"	{ return makeNode(STRING, yytext()); }
+    \"(\\.|[^\\\"])*\"	{
+        //Remove the beginning and trailing quotes from the string
+        String text = yytext();
+        return makeNode(TEXT, text.substring(1, text.length() - 1));
+    }
 
-    "<="			{ return makeNode(LE_OP); }
-    ">="			{ return makeNode(GE_OP); }
-    "=="			{ return makeNode(EQ_OP); }
-    "!="			{ return makeNode(NE_OP); }
+    "++"        { return makeNode(STRING_CONCAT); }
+    "<="		{ return makeNode(LE_OP); }
+    ">="		{ return makeNode(GE_OP); }
+    "=="		{ return makeNode(EQ_OP); }
+    "!="		{ return makeNode(NE_OP); }
     ";"			{ return makeNode(SEMI_COLON); }
-    "{"     		{ return makeNode(LEFT_CURLY); }
-    "}"     		{ return makeNode(RIGHT_CURLY); }
+    "{"     	{ return makeNode(LEFT_CURLY); }
+    "}"     	{ return makeNode(RIGHT_CURLY); }
     ","			{ return makeNode(COMMA); }
-    ":"			{ return makeNode(COLON); }
     "="			{ return makeNode(ASSIGNMENT); }
     "("			{ return makeNode(LEFT_BRACKET); }
     ")"			{ return makeNode(RIGHT_BRACKET); }

@@ -78,6 +78,7 @@ class TacGenerator(private val program: Program) {
 
         val expression = when(this) {
             is MathOperation -> this.toTac(registers, code)
+            is UnaryMinus -> this.toTac(registers, code)
             is Negation -> this.toTac(registers, code)
             is StringConcat -> this.toTac(registers, code)
             else -> throw IllegalArgumentException("Unknown computable ${this::class.simpleName}")
@@ -107,6 +108,11 @@ class TacGenerator(private val program: Program) {
         val second = this.arg2.calculateIntermediate(registers, code)
 
         return ConstructMath(first, ConstructMath.getType(this), second)
+    }
+
+    private fun UnaryMinus.toTac(registers: RegisterUse, code: MutableList<TacCodeConstruct>): ConstructUnaryMinus {
+        val exp = this.expression.calculateIntermediate(registers, code)
+        return ConstructUnaryMinus(exp)
     }
 
     private fun Negation.toTac(registers: RegisterUse, code: MutableList<TacCodeConstruct>): ConstructNegation {

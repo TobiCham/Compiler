@@ -15,9 +15,14 @@ fun main() {
     CompileButton.element.addEventListener("click", { compileAndRun() })
     OptimiseButton.element.addEventListener("click", { showOptimisations() })
     GenerateTacButton.element.addEventListener("click", { showTac() })
+    FormatButton.element.addEventListener("click", { formatCode() })
 }
 
-private fun compileAndRun() = handleAction {
+private fun formatCode() = handleAction(false) {
+    OutputWindow.text = ProgramToString(HtmlStyler).toString(it)
+}
+
+private fun compileAndRun() = handleAction(true) {
     val exitCode = (it.compute(JSExecutionEnvironment) as? DataTypeInt)?.value
 
     if (OutputWindow.text.isNotEmpty()) OutputWindow.text += "\n"
@@ -28,23 +33,23 @@ private fun compileAndRun() = handleAction {
     }
 }
 
-private fun showOptimisations() = handleAction {
+private fun showOptimisations() = handleAction(true) {
     OutputWindow.text = ProgramToString(HtmlStyler).toString(it)
 }
 
-private fun showTac() = handleAction {
+private fun showTac() = handleAction(true) {
     val tacProgram = TacGenerator(it).toTac()
     OutputWindow.text = TacToString.toString(tacProgram)
 }
 
-private fun handleAction(action: suspend (Program) -> Unit) {
+private fun handleAction(process: Boolean, action: suspend (Program) -> Unit) {
     OutputWindow.clear()
     CompileButton.disabled = true
     OptimiseButton.disabled = true
 
     GlobalScope.launch {
         try {
-            parseThen(action)
+            parseThen(process, action)
         } catch (e: Exception) {
             OutputWindow.text += "Unexpected error: ${e.message}"
         } finally {
@@ -54,15 +59,15 @@ private fun handleAction(action: suspend (Program) -> Unit) {
     }
 }
 
-private suspend fun parseThen(action: suspend (Program) -> Unit) {
+private suspend fun parseThen(process: Boolean, action: suspend (Program) -> Unit) {
     val parserContext = ParserContext.createContext()
-    val program = try {
+    try {
         val program = parserContext.parseFromString(CodeArea.element.value)
-        parserContext.processProgram(program)
-        program
+        if(process) {
+            parserContext.processProgram(program)
+        }
+        action(program)
     } catch (e: Exception) {
         OutputWindow.text += "Failed to parse:\n${e.message}"
-        return
     }
-    action(program)
 }

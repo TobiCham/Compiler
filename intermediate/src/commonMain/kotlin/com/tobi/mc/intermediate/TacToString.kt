@@ -63,6 +63,10 @@ object TacToString {
             builder.print(" ${this.type.opString} ")
             this.arg2.print(builder)
         }
+        is ConstructUnaryMinus -> {
+            builder.print("-")
+            this.variable.print(builder)
+        }
         is ConstructNegation -> {
             builder.print("Negate ")
             this.toNegate.print(builder)
