@@ -1,11 +1,7 @@
-plugins {
-    kotlin("multiplatform") version "1.3.70"
-}
-
 kotlin {
     jvm {
         withJava()
-        for(target in arrayOf("main", "test")) {
+        for (target in arrayOf("main", "test")) {
             compilations[target].compileKotlinTask.kotlinOptions.jvmTarget = "1.8"
         }
     }
@@ -16,7 +12,8 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
-                implementation(kotlin("stdlib-common"))
+                api(kotlin("stdlib-common"))
+                api("org.jetbrains.kotlinx:kotlinx-coroutines-core-common:1.3.3")
             }
         }
         val commonTest by getting {
@@ -28,19 +25,15 @@ kotlin {
 
         val jvmMain by getting {
             dependencies {
-                implementation(kotlin("stdlib-jdk8"))
-            }
-        }
-
-        val jvmTest by getting {
-            dependencies {
-                implementation(kotlin("test-junit"))
+                api(kotlin("stdlib-jdk8"))
+                api("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.3")
             }
         }
 
         val jsMain by getting {
             dependencies {
-                implementation(kotlin("stdlib-js"))
+                api(kotlin("stdlib-js"))
+                api("org.jetbrains.kotlinx:kotlinx-coroutines-core-js:1.3.3")
             }
         }
 

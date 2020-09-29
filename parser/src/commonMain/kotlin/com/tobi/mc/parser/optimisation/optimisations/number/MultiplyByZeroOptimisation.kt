@@ -1,7 +1,11 @@
 package com.tobi.mc.parser.optimisation.optimisations.number
 
-import com.tobi.mc.computable.*
+import com.tobi.mc.computable.Computable
 import com.tobi.mc.computable.data.DataTypeInt
+import com.tobi.mc.computable.operation.Divide
+import com.tobi.mc.computable.operation.MathOperation
+import com.tobi.mc.computable.operation.Multiply
+import com.tobi.mc.computable.variable.GetVariable
 import com.tobi.mc.parser.optimisation.Optimisation
 import com.tobi.mc.parser.util.SimpleDescription
 import com.tobi.mc.parser.util.isZero

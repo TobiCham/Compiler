@@ -1,6 +1,6 @@
 package com.tobi.mc.intermediate.construct.code
 
-import com.tobi.mc.computable.*
+import com.tobi.mc.computable.operation.*
 import com.tobi.mc.intermediate.construct.TacExpression
 
 class ConstructMath(val arg1: TacVariableReference, val type: MathType, val arg2: TacVariableReference) : TacExpression {

@@ -1,6 +1,10 @@
 package com.tobi.mc.computable
 
+import com.tobi.mc.computable.data.Data
+
 interface Computable {
 
-    suspend fun compute(context: Context, environment: ExecutionEnvironment): ComputableResult
+    val description: String
+
+    suspend fun compute(context: Context, environment: ExecutionEnvironment): Data
 }

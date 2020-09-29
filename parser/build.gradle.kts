@@ -1,11 +1,7 @@
-plugins {
-    kotlin("multiplatform") version "1.3.70"
-}
-
 kotlin {
     jvm {
         withJava()
-        for(target in arrayOf("main", "test")) {
+        for (target in arrayOf("main", "test")) {
             compilations[target].compileKotlinTask.kotlinOptions.jvmTarget = "1.8"
         }
     }
@@ -16,7 +12,6 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
-                implementation(kotlin("stdlib-common"))
                 api(project(":common"))
             }
         }
@@ -27,23 +22,8 @@ kotlin {
             }
         }
 
-        val jvmMain by getting {
-            dependencies {
-                implementation(kotlin("stdlib-jdk8"))
-            }
-        }
-
-        val jvmTest by getting {
-            dependencies {
-                implementation(kotlin("test-junit"))
-            }
-        }
-
-        val jsMain by getting {
-            dependencies {
-                implementation(kotlin("stdlib-js"))
-            }
-        }
+        val jvmMain by getting {}
+        val jsMain by getting {}
 
         all {
             languageSettings.progressiveMode = true

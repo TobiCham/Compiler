@@ -1,8 +1,20 @@
 package com.tobi.mc
 
-import com.tobi.mc.computable.*
+import com.tobi.mc.computable.Computable
+import com.tobi.mc.computable.ExpressionSequence
+import com.tobi.mc.computable.Program
+import com.tobi.mc.computable.control.*
 import com.tobi.mc.computable.data.DataTypeInt
 import com.tobi.mc.computable.data.DataTypeString
+import com.tobi.mc.computable.function.FunctionCall
+import com.tobi.mc.computable.function.FunctionDeclaration
+import com.tobi.mc.computable.operation.MathOperation
+import com.tobi.mc.computable.operation.Negation
+import com.tobi.mc.computable.operation.StringConcat
+import com.tobi.mc.computable.operation.UnaryMinus
+import com.tobi.mc.computable.variable.DefineVariable
+import com.tobi.mc.computable.variable.GetVariable
+import com.tobi.mc.computable.variable.SetVariable
 import com.tobi.mc.util.TabbedBuilder
 
 class ProgramToString(val styler: ProgramToStringStyler = Stylers.NONE) {
@@ -29,7 +41,7 @@ class ProgramToString(val styler: ProgramToStringStyler = Stylers.NONE) {
 //        is InbuiltFunction -> builder.print("/* Compiled code */")
         is BreakStatement -> builder.print(styler.style(StyleType.BREAK, "break"))
         is ContinueStatement -> builder.print(styler.style(StyleType.CONTINUE, "continue"))
-        is ReturnExpression -> {
+        is ReturnStatement -> {
             builder.print(styler.style(StyleType.RETURN, "return"))
             if(toReturn != null) {
                 builder.print(" ")

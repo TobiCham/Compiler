@@ -1,9 +1,9 @@
 package com.tobi.mc.parser.optimisation.optimisations.number
 
 import com.tobi.mc.computable.Computable
-import com.tobi.mc.computable.Divide
-import com.tobi.mc.computable.MathOperation
-import com.tobi.mc.computable.Multiply
+import com.tobi.mc.computable.operation.Divide
+import com.tobi.mc.computable.operation.MathOperation
+import com.tobi.mc.computable.operation.Multiply
 import com.tobi.mc.parser.optimisation.Optimisation
 import com.tobi.mc.parser.util.SimpleDescription
 import com.tobi.mc.parser.util.isOne

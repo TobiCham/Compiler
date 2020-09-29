@@ -1,9 +1,9 @@
 package com.tobi.mc.parser.optimisation.optimisations
 
 import com.tobi.mc.computable.Computable
-import com.tobi.mc.computable.Data
 import com.tobi.mc.computable.ExpressionSequence
-import com.tobi.mc.computable.MathOperation
+import com.tobi.mc.computable.data.Data
+import com.tobi.mc.computable.operation.MathOperation
 import com.tobi.mc.parser.optimisation.InstanceOptimisation
 import com.tobi.mc.parser.util.SimpleDescription
 import com.tobi.mc.util.DescriptionMeta

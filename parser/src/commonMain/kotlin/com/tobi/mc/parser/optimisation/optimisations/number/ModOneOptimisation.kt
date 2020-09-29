@@ -1,9 +1,9 @@
 package com.tobi.mc.parser.optimisation.optimisations.number
 
 import com.tobi.mc.computable.Computable
-import com.tobi.mc.computable.GetVariable
-import com.tobi.mc.computable.Mod
 import com.tobi.mc.computable.data.DataTypeInt
+import com.tobi.mc.computable.operation.Mod
+import com.tobi.mc.computable.variable.GetVariable
 import com.tobi.mc.parser.optimisation.InstanceOptimisation
 import com.tobi.mc.parser.util.SimpleDescription
 import com.tobi.mc.parser.util.isOne

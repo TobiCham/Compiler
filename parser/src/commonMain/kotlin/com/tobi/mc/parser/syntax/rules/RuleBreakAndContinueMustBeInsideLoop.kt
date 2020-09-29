@@ -1,7 +1,12 @@
 package com.tobi.mc.parser.syntax.rules
 
 import com.tobi.mc.ParseException
-import com.tobi.mc.computable.*
+import com.tobi.mc.computable.Computable
+import com.tobi.mc.computable.Context
+import com.tobi.mc.computable.control.BreakStatement
+import com.tobi.mc.computable.control.ContinueStatement
+import com.tobi.mc.computable.control.WhileLoop
+import com.tobi.mc.computable.function.FunctionDeclaration
 import com.tobi.mc.parser.syntax.StateBasedSyntaxRule
 import com.tobi.mc.parser.util.SimpleDescription
 import com.tobi.mc.util.DescriptionMeta
@@ -26,5 +31,5 @@ internal object RuleBreakAndContinueMustBeInsideLoop : StateBasedSyntaxRule<Bool
         else -> previousState
     }
 
-    override fun getInitialState(defaultContext: DefaultContext): Boolean = false
+    override fun getInitialState(context: Context): Boolean = false
 }

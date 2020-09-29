@@ -1,8 +1,8 @@
 package com.tobi.mc.parser.optimisation.optimisations
 
 import com.tobi.mc.computable.Computable
-import com.tobi.mc.computable.StringConcat
 import com.tobi.mc.computable.data.DataTypeString
+import com.tobi.mc.computable.operation.StringConcat
 import com.tobi.mc.parser.optimisation.InstanceOptimisation
 import com.tobi.mc.parser.util.SimpleDescription
 import com.tobi.mc.util.DescriptionMeta

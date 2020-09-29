@@ -51,7 +51,7 @@ object TacToString {
             this.conditionVariable.print(builder)
             builder.print(" ${this.branchLabel}")
         }
-        is ConstructCreateEnvironment -> builder.print("make ${this.environment.name}")
+        is ConstructCreateClosure -> builder.print("make ${this.environment.name}")
         is ConstructFunctionCall -> {
             builder.print("Call ")
             this.function.print(builder)
@@ -81,13 +81,13 @@ object TacToString {
             builder.print("PushArg ")
             this.variable.print(builder)
         }
-        is ConstructPopVariable -> builder.print("PopArg")
+        is ConstructPopArgument -> builder.print("PopArg")
         is ConstructReturn -> {
             builder.print("return")
             if(this.toReturn != null) {
                 builder.print(" ")
                 this.toReturn.print(builder)
-            } else {}
+            } else Unit
         }
         is ConstructSetVariable -> {
             (this.variable as TacCodeConstruct).print(builder)

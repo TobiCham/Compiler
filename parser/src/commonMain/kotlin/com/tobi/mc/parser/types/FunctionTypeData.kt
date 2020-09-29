@@ -1,7 +1,7 @@
 package com.tobi.mc.parser.types
 
 import com.tobi.mc.ParseException
-import com.tobi.mc.computable.FunctionDeclaration
+import com.tobi.mc.computable.function.FunctionDeclaration
 import com.tobi.mc.type.ExpandedType
 import com.tobi.mc.type.VoidType
 

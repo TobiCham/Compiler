@@ -1,14 +1,15 @@
 package com.tobi.mc.intermediate.construct
 
 import com.tobi.mc.computable.data.DataType
+import com.tobi.mc.intermediate.TacStructure
 
-class TacEnvironment(val name: String, var parent: TacEnvironment?) {
+open class TacEnvironment(val name: String, var parent: TacEnvironment?): TacStructure {
 
     val variables: Map<String, DataType> = LinkedHashMap()
 
     /**
      * @return A new [TacEnvironment] with no parent, consisting of all the variables defined by this
-     * construct and all parent constructs
+     * environment and all parent environments
      */
     fun collapse(): TacEnvironment {
         val newEnv = TacEnvironment(name, null)

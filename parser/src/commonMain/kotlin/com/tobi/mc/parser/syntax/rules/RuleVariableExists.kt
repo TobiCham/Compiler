@@ -1,6 +1,13 @@
 package com.tobi.mc.parser.syntax.rules
 
-import com.tobi.mc.computable.*
+import com.tobi.mc.computable.Computable
+import com.tobi.mc.computable.ExpressionSequence
+import com.tobi.mc.computable.Program
+import com.tobi.mc.computable.function.FunctionDeclaration
+import com.tobi.mc.computable.variable.DefineVariable
+import com.tobi.mc.computable.variable.GetVariable
+import com.tobi.mc.computable.variable.SetVariable
+import com.tobi.mc.computable.variable.VariableReference
 import com.tobi.mc.parser.syntax.InstanceSyntaxRule
 import com.tobi.mc.parser.syntax.VariablesState
 import com.tobi.mc.parser.util.SimpleDescription

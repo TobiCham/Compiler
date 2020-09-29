@@ -1,8 +1,8 @@
 package com.tobi.mc.parser.optimisation.optimisations.number
 
 import com.tobi.mc.computable.Computable
-import com.tobi.mc.computable.UnaryMinus
 import com.tobi.mc.computable.data.DataTypeInt
+import com.tobi.mc.computable.operation.UnaryMinus
 import com.tobi.mc.parser.optimisation.InstanceOptimisation
 import com.tobi.mc.parser.util.SimpleDescription
 import com.tobi.mc.util.DescriptionMeta

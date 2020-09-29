@@ -2,8 +2,7 @@ package com.tobi.mc.parser.optimisation.optimisations
 
 import com.tobi.mc.computable.Computable
 import com.tobi.mc.computable.ExpressionSequence
-import com.tobi.mc.computable.FlowInterrupt
-import com.tobi.mc.computable.ReturnExpression
+import com.tobi.mc.computable.control.FlowInterruptComputable
 import com.tobi.mc.parser.optimisation.InstanceOptimisation
 import com.tobi.mc.parser.util.SimpleDescription
 import com.tobi.mc.util.DescriptionMeta
@@ -25,7 +24,7 @@ internal object FlowInterruptOptimisation : InstanceOptimisation<ExpressionSeque
 
     override fun ExpressionSequence.optimise(replace: (Computable) -> Boolean): Boolean {
         val interruptIndex = this.operations.indexOfFirst {
-            it is FlowInterrupt || it is ReturnExpression
+            it is FlowInterruptComputable
         }
         if(interruptIndex < 0 || interruptIndex == this.operations.size - 1) {
             return false

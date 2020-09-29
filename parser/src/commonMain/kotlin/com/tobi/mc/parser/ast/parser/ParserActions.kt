@@ -1,9 +1,20 @@
 package com.tobi.mc.parser.ast.parser
 
-import com.tobi.mc.computable.*
+import com.tobi.mc.computable.Computable
+import com.tobi.mc.computable.ExpressionSequence
+import com.tobi.mc.computable.Program
+import com.tobi.mc.computable.control.*
 import com.tobi.mc.computable.data.DataType
 import com.tobi.mc.computable.data.DataTypeInt
 import com.tobi.mc.computable.data.DataTypeString
+import com.tobi.mc.computable.function.FunctionCall
+import com.tobi.mc.computable.function.FunctionDeclaration
+import com.tobi.mc.computable.function.Parameter
+import com.tobi.mc.computable.operation.*
+import com.tobi.mc.computable.variable.DefineVariable
+import com.tobi.mc.computable.variable.GetVariable
+import com.tobi.mc.computable.variable.SetVariable
+import com.tobi.mc.inbuilt.DefaultContext
 import com.tobi.mc.parser.ParseException
 import com.tobi.mc.parser.ast.parser.runtime.LRParser
 import com.tobi.mc.parser.ast.parser.runtime.Symbol
@@ -21,38 +32,38 @@ internal class ParserActions(private val parser: Parser) {
         return ParseException(message, null, symbol.locationRight)
     }
 
-    private fun isString(computable: DataComputable?): Boolean {
+    private fun isString(computable: Computable?): Boolean {
         return computable is DataTypeString || computable is StringConcat || computable is GetVariable || computable is FunctionCall
     }
 
-    private fun isMath(computable: DataComputable?): Boolean {
+    private fun isMath(computable: Computable?): Boolean {
         return computable is DataTypeInt || computable is MathOperation || computable is UnaryMinus || computable is Negation || computable is GetVariable || computable is FunctionCall
     }
 
-    private fun isCallable(computable: DataComputable?): Boolean {
+    private fun isCallable(computable: Computable?): Boolean {
         return computable is GetVariable || computable is FunctionCall
     }
 
     private fun <T : MathOperation> createMath(
         stackTop: Int,
-        arg1: DataComputable,
-        arg2: DataComputable,
-        createMath: (DataComputable, DataComputable) -> T
+        arg1: Computable,
+        arg2: Computable,
+        createMath: (Computable, Computable) -> T
     ): T {
         if (!isMath(arg1)) throw makeException("Invalid math expression", stackTop - 2)
         if (!isMath(arg2)) throw makeException("Invalid math expression")
         return createMath(arg1, arg2)
     }
 
-    private fun createMath(arg: DataComputable, createMath: (DataComputable) -> DataComputable): DataComputable {
+    private fun createMath(arg: Computable, createMath: (Computable) -> Computable): Computable {
         if (!isMath(arg)) throw makeException("Invalid math expression")
         return createMath(arg)
     }
 
-    private fun <T : MathOperation> makeMath(stackTop: Int, createMath: (DataComputable, DataComputable) -> T): Symbol {
+    private fun <T : MathOperation> makeMath(stackTop: Int, createMath: (Computable, Computable) -> T): Symbol {
         val stack = this.parser.stack
-        val arg1 = stack[stackTop - 2].value as DataComputable
-        val arg2 = stack.peek().value as DataComputable
+        val arg1 = stack[stackTop - 2].value as Computable
+        val arg2 = stack.peek().value as Computable
         val RESULT = createMath(stackTop, arg1, arg2, createMath)
         return this.parser.symbolFactory.newSymbol("mathComputable", 12, stack[stackTop - 2], stack.peek(), RESULT)
     }
@@ -125,14 +136,14 @@ internal class ParserActions(private val parser: Parser) {
         }
         13 -> {
             val name = stack[stackTop - 2].value as String
-            val assignment = stack.peek().value as DataComputable
+            val assignment = stack.peek().value as Computable
             val RESULT = SetVariable(name, -1, assignment)
             this.parser.symbolFactory.newSymbol("setVariable", 8, stack[stackTop - 2], stack.peek(), RESULT)
         }
         14 -> {
             val type = stack[stackTop - 3].value as DataType?
             val name = stack[stackTop - 2].value as String
-            val value = stack.peek().value as DataComputable
+            val value = stack.peek().value as Computable
             if (type === DataType.VOID) {
                 throw makeException("Cannot define variables as void")
             }
@@ -149,26 +160,26 @@ internal class ParserActions(private val parser: Parser) {
 //                this.parser.symbolFactory.newSymbol("defineVariable", 9, stack.get(stackTop - 1), stack.peek(), RESULT)
         }
         16 -> {
-            val RESULT = stack[stackTop - 1].value as DataComputable
-            this.parser.symbolFactory.newSymbol("dataComputable", 11, stack[stackTop - 2], stack.peek(), RESULT)
+            val RESULT = stack[stackTop - 1].value as Computable
+            this.parser.symbolFactory.newSymbol("Computable", 11, stack[stackTop - 2], stack.peek(), RESULT)
         }
-        17, 18, 19 -> makeExisting("dataComputable", 11)
+        17, 18, 19 -> makeExisting("Computable", 11)
         20 -> {
-            val exp1 = stack[stackTop - 2].value as DataComputable
-            val exp2 = stack.peek().value as DataComputable
+            val exp1 = stack[stackTop - 2].value as Computable
+            val exp2 = stack.peek().value as Computable
             if (!isString(exp1)) throw makeException("Can only concatenate strings", stackTop - 2)
             if (!isString(exp2)) throw makeException("Can only concatenate strings")
             val RESULT = StringConcat(exp1, exp2)
-            this.parser.symbolFactory.newSymbol("dataComputable", 11, stack[stackTop - 2], stack.peek(), RESULT)
+            this.parser.symbolFactory.newSymbol("Computable", 11, stack[stackTop - 2], stack.peek(), RESULT)
         }
         21, 22 -> makeExisting("mathComputable", 12)
         23 -> {
-            val math = stack.peek().value as DataComputable
+            val math = stack.peek().value as Computable
             val RESULT = createMath(math, ::UnaryMinus)
             this.parser.symbolFactory.newSymbol("mathComputable", 12, stack[stackTop - 1], stack.peek(), RESULT)
         }
         24 -> {
-            val math = stack.peek().value as DataComputable
+            val math = stack.peek().value as Computable
             val RESULT = createMath(math, ::Negation)
             this.parser.symbolFactory.newSymbol("mathComputable", 12, stack[stackTop - 1], stack.peek(), RESULT)
         }
@@ -184,27 +195,27 @@ internal class ParserActions(private val parser: Parser) {
         34 -> makeMath(stackTop, ::LessThanOrEqualTo)
         35 -> makeMath(stackTop, ::GreaterThanOrEqualTo)
         36 -> {
-            val func = stack[stackTop - 3].value as DataComputable
-            val args = stack[stackTop - 1].value as List<DataComputable>
+            val func = stack[stackTop - 3].value as Computable
+            val args = stack[stackTop - 1].value as List<Computable>
             if (!isCallable(func)) throw makeException("Not callable", stackTop - 3)
-            val RESULT = FunctionCall(func, args)
+            val RESULT = FunctionCall(func, args.toTypedArray())
             this.parser.symbolFactory.newSymbol("functionCall", 10, stack[stackTop - 3], stack.peek(), RESULT)
         }
         37 -> {
-            val func = stack[stackTop - 2].value as DataComputable
+            val func = stack[stackTop - 2].value as Computable
             if (!isCallable(func)) throw makeException("Not callable", stackTop - 2)
-            val RESULT = FunctionCall(func, ArrayList())
+            val RESULT = FunctionCall(func, emptyArray())
             this.parser.symbolFactory.newSymbol("functionCall", 10, stack[stackTop - 2], stack.peek(), RESULT)
         }
         38 -> {
-            val arg = stack.peek().value as DataComputable
-            val RESULT: MutableList<DataComputable> = ArrayList()
+            val arg = stack.peek().value as Computable
+            val RESULT: MutableList<Computable> = ArrayList()
             RESULT.add(arg)
             this.parser.symbolFactory.newSymbol("functionArgs", 6, stack.peek(), stack.peek(), RESULT)
         }
         39 -> {
-            val args = stack[stackTop - 2].value as MutableList<DataComputable>
-            val arg = stack.peek().value as DataComputable
+            val args = stack[stackTop - 2].value as MutableList<Computable>
+            val arg = stack.peek().value as Computable
             args.add(arg)
             this.parser.symbolFactory.newSymbol("functionArgs", 6, stack[stackTop - 2], stack.peek(), args)
         }
@@ -258,14 +269,14 @@ internal class ParserActions(private val parser: Parser) {
             this.parser.symbolFactory.newSymbol("expressionSequence", 15, stack.peek(), stack.peek(), RESULT)
         }
         57 -> {
-            val condition = stack[stackTop - 2].value as DataComputable
+            val condition = stack[stackTop - 2].value as Computable
             val body = stack.peek().value as ExpressionSequence
             if (!isMath(condition)) throw makeException("Invalid condition", stackTop - 2)
             val RESULT = WhileLoop(condition, body)
             this.parser.symbolFactory.newSymbol("whileLoop", 20, stack[stackTop - 4], stack.peek(), RESULT)
         }
         58 -> {
-            val condition = stack[stackTop - 4].value as DataComputable
+            val condition = stack[stackTop - 4].value as Computable
             val body = stack[stackTop - 2].value as ExpressionSequence
             val elseBody = stack.peek().value as ExpressionSequence
             if (!isMath(condition)) throw makeException("Invalid condition", stackTop - 4)
@@ -273,18 +284,18 @@ internal class ParserActions(private val parser: Parser) {
             this.parser.symbolFactory.newSymbol("ifStatement", 21, stack[stackTop - 6], stack.peek(), RESULT)
         }
         59 -> {
-            val condition = stack[stackTop - 2].value as DataComputable
+            val condition = stack[stackTop - 2].value as Computable
             val body = stack.peek().value as ExpressionSequence
             if (!isMath(condition)) throw makeException("Invalid condition", stackTop - 2)
             val RESULT = IfStatement(condition, body, null)
             this.parser.symbolFactory.newSymbol("ifStatement", 21, stack[stackTop - 4], stack.peek(), RESULT)
         }
         60 -> {
-            val toReturn = stack.peek().value as DataComputable
-            val RESULT = ReturnExpression(toReturn)
+            val toReturn = stack.peek().value as Computable
+            val RESULT = ReturnStatement(toReturn)
             this.parser.symbolFactory.newSymbol("returnExpression", 19, stack[stackTop - 1], stack.peek(), RESULT)
         }
-        61 -> makeSimple("returnExpression", 19, ReturnExpression(null))
+        61 -> makeSimple("returnExpression", 19, ReturnStatement(null))
         62 -> makeSimple("breakStatement", 18, BreakStatement)
         63 -> makeSimple("continueStatement", 17, ContinueStatement)
         else -> throw Exception("Invalid action number " + actionId + "found in internal parse table")

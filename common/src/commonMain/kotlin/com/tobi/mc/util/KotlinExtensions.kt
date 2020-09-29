@@ -11,6 +11,11 @@ fun <T> List<T>.copyAndReplaceIndex(index: Int, replacement: T): List<T> {
     }
     return newList
 }
+inline fun <reified T> Array<T>.copyAndReplaceIndex(index: Int, replacement: T): Array<T> = Array(this.size) {
+    if(it == index) replacement
+    else this[it]
+}
+
 fun <T> List<T>.copyAndReplaceIndex(index: Int, replacement: List<T>): List<T> {
     val newList = ArrayList<T>(this.size)
     for((i, item) in this.withIndex()) {

@@ -1,6 +1,9 @@
 package com.tobi.mc.parser.optimisation.optimisations
 
-import com.tobi.mc.computable.*
+import com.tobi.mc.computable.Computable
+import com.tobi.mc.computable.ExpressionSequence
+import com.tobi.mc.computable.control.IfStatement
+import com.tobi.mc.computable.control.WhileLoop
 import com.tobi.mc.computable.data.DataTypeInt
 import com.tobi.mc.parser.optimisation.Optimisation
 import com.tobi.mc.parser.util.SimpleDescription
@@ -37,7 +40,7 @@ internal object BranchOptimisation : Optimisation<Computable> {
         return false
     }
 
-    private fun checkType(computable: DataComputable) = when {
+    private fun checkType(computable: Computable) = when {
         computable !is DataTypeInt -> CheckType.UNKNOWN
         computable.value == 0L -> CheckType.FAIL
         else -> CheckType.SUCCEED

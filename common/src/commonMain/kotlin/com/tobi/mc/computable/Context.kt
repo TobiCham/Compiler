@@ -1,6 +1,7 @@
 package com.tobi.mc.computable
 
 import com.tobi.mc.ScriptException
+import com.tobi.mc.computable.data.Data
 
 open class Context(parent: Context?) {
 
@@ -18,10 +19,6 @@ open class Context(parent: Context?) {
     fun getDataType(name: String, contextIndex: Int): Data? {
         checkIndex(contextIndex)
         return variables[contextIndex][name]
-    }
-
-    inline fun <reified T : Data> getDataOfType(name: String, contextIndex: Int): T {
-        return getDataType(name, contextIndex) as T
     }
 
     fun defineVariable(name: String, data: Data) {

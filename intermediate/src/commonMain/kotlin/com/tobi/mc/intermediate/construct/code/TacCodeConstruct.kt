@@ -1,4 +1,5 @@
 package com.tobi.mc.intermediate.construct.code
 
-interface TacCodeConstruct {
-}
+import com.tobi.mc.intermediate.TacStructure
+
+interface TacCodeConstruct : TacStructure

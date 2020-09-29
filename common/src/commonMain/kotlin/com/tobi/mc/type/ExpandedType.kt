@@ -3,33 +3,20 @@ package com.tobi.mc.type
 import com.tobi.mc.computable.data.DataType
 
 sealed class ExpandedType
-interface CompleteType {
-    val type: DataType
+sealed class CompleteType(val type: DataType) : ExpandedType() {
+    override fun toString(): String = type.toString()
 }
 interface ComplexType
 
-object IntType : ExpandedType(),
-    CompleteType {
-    override val type: DataType = DataType.INT
-    override fun toString(): String = DataType.INT.toString()
-}
-object StringType : ExpandedType(),
-    CompleteType {
-    override val type: DataType = DataType.STRING
-    override fun toString(): String = DataType.STRING.toString()
-}
-object VoidType : ExpandedType(),
-    CompleteType {
-    override val type: DataType = DataType.VOID
-    override fun toString(): String = DataType.VOID.toString()
-}
+object IntType : CompleteType(DataType.INT)
+object StringType : CompleteType(DataType.STRING)
+object VoidType : CompleteType(DataType.VOID)
+
 object UnknownType : ExpandedType() {
     override fun toString(): String = "?"
 }
 
-data class FunctionType(val returnType: ExpandedType, val parameters: AnalysisParamList) : ExpandedType(), ComplexType, CompleteType {
-
-    override val type: DataType = DataType.FUNCTION
+data class FunctionType(val returnType: ExpandedType, val parameters: AnalysisParamList) : ComplexType, CompleteType(DataType.FUNCTION) {
 
     override fun toString(): String {
         val paramList = if(parameters is KnownParameters) {

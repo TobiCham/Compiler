@@ -1,9 +1,9 @@
 package com.tobi.mc.parser.optimisation.optimisations.number
 
 import com.tobi.mc.computable.Computable
-import com.tobi.mc.computable.Equals
-import com.tobi.mc.computable.Negation
-import com.tobi.mc.computable.NotEquals
+import com.tobi.mc.computable.operation.Equals
+import com.tobi.mc.computable.operation.Negation
+import com.tobi.mc.computable.operation.NotEquals
 import com.tobi.mc.parser.optimisation.InstanceOptimisation
 import com.tobi.mc.parser.util.SimpleDescription
 import com.tobi.mc.util.DescriptionMeta

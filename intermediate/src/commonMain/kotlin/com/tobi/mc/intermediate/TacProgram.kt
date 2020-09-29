@@ -7,4 +7,4 @@ class TacProgram(
     val strings: Array<String>,
     val environments: List<TacEnvironment>,
     val functions: List<TacFunction>
-)
+) : TacStructure

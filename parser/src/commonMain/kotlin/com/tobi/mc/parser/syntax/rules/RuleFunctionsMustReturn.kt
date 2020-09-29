@@ -1,9 +1,15 @@
 package com.tobi.mc.parser.syntax.rules
 
 import com.tobi.mc.ParseException
-import com.tobi.mc.computable.*
+import com.tobi.mc.computable.Computable
+import com.tobi.mc.computable.ExpressionSequence
+import com.tobi.mc.computable.control.BreakStatement
+import com.tobi.mc.computable.control.IfStatement
+import com.tobi.mc.computable.control.ReturnStatement
+import com.tobi.mc.computable.control.WhileLoop
 import com.tobi.mc.computable.data.DataType
 import com.tobi.mc.computable.data.DataTypeInt
+import com.tobi.mc.computable.function.FunctionDeclaration
 import com.tobi.mc.parser.syntax.InstanceSyntaxRule
 import com.tobi.mc.parser.util.SimpleDescription
 import com.tobi.mc.parser.util.getComponents
@@ -23,7 +29,7 @@ internal object RuleFunctionsMustReturn : InstanceSyntaxRule<FunctionDeclaration
 
     private fun Computable.hasReturnPath(): Boolean {
         return when(this) {
-            is ReturnExpression -> true
+            is ReturnStatement -> true
             is IfStatement -> this.ifBody.hasReturnPath() && !(elseBody != null && !elseBody!!.hasReturnPath())
             is ExpressionSequence -> operations.any { it.hasReturnPath() }
             is WhileLoop -> this.hasGuaranteedReturn()

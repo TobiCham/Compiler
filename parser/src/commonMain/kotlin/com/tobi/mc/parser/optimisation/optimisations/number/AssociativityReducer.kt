@@ -1,14 +1,14 @@
 package com.tobi.mc.parser.optimisation.optimisations.number
 
-import com.tobi.mc.computable.DataComputable
-import com.tobi.mc.computable.GetVariable
+import com.tobi.mc.computable.Computable
 import com.tobi.mc.computable.data.DataTypeInt
+import com.tobi.mc.computable.variable.GetVariable
 import com.tobi.mc.parser.util.getComponents
 import kotlin.reflect.KClass
 
-internal class AssociativityReducer<T : DataComputable>(val type: KClass<T>, val createType: (DataComputable, DataComputable) -> T, val operation: (Long, Long) -> Long) {
+internal class AssociativityReducer<T : Computable>(val type: KClass<T>, val createType: (Computable, Computable) -> T, val operation: (Long, Long) -> Long) {
 
-    fun reduce(input: T): DataComputable {
+    fun reduce(input: T): Computable {
         val mergingList = MergingList()
         input.traverse(mergingList)
 
@@ -18,7 +18,7 @@ internal class AssociativityReducer<T : DataComputable>(val type: KClass<T>, val
         return mergingList.mergeResults()
     }
 
-    private fun DataComputable.traverse(items: MergingList) {
+    private fun Computable.traverse(items: MergingList) {
         if(!type.isInstance(this)) {
             items.add(this)
 
@@ -27,15 +27,15 @@ internal class AssociativityReducer<T : DataComputable>(val type: KClass<T>, val
             }
         }
         for (component in this.getComponents()) {
-            (component as DataComputable).traverse(items)
+            component.traverse(items)
         }
     }
 
     private inner class MergingList {
-        val list = ArrayList<DataComputable>()
+        val list = ArrayList<Computable>()
         var hasModified: Boolean = false
 
-        fun add(computable: DataComputable) {
+        fun add(computable: Computable) {
             if(computable is DataTypeInt) {
                 if(list.isEmpty()) list.add(computable)
                 else {
@@ -50,7 +50,7 @@ internal class AssociativityReducer<T : DataComputable>(val type: KClass<T>, val
             }
         }
 
-        fun mergeResults(): DataComputable {
+        fun mergeResults(): Computable {
             if(list.isEmpty()) {
                 throw IllegalStateException("List empty")
             }

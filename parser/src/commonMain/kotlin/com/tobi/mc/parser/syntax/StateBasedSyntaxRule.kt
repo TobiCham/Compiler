@@ -1,7 +1,7 @@
 package com.tobi.mc.parser.syntax
 
 import com.tobi.mc.computable.Computable
-import com.tobi.mc.computable.DefaultContext
+import com.tobi.mc.computable.Context
 import com.tobi.mc.computable.Program
 import com.tobi.mc.parser.util.getComponents
 
@@ -30,5 +30,5 @@ internal abstract class StateBasedSyntaxRule<State> : InstanceSyntaxRule<Program
 
     abstract fun Computable.getNextState(previousState: State): State
 
-    abstract fun getInitialState(defaultContext: DefaultContext): State
+    abstract fun getInitialState(context: Context): State
 }

@@ -1,6 +1,17 @@
 package com.tobi.mc.parser.experimental
 
-import com.tobi.mc.computable.*
+import com.tobi.mc.computable.Computable
+import com.tobi.mc.computable.ExpressionSequence
+import com.tobi.mc.computable.control.IfStatement
+import com.tobi.mc.computable.control.ReturnStatement
+import com.tobi.mc.computable.control.WhileLoop
+import com.tobi.mc.computable.data.Data
+import com.tobi.mc.computable.function.FunctionCall
+import com.tobi.mc.computable.function.FunctionDeclaration
+import com.tobi.mc.computable.function.Parameter
+import com.tobi.mc.computable.operation.MathOperation
+import com.tobi.mc.computable.variable.DefineVariable
+import com.tobi.mc.computable.variable.VariableReference
 import com.tobi.mc.parser.util.getComponents
 
 internal object VariableRenamer {
@@ -67,7 +78,7 @@ internal object VariableRenamer {
                 arg1.rename(from, to)
                 arg2.rename(from, to)
             }
-            is ReturnExpression -> {
+            is ReturnStatement -> {
                 toReturn?.rename(from, to)
             }
             else -> throw RuntimeException("Unknown computable $this")

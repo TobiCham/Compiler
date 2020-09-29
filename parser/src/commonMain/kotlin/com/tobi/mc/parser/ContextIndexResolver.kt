@@ -1,7 +1,14 @@
 package com.tobi.mc.parser
 
 import com.tobi.mc.ParseException
-import com.tobi.mc.computable.*
+import com.tobi.mc.computable.Computable
+import com.tobi.mc.computable.ExpressionSequence
+import com.tobi.mc.computable.Program
+import com.tobi.mc.computable.function.FunctionDeclaration
+import com.tobi.mc.computable.variable.DefineVariable
+import com.tobi.mc.computable.variable.GetVariable
+import com.tobi.mc.computable.variable.SetVariable
+import com.tobi.mc.computable.variable.VariableReference
 import com.tobi.mc.parser.util.SimpleDescription
 import com.tobi.mc.parser.util.getComponents
 import com.tobi.mc.util.DescriptionMeta
@@ -14,7 +21,7 @@ object ContextIndexResolver : ParserOperation {
 
     override fun processProgram(program: Program) {
         val contexts = ArrayList<MutableSet<String>>()
-        contexts.add(program.context.defaultVariables.map { it.name }.toHashSet())
+        contexts.add(program.context.getVariables().keys.toHashSet())
         program.calculate(contexts)
     }
 

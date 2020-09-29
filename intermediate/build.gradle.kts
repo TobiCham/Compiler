@@ -1,7 +1,3 @@
-plugins {
-    kotlin("multiplatform") version "1.3.70"
-}
-
 kotlin {
     jvm {
         withJava()
@@ -16,34 +12,19 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
-                implementation(kotlin("stdlib-common"))
-                implementation(project(":parser"))
+                api(project(":parser"))
             }
         }
-        val commonTest by getting {
-            dependencies {
-                implementation(kotlin("test-common"))
-                implementation(kotlin("test-annotations-common"))
-            }
-        }
-
-        val jvmMain by getting {
-            dependencies {
-                implementation(kotlin("stdlib-jdk8"))
-            }
-        }
-
         val jvmTest by getting {
             dependencies {
-                implementation(kotlin("test-junit"))
+                implementation("org.junit.jupiter:junit-jupiter:5.6.2")
+//                implementation(kotlin("test-common"))
+//                implementation(kotlin("test-annotations-common"))
             }
         }
 
-        val jsMain by getting {
-            dependencies {
-                implementation(kotlin("stdlib-js"))
-            }
-        }
+        val jvmMain by getting { }
+        val jsMain by getting {}
 
         all {
             languageSettings.progressiveMode = true

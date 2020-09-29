@@ -1,33 +1,33 @@
 package com.tobi.mc.inbuilt
 
-import com.tobi.mc.computable.*
-import com.tobi.mc.computable.data.DataTypeClosure
+import com.tobi.mc.computable.ExecutionEnvironment
+import com.tobi.mc.computable.data.Data
+import com.tobi.mc.computable.data.DataType
+import com.tobi.mc.computable.function.Invocable
+import com.tobi.mc.computable.function.Parameter
 import com.tobi.mc.type.CompleteType
-import com.tobi.mc.type.ExpandedType
 import com.tobi.mc.type.FunctionType
 import com.tobi.mc.type.KnownParameters
+import com.tobi.mc.type.TypedComputable
 
 abstract class InbuiltFunction(
-    name: String,
-    val params: List<Pair<String, ExpandedType>>,
-    val returnType: ExpandedType
-) : InbuiltVariable(name, FunctionType(returnType, KnownParameters(params.map { it.second }))) {
+    val params: List<Pair<String, CompleteType>>,
+    returnType: CompleteType
+) : Data(), TypedComputable, Invocable {
 
-    override fun computeData(context: Context): Data {
-        val simpleParams = params.map { (name, type) ->
-            Parameter((type as CompleteType).type, name)
-        }
-        return DataTypeClosure(simpleParams, context, ExpressionSequence(listOf(
-            ReturnExpression(InbuiltFunctionComputable())
-        )), (returnType as CompleteType).type)
+    override val type: DataType = DataType.FUNCTION
+
+    override val returnType: DataType = returnType.type
+
+    override val expandedType: FunctionType = FunctionType(returnType, KnownParameters(params.map { it.second }))
+
+    override val parameters: List<Parameter> = ArrayList(params.map { (name, type) ->
+        Parameter(type.type, name)
+    })
+
+    final override suspend fun invoke(arguments: Array<Data>, environment: ExecutionEnvironment): Data {
+        return compute(arguments, environment)
     }
 
-    abstract suspend fun compute(context: Context, environment: ExecutionEnvironment): Data
-
-    private inner class InbuiltFunctionComputable : DataComputable {
-
-        override suspend fun compute(context: Context, environment: ExecutionEnvironment): Data {
-            return this@InbuiltFunction.compute(context, environment)
-        }
-    }
+    abstract suspend fun compute(arguments: Array<Data>, environment: ExecutionEnvironment): Data
 }

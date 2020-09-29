@@ -1,9 +1,21 @@
 package com.tobi.mc.intermediate
 
-import com.tobi.mc.computable.*
+import com.tobi.mc.computable.Computable
+import com.tobi.mc.computable.ExpressionSequence
+import com.tobi.mc.computable.Program
+import com.tobi.mc.computable.control.*
 import com.tobi.mc.computable.data.DataType
 import com.tobi.mc.computable.data.DataTypeInt
 import com.tobi.mc.computable.data.DataTypeString
+import com.tobi.mc.computable.function.FunctionCall
+import com.tobi.mc.computable.function.FunctionDeclaration
+import com.tobi.mc.computable.operation.MathOperation
+import com.tobi.mc.computable.operation.Negation
+import com.tobi.mc.computable.operation.StringConcat
+import com.tobi.mc.computable.operation.UnaryMinus
+import com.tobi.mc.computable.variable.DefineVariable
+import com.tobi.mc.computable.variable.GetVariable
+import com.tobi.mc.computable.variable.SetVariable
 import com.tobi.mc.intermediate.construct.ControlLabel
 import com.tobi.mc.intermediate.construct.TacEnvironment
 import com.tobi.mc.intermediate.construct.TacFunction
@@ -29,7 +41,7 @@ class TacGenerator(private val program: Program) {
 
     private fun Computable.toTac(currentEnvironment: TacEnvironment, context: TacGenerationContext, code: MutableList<TacCodeConstruct>): Any = when(this) {
         is FunctionDeclaration -> {
-            code.add(ConstructCreateEnvironment(currentEnvironment))
+            code.add(ConstructCreateClosure(currentEnvironment))
 
             val newEnvironment = this.createEnvironment(currentEnvironment)
             environments.add(newEnvironment)
@@ -55,14 +67,14 @@ class TacGenerator(private val program: Program) {
         is WhileLoop -> this.toTac(currentEnvironment, context, code)
         is ContinueStatement -> code.add(ConstructGoto(context.controlLabels.peek().start))
         is BreakStatement -> code.add(ConstructGoto(context.controlLabels.peek().end))
-        is ReturnExpression -> code.add(ConstructReturn(this.toReturn?.calculateIntermediate(RegisterUse(), code)))
+        is ReturnStatement -> code.add(ConstructReturn(this.toReturn?.calculateIntermediate(RegisterUse(), code)))
         is ExpressionSequence -> this.operations.forEach {
             it.toTac(currentEnvironment, context, code)
         }
         else -> throw IllegalStateException()
     }
 
-    private fun DataComputable.calculateIntermediate(registers: RegisterUse, code: MutableList<TacCodeConstruct>): TacVariableReference {
+    private fun Computable.calculateIntermediate(registers: RegisterUse, code: MutableList<TacCodeConstruct>): TacVariableReference {
         when(this) {
             is DataTypeInt -> return IntValue(this.value)
             is GetVariable -> return EnvironmentVariable(this.name)
@@ -99,7 +111,7 @@ class TacGenerator(private val program: Program) {
             functionCall
         })
         for(arg in this.arguments) {
-            code.add(ConstructPopVariable)
+            code.add(ConstructPopArgument)
         }
     }
 

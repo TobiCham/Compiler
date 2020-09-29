@@ -1,7 +1,18 @@
 package com.tobi.mc.parser.optimisation.optimisations
 
-import com.tobi.mc.computable.*
+import com.tobi.mc.computable.Computable
+import com.tobi.mc.computable.ExpressionSequence
+import com.tobi.mc.computable.control.ContinueStatement
+import com.tobi.mc.computable.control.IfStatement
+import com.tobi.mc.computable.control.ReturnStatement
+import com.tobi.mc.computable.control.WhileLoop
 import com.tobi.mc.computable.data.DataTypeInt
+import com.tobi.mc.computable.function.FunctionCall
+import com.tobi.mc.computable.function.FunctionDeclaration
+import com.tobi.mc.computable.variable.DefineVariable
+import com.tobi.mc.computable.variable.GetVariable
+import com.tobi.mc.computable.variable.SetVariable
+import com.tobi.mc.computable.variable.VariableReference
 import com.tobi.mc.parser.optimisation.InstanceOptimisation
 import com.tobi.mc.parser.util.SimpleDescription
 import com.tobi.mc.parser.util.traverseAllNodes
@@ -57,7 +68,7 @@ internal object TailRecursionOptimisation : InstanceOptimisation<FunctionDeclara
     }
 
     private fun Computable.convertToTailrec(tailRecFunc: FunctionDeclaration, tempParamNames: Map<String, String>): Computable = when(this) {
-        is ReturnExpression -> this.convertToTailrec(tailRecFunc, tempParamNames)
+        is ReturnStatement -> this.convertToTailrec(tailRecFunc, tempParamNames)
         is ExpressionSequence -> ExpressionSequence(operations.map { it.convertToTailrec(tailRecFunc, tempParamNames) })
         is IfStatement -> IfStatement(check, ifBody.convertToTailrec(tailRecFunc, tempParamNames) as ExpressionSequence,
             elseBody?.convertToTailrec(tailRecFunc, tempParamNames) as ExpressionSequence?
@@ -66,7 +77,7 @@ internal object TailRecursionOptimisation : InstanceOptimisation<FunctionDeclara
         else -> this
     }
 
-    private fun ReturnExpression.convertToTailrec(tailRecFunc: FunctionDeclaration, tempParamNames: Map<String, String>): Computable {
+    private fun ReturnStatement.convertToTailrec(tailRecFunc: FunctionDeclaration, tempParamNames: Map<String, String>): Computable {
         if(!this.toReturn.isTailRecursiveCall(tailRecFunc.name)) {
             return this
         }
@@ -93,7 +104,7 @@ internal object TailRecursionOptimisation : InstanceOptimisation<FunctionDeclara
             return false
         }
         return this.traverseAllNodes().any {
-            it is ReturnExpression && it.toReturn.isTailRecursiveCall(this.name)
+            it is ReturnStatement && it.toReturn.isTailRecursiveCall(this.name)
         }
     }
 

@@ -1,9 +1,10 @@
 package com.tobi.mc.intermediate.construct
 
 import com.tobi.mc.computable.data.DataType
-import org.junit.Assert.assertArrayEquals
-import kotlin.test.Test
-import kotlin.test.assertEquals
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 
 class TacEnvironmentTest {
 
@@ -22,14 +23,16 @@ class TacEnvironmentTest {
             addVariable("c", DataType.INT)
             addVariable("y", DataType.FUNCTION)
         }
-        assertArrayEquals(env3.getVariableOffsets(), arrayOf("b", "x", "z", "c", "y"))
+        assertTrue(env3.getVariableOffsets().contentEquals(arrayOf("b", "x", "z", "c", "y")))
         assertEquals(env3.getVariableOffsetsAsMap(), mapOf("b" to 0, "x" to 1, "z" to 2, "c" to 3, "y" to 4))
     }
 
-    @Test(IllegalArgumentException::class)
+    @Test
     fun `Environments shouldn't allow inserting void types`() {
-        TacEnvironment("", null).apply {
-            addVariable("void", DataType.VOID)
+        assertThrows<IllegalArgumentException> {
+            TacEnvironment("", null).apply {
+                addVariable("void", DataType.VOID)
+            }
         }
     }
 }

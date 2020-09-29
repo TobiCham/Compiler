@@ -1,8 +1,24 @@
 package com.tobi.mc.parser.types
 
 import com.tobi.mc.ParseException
-import com.tobi.mc.computable.*
+import com.tobi.mc.computable.Computable
+import com.tobi.mc.computable.Context
+import com.tobi.mc.computable.ExpressionSequence
+import com.tobi.mc.computable.Program
+import com.tobi.mc.computable.control.IfStatement
+import com.tobi.mc.computable.control.ReturnStatement
+import com.tobi.mc.computable.control.WhileLoop
+import com.tobi.mc.computable.data.Data
 import com.tobi.mc.computable.data.DataType
+import com.tobi.mc.computable.function.FunctionCall
+import com.tobi.mc.computable.function.FunctionDeclaration
+import com.tobi.mc.computable.operation.MathOperation
+import com.tobi.mc.computable.operation.Negation
+import com.tobi.mc.computable.operation.StringConcat
+import com.tobi.mc.computable.operation.UnaryMinus
+import com.tobi.mc.computable.variable.DefineVariable
+import com.tobi.mc.computable.variable.GetVariable
+import com.tobi.mc.computable.variable.SetVariable
 import com.tobi.mc.parser.TypeDetection
 import com.tobi.mc.parser.util.SimpleDescription
 import com.tobi.mc.parser.util.getComponents
@@ -22,14 +38,17 @@ internal object TypeDetectionImpl : TypeDetection {
         )
     }
 
-    override fun inferAndValidateTypes(computable: Computable, defaultContext: DefaultContext) {
-        computable.detectTypes(createNewState(defaultContext), null)
+    override fun inferAndValidateTypes(computable: Computable, context: Context) {
+        computable.detectTypes(createNewState(context), null)
     }
 
-    private fun createNewState(defaultContext: DefaultContext): VariableTypeState {
+    private fun createNewState(context: Context): VariableTypeState {
         val parentState = VariableTypeState(null)
-        for(variable in defaultContext.defaultVariables) {
-            parentState.define(variable.name, variable.expandedType)
+        for((name, value) in context.getVariables()) {
+            if(value !is TypedComputable) {
+                throw IllegalArgumentException("No type information for variable $name")
+            }
+            parentState.define(name, value.expandedType)
         }
         return VariableTypeState(parentState)
     }
@@ -38,7 +57,7 @@ internal object TypeDetectionImpl : TypeDetection {
         var newState = state
         when(this) {
             is FunctionCall -> this.handle(state)
-            is ReturnExpression -> this.handle(state, currentFunction!!)
+            is ReturnStatement -> this.handle(state, currentFunction!!)
             is ExpressionSequence -> newState = VariableTypeState(state)
             is MathOperation -> {
                 val name = this::class.simpleName!!.toLowerCase()
@@ -130,7 +149,7 @@ internal object TypeDetectionImpl : TypeDetection {
         )
     }
 
-    private fun ReturnExpression.handle(state: VariableTypeState, currentFunction: FunctionTypeData) {
+    private fun ReturnStatement.handle(state: VariableTypeState, currentFunction: FunctionTypeData) {
         if(toReturn == null) {
             currentFunction.addReturnType(VoidType)
         } else {
@@ -155,6 +174,7 @@ internal object TypeDetectionImpl : TypeDetection {
     }
 
     private fun Computable.calculateType(state: VariableTypeState): ExpandedType = when (this) {
+        is TypedComputable -> this.expandedType
         is Data -> type.mapToType()
         is FunctionDeclaration -> {
             val returnType = this.returnType ?: throw IllegalStateException()

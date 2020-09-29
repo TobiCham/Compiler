@@ -1,9 +1,9 @@
 package com.tobi.mc.parser.syntax.rules
 
 import com.tobi.mc.ParseException
-import com.tobi.mc.computable.Divide
-import com.tobi.mc.computable.MathOperation
-import com.tobi.mc.computable.Mod
+import com.tobi.mc.computable.operation.Divide
+import com.tobi.mc.computable.operation.MathOperation
+import com.tobi.mc.computable.operation.Mod
 import com.tobi.mc.parser.syntax.InstanceSyntaxRule
 import com.tobi.mc.parser.util.SimpleDescription
 import com.tobi.mc.parser.util.isZero

@@ -1,7 +1,20 @@
 package com.tobi.mc.parser.util
 
-import com.tobi.mc.computable.*
+import com.tobi.mc.computable.Computable
+import com.tobi.mc.computable.ExpressionSequence
+import com.tobi.mc.computable.Program
+import com.tobi.mc.computable.control.*
+import com.tobi.mc.computable.data.Data
 import com.tobi.mc.computable.data.DataTypeInt
+import com.tobi.mc.computable.function.FunctionCall
+import com.tobi.mc.computable.function.FunctionDeclaration
+import com.tobi.mc.computable.operation.MathOperation
+import com.tobi.mc.computable.operation.Negation
+import com.tobi.mc.computable.operation.StringConcat
+import com.tobi.mc.computable.operation.UnaryMinus
+import com.tobi.mc.computable.variable.DefineVariable
+import com.tobi.mc.computable.variable.GetVariable
+import com.tobi.mc.computable.variable.SetVariable
 import com.tobi.mc.util.ArrayListStack
 import com.tobi.mc.util.copyAndReplaceIndex
 import com.tobi.mc.util.typeName
@@ -17,7 +30,7 @@ fun Computable.updateComponentAtIndex(index: Int, component: Computable) {
         return true
     }
     val updated = when(this) {
-        is ReturnExpression -> update(this::toReturn)
+        is ReturnStatement -> update(this::toReturn)
         is IfStatement -> update(this::check, this::ifBody, this::elseBody)
         is WhileLoop -> update(this::check, this::body)
         is ExpressionSequence -> {
@@ -31,8 +44,8 @@ fun Computable.updateComponentAtIndex(index: Int, component: Computable) {
         is FunctionDeclaration -> update(this::body)
         is FunctionCall -> {
             if(index >= 0 && index < this.arguments.size + 1) {
-                if(index == 0) this.function = component as DataComputable
-                else this.arguments = this.arguments.copyAndReplaceIndex(index - 1, component) as List<DataComputable>
+                if(index == 0) this.function = component
+                else this.arguments = this.arguments.copyAndReplaceIndex(index - 1, component)
                 true
             } else false
         }
@@ -55,7 +68,7 @@ private fun newList(list: List<Computable>, index: Int, newValue: Computable) = 
 fun Computable.getComponents(): Array<Computable> = when(this) {
     is ContinueStatement, BreakStatement -> emptyArray()
     is Data -> emptyArray()
-    is ReturnExpression -> if(toReturn == null) emptyArray() else arrayOf<Computable>(toReturn!!)
+    is ReturnStatement -> if(toReturn == null) emptyArray() else arrayOf<Computable>(toReturn!!)
     is IfStatement -> if(elseBody == null) arrayOf(check, ifBody) else arrayOf(check, ifBody, elseBody!!)
     is WhileLoop -> arrayOf(check, body)
     is ExpressionSequence -> operations.toTypedArray()
@@ -63,7 +76,7 @@ fun Computable.getComponents(): Array<Computable> = when(this) {
     is SetVariable -> arrayOf(value)
     is DefineVariable -> arrayOf(value)
     is FunctionDeclaration -> arrayOf(body)
-    is FunctionCall -> arrayOf(function, *arguments.toTypedArray())
+    is FunctionCall -> arrayOf(function, *arguments)
     is MathOperation -> arrayOf(arg1, arg2)
     is UnaryMinus -> arrayOf(expression)
     is Negation -> arrayOf(negation)

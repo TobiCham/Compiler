@@ -1,9 +1,9 @@
 package com.tobi.mc.parser.optimisation.optimisations.number
 
-import com.tobi.mc.computable.Add
 import com.tobi.mc.computable.Computable
-import com.tobi.mc.computable.MathOperation
-import com.tobi.mc.computable.Subtract
+import com.tobi.mc.computable.operation.Add
+import com.tobi.mc.computable.operation.MathOperation
+import com.tobi.mc.computable.operation.Subtract
 import com.tobi.mc.parser.optimisation.Optimisation
 import com.tobi.mc.parser.util.SimpleDescription
 import com.tobi.mc.parser.util.isZero
