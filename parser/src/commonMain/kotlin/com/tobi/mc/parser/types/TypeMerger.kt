@@ -1,14 +1,15 @@
 package com.tobi.mc.parser.types
 
 import com.tobi.mc.ParseException
+import com.tobi.mc.SourceObject
 import com.tobi.mc.computable.data.DataType
 import com.tobi.mc.type.*
 
 internal object TypeMerger {
 
-    fun invokeFunction(function: ExpandedType, args: List<ExpandedType>): ExpandedType {
+    fun invokeFunction(sourceObject: SourceObject, function: ExpandedType, args: List<ExpandedType>): ExpandedType {
         if(function is IntType || function is StringType || function is VoidType || function is UnknownType) {
-            throw ParseException("Cannot invoke '$function' as a function")
+            throw ParseException("Cannot invoke as a function", sourceObject)
         }
 
         val possibleFunctions = when(function) {
@@ -26,7 +27,7 @@ internal object TypeMerger {
                 }
             }
         }
-        return resultType ?: throw ParseException("Cannot invoke function with those arguments")
+        return resultType ?: throw ParseException("Cannot invoke function with the specified arguments", sourceObject)
     }
 
     private fun canInvoke(function: FunctionType, args: List<ExpandedType>): Boolean = when(function.parameters) {
@@ -60,20 +61,21 @@ internal object TypeMerger {
         else -> expectedType == actualType
     }
 
-    fun restrictType(type: ExpandedType, restrictTo: DataType): ExpandedType {
+    fun restrictType(sourceObject: SourceObject, type: ExpandedType, restrictTo: DataType): ExpandedType {
         if(type is IntersectionType) {
             val newTypes = type.possible.filter {
                 it is CompleteType && it.type == restrictTo
             }
-            return if(newTypes.size == 1) newTypes.first() else IntersectionType(
-                newTypes.toSet()
-            )
+            return if(newTypes.size == 1) {
+                newTypes.first()
+            } else {
+                IntersectionType(newTypes.toSet())
+            }
         }
-        if(type is CompleteType) {
-            if(type.type != restrictTo) throw ParseException()
+        if(type is CompleteType && type.type == restrictTo) {
             return type
         }
-        throw ParseException()
+        throw ParseException("Unable to narrow type from $type to $restrictTo", sourceObject)
     }
 
     fun canBeAssignedToStrict(expectedType: ExpandedType, actualType: ExpandedType): Boolean {

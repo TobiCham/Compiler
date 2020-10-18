@@ -5,18 +5,20 @@ import com.tobi.mc.computable.operation.Equals
 import com.tobi.mc.computable.operation.Negation
 import com.tobi.mc.computable.operation.NotEquals
 import com.tobi.mc.parser.optimisation.InstanceOptimisation
-import com.tobi.mc.parser.util.SimpleDescription
 import com.tobi.mc.util.DescriptionMeta
+import com.tobi.mc.util.SimpleDescription
 
 internal object NegationOfEquals : InstanceOptimisation<Negation>(Negation::class) {
 
     override val description: DescriptionMeta = SimpleDescription("Negation of equals", """
-        Optimises expressions in the form !(a == b) to a != b
+        Optimises expressions in the form:
+            - !(a == b) to a != b
+            - !(a != b) to a == b
     """.trimIndent())
 
-    override fun Negation.optimise(replace: (Computable) -> Boolean): Boolean {
-        if(negation !is Equals) return false
-        val negation = negation as Equals
-        return replace(NotEquals(negation.arg1, negation.arg2))
+    override fun Negation.optimiseInstance(): Computable? = when(val negation = negation) {
+        is Equals -> NotEquals(negation.arg1, negation.arg2)
+        is NotEquals -> Equals(negation.arg1, negation.arg2)
+        else -> null
     }
 }

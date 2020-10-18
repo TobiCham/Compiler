@@ -1,5 +1,6 @@
 package com.tobi.mc.computable.data
 
+import com.tobi.mc.SourceRange
 import com.tobi.mc.computable.Context
 import com.tobi.mc.computable.ExecutionEnvironment
 import com.tobi.mc.computable.ExpressionSequence
@@ -10,7 +11,8 @@ class DataTypeClosure(
     override val parameters: List<Parameter>,
     val closure: Context,
     val body: ExpressionSequence,
-    override val returnType: DataType
+    override val returnType: DataType,
+    override var sourceRange: SourceRange? = null
 ) : Invocable, Data() {
 
     override val type: DataType = DataType.FUNCTION
@@ -20,7 +22,7 @@ class DataTypeClosure(
     override suspend fun invoke(arguments: Array<Data>, environment: ExecutionEnvironment): Data {
         val newContext = Context(closure)
         for((i, parameter) in parameters.withIndex()) {
-            newContext.defineVariable(parameter.name, arguments[i])
+            newContext.defineVariable(parameter.name, arguments[i], this)
         }
         return body.compute(newContext, environment)
     }

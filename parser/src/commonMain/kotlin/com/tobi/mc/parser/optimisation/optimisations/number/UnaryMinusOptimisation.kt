@@ -4,20 +4,17 @@ import com.tobi.mc.computable.Computable
 import com.tobi.mc.computable.data.DataTypeInt
 import com.tobi.mc.computable.operation.UnaryMinus
 import com.tobi.mc.parser.optimisation.InstanceOptimisation
-import com.tobi.mc.parser.util.SimpleDescription
 import com.tobi.mc.util.DescriptionMeta
+import com.tobi.mc.util.SimpleDescription
 
 internal object UnaryMinusOptimisation : InstanceOptimisation<UnaryMinus>(UnaryMinus::class) {
     override val description: DescriptionMeta = SimpleDescription("Unary minus", """
         Optimises expressions in the form -(-x) to x
     """.trimIndent())
 
-    override fun UnaryMinus.optimise(replace: (Computable) -> Boolean): Boolean {
-        val exp = this.expression
-        return when(exp) {
-            is DataTypeInt -> replace(DataTypeInt(-exp.value))
-            is UnaryMinus -> replace(exp.expression)
-            else -> false
-        }
+    override fun UnaryMinus.optimiseInstance(): Computable? = when(val expression = expression) {
+        is DataTypeInt -> DataTypeInt(-expression.value)
+        is UnaryMinus -> expression.expression
+        else -> null
     }
 }

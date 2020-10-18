@@ -1,8 +1,12 @@
 package com.tobi.mc
 
-class ParseException : RuntimeException {
+class ParseException(
+    override val message: String,
+    val source: SourceRange
+) : RuntimeException(message) {
 
-    constructor() : super()
-    constructor(message: String) : super(message)
-    constructor(message: String, cause: Throwable) : super(message, cause)
+    constructor(message: String, sourceObject: SourceObject): this(
+        message,
+        sourceObject.sourceRange ?: throw IllegalArgumentException("Source object must have a range")
+    )
 }

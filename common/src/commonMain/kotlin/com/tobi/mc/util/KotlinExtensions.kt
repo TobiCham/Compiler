@@ -1,7 +1,5 @@
 package com.tobi.mc.util
 
-inline fun <T, S> T?.mapIfNotNull(mapping: (T) -> S): S? = if(this == null) null else mapping(this)
-
 fun <T> List<T>.copyExceptIndex(index: Int) = this.filterIndexed { i, _ -> i != index }
 fun <T> List<T>.copyAndReplaceIndex(index: Int, replacement: T): List<T> {
     val newList = ArrayList<T>(this.size)

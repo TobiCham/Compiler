@@ -11,6 +11,6 @@ object JVMExecutionEnvironment : ExecutionEnvironment {
     override fun println(message: String) = kotlin.io.println(message)
 
     override suspend fun readLine(): String = withContext(Dispatchers.IO) {
-        return@withContext kotlin.io.readLine() ?: throw ScriptException("End of input stream")
+        return@withContext kotlin.io.readLine() ?: throw ScriptException("End of input stream", null)
     }
 }

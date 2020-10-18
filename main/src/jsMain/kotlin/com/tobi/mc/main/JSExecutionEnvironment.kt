@@ -1,46 +1,35 @@
 package com.tobi.mc.main
 
 import com.tobi.mc.computable.ExecutionEnvironment
+import com.tobi.mc.ui.OutputWindow
+import org.w3c.dom.HTMLInputElement
 import org.w3c.dom.events.KeyboardEvent
 
-object JSExecutionEnvironment : ExecutionEnvironment {
+class JSExecutionEnvironment(private val outputWindow: OutputWindow, private val inputElement: HTMLInputElement) : ExecutionEnvironment {
 
     override fun print(message: String) {
-        OutputWindow.append(message)
+        outputWindow.text += message
     }
 
-    override fun println(message: String) =
-        print("$message\n")
+    override fun println(message: String) = print("$message\n")
 
     override suspend fun readLine(): String {
-        SubmitInputButton.disabled = false
-        TextInput.disabled = false
-
-        TextInput.element.focus()
+        inputElement.disabled = false
+        inputElement.focus()
 
         try {
             val line = tryReadLine()
             println(line)
             return line
         } finally {
-            SubmitInputButton.disabled = true
-            TextInput.disabled = true
-            TextInput.element.value = ""
+            inputElement.disabled = true
+            inputElement.value = ""
         }
     }
 
     private suspend fun tryReadLine(): String = useListenerPromise(
-        ElementListener(
-            TextInput.element,
-            "keyup"
-        ) { event, accept, _ ->
-            if ((event as KeyboardEvent).keyCode == 13) accept(TextInput.element.value)
-        },
-        ElementListener(
-            SubmitInputButton.element,
-            "click"
-        ) { _, accept, _ ->
-            accept(TextInput.element.value)
+        ElementListener(inputElement, "keyup") { event, accept, _ ->
+            if ((event as KeyboardEvent).keyCode == 13) accept(inputElement.value)
         }
     )
 }

@@ -25,7 +25,7 @@ class TabbedBuilder(val tabSize: Int = 4) {
         print(value)
         if(indent > 0) {
             val chars = CharArray(indent) { ' ' }
-            builder.append(String(chars))
+            builder.append(chars.concatToString())
         }
         builder.append(currentStr)
         builder.append('\n')

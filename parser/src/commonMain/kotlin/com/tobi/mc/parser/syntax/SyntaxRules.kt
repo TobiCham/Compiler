@@ -5,9 +5,9 @@ import com.tobi.mc.parser.syntax.rules.RuleDivideByZero
 import com.tobi.mc.parser.syntax.rules.RuleFunctionsMustReturn
 import com.tobi.mc.parser.syntax.rules.RuleVariableExists
 
-internal object SyntaxRulesList {
+internal object SyntaxRules {
 
-    val RULES: Array<SyntaxRule<*>> = arrayOf(
+    val ALL_RULES: List<SyntaxRule> = listOf(
         RuleBreakAndContinueMustBeInsideLoop,
         RuleDivideByZero,
         RuleFunctionsMustReturn,

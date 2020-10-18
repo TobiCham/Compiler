@@ -25,7 +25,7 @@ internal class Lexer(
     private var yycolumn = 0
 
     private fun makeNode(type: LexerNodeType, value: Any? = null): LexerNode {
-        return LexerNode(type, value, yyline, yycolumn)
+        return LexerNode(type, yytext(), value, yyline, yycolumn)
     }
 
     private fun zzRefill(): Boolean {
@@ -74,7 +74,7 @@ internal class Lexer(
     }
 
     fun yytext(): String {
-        return String(zzBuffer, zzStartRead, zzMarkedPos - zzStartRead)
+        return zzBuffer.concatToString(zzStartRead, zzStartRead + (zzMarkedPos - zzStartRead))
     }
 
     fun yylex(): LexerNode? {

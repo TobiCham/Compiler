@@ -8,9 +8,9 @@ import com.tobi.mc.computable.variable.GetVariable
 import com.tobi.mc.computable.variable.SetVariable
 import com.tobi.mc.computable.variable.VariableReference
 import com.tobi.mc.parser.optimisation.InstanceOptimisation
-import com.tobi.mc.parser.util.SimpleDescription
 import com.tobi.mc.parser.util.getComponents
 import com.tobi.mc.util.DescriptionMeta
+import com.tobi.mc.util.SimpleDescription
 import com.tobi.mc.util.copyAndReplaceIndex
 
 internal object RedundantVariablesOptimisation : InstanceOptimisation<ExpressionSequence>(ExpressionSequence::class) {
@@ -19,7 +19,7 @@ internal object RedundantVariablesOptimisation : InstanceOptimisation<Expression
         Removes any unused variables and function declarations
     """.trimIndent())
 
-    override fun ExpressionSequence.optimise(replace: (Computable) -> Boolean): Boolean {
+    override fun ExpressionSequence.optimiseInstance(): Computable? {
         for ((i, operation) in this.operations.withIndex()) {
             if(hasUsages(i, operation)) {
                 continue
@@ -29,9 +29,9 @@ internal object RedundantVariablesOptimisation : InstanceOptimisation<Expression
             } else {
                 operations.filterIndexed { index, _ -> index != i }
             }
-            return replace(ExpressionSequence(newOps))
+            return ExpressionSequence(newOps)
         }
-        return false
+        return null
     }
 
     private fun ExpressionSequence.hasUsages(index: Int, computable: Computable): Boolean {

@@ -1,5 +1,3 @@
-package com.tobi.mc.parser.util
-
-import com.tobi.mc.util.DescriptionMeta
+package com.tobi.mc.util
 
 data class SimpleDescription(override val name: String, override val description: String) : DescriptionMeta

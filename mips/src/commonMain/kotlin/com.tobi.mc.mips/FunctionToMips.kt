@@ -76,7 +76,7 @@ class FunctionToMips private constructor(function: TacFunction, val config: Mips
             copyToRegister(config.argumentRegisters[0], arg1)
             copyToRegister(config.argumentRegisters[1], arg2)
             val r1 = MipsArgument.Register(config.argumentRegisters[0])
-            val r2 = MipsArgument.Register(config.argumentRegisters[0])
+            val r2 = MipsArgument.Register(config.argumentRegisters[1])
 
             when(type) {
                 ConstructMath.MathType.ADD -> MipsInstruction("add", r1, r2)

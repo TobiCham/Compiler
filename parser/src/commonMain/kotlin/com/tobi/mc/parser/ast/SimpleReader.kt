@@ -1,6 +1,6 @@
 package com.tobi.mc.parser.ast
 
-internal interface SimpleReader {
+interface SimpleReader {
 
     fun read(): Int
 

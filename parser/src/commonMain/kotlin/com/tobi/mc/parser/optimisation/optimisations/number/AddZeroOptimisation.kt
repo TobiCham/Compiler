@@ -5,11 +5,11 @@ import com.tobi.mc.computable.operation.Add
 import com.tobi.mc.computable.operation.MathOperation
 import com.tobi.mc.computable.operation.Subtract
 import com.tobi.mc.parser.optimisation.Optimisation
-import com.tobi.mc.parser.util.SimpleDescription
 import com.tobi.mc.parser.util.isZero
 import com.tobi.mc.util.DescriptionMeta
+import com.tobi.mc.util.SimpleDescription
 
-internal object AddZeroOptimisation : Optimisation<MathOperation> {
+internal object AddZeroOptimisation : Optimisation {
 
     override val description: DescriptionMeta = SimpleDescription("Add Zero Identity", """
         Optimises expressions of the form:
@@ -18,13 +18,15 @@ internal object AddZeroOptimisation : Optimisation<MathOperation> {
         To simply x
     """.trimIndent())
 
-    override fun accepts(computable: Computable): Boolean {
-        return computable is Add || computable is Subtract
-    }
-
-    override fun MathOperation.optimise(replace: (Computable) -> Boolean) = when {
-        arg1.isZero() -> replace(arg2)
-        arg2.isZero() -> replace(arg1)
-        else -> false
+    override fun optimise(computable: Computable): Computable? {
+        if(!(computable is Add || computable is Subtract)) {
+            return null
+        }
+        computable as MathOperation
+        return when {
+            computable.arg1.isZero() -> computable.arg2
+            computable.arg2.isZero() -> computable.arg1
+            else -> null
+        }
     }
 }

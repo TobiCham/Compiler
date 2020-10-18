@@ -1,8 +1,6 @@
 package com.tobi.mc
 
-class ScriptException : RuntimeException {
-
-    constructor() : super()
-    constructor(message: String) : super(message)
-    constructor(message: String, cause: Throwable) : super(message, cause)
-}
+class ScriptException(
+    override val message: String,
+    val source: SourceObject?
+) : RuntimeException(message)

@@ -9,45 +9,46 @@ import com.tobi.mc.computable.variable.DefineVariable
 import com.tobi.mc.computable.variable.GetVariable
 import com.tobi.mc.computable.variable.SetVariable
 import com.tobi.mc.computable.variable.VariableReference
-import com.tobi.mc.parser.util.SimpleDescription
 import com.tobi.mc.parser.util.getComponents
-import com.tobi.mc.util.DescriptionMeta
+import com.tobi.mc.util.ArrayListStack
+import com.tobi.mc.util.MutableStack
+import com.tobi.mc.util.Stack
 
-object ContextIndexResolver : ParserOperation {
+object ContextIndexResolver {
 
-    override val description: DescriptionMeta = SimpleDescription("Resolves context", """
-        Calculates which context variables are referring to
-    """.trimIndent())
-
-    override fun processProgram(program: Program) {
-        val contexts = ArrayList<MutableSet<String>>()
-        contexts.add(program.context.getVariables().keys.toHashSet())
+    /**
+     * Calculates and sets which context each variable in the program is refering to
+     */
+    fun calculateVariableContexts(program: Program) {
+        val contexts = ArrayListStack<MutableSet<String>>()
+        contexts.push(program.context.getVariables().keys.toHashSet())
         program.calculate(contexts)
     }
 
-    private fun Computable.calculate(contexts: ArrayList<MutableSet<String>>) {
+    private fun Computable.calculate(contexts: MutableStack<MutableSet<String>>) {
         if(this is ExpressionSequence) {
-            contexts.add(HashSet())
+            contexts.push(HashSet())
         } else if(this is DefineVariable || this is FunctionDeclaration) {
-            contexts.last().add((this as VariableReference).name)
+            contexts.peek().add((this as VariableReference).name)
         }
         if(this is FunctionDeclaration) {
-            contexts.add(this.parameters.map { it.name }.toHashSet())
+            contexts.push(this.parameters.map { it.name }.toHashSet())
         }
         for(component in this.getComponents()) {
             component.calculate(contexts)
         }
         if(this is ExpressionSequence || this is FunctionDeclaration) {
-            contexts.removeAt(contexts.size - 1)
+            contexts.pop()
         }
         if(this is GetVariable) {
-            this.contextIndex = findVariable(this.name, contexts)
+            this.contextIndex = findVariable(this, contexts)
         } else if(this is SetVariable) {
-            this.contextIndex = findVariable(this.name, contexts)
+            this.contextIndex = findVariable(this, contexts)
         }
     }
 
-    private fun findVariable(name: String, contexts: ArrayList<MutableSet<String>>): Int {
+    private fun findVariable(variable: VariableReference, contexts: Stack<MutableSet<String>>): Int {
+        val name = variable.name
         var i = contexts.size - 1
         while(i >= 0) {
             val context = contexts[i]
@@ -56,6 +57,6 @@ object ContextIndexResolver : ParserOperation {
             }
             i--
         }
-        throw ParseException("Unknown variable $name")
+        throw ParseException("Unknown variable $name", variable)
     }
 }

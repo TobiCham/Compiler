@@ -1,6 +1,8 @@
 package com.tobi.mc.computable.data
 
-object DataTypeVoid : Data() {
+import com.tobi.mc.SourceRange
+
+class DataTypeVoid(override var sourceRange: SourceRange? = null) : Data() {
 
     override val type: DataType = DataType.VOID
 

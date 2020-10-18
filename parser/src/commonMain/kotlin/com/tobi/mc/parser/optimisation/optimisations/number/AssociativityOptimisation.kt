@@ -2,13 +2,12 @@ package com.tobi.mc.parser.optimisation.optimisations.number
 
 import com.tobi.mc.computable.Computable
 import com.tobi.mc.computable.operation.Add
-import com.tobi.mc.computable.operation.MathOperation
 import com.tobi.mc.computable.operation.Multiply
 import com.tobi.mc.parser.optimisation.Optimisation
-import com.tobi.mc.parser.util.SimpleDescription
 import com.tobi.mc.util.DescriptionMeta
+import com.tobi.mc.util.SimpleDescription
 
-internal object AssociativityOptimisation : Optimisation<MathOperation> {
+internal object AssociativityOptimisation : Optimisation {
 
     override val description: DescriptionMeta = SimpleDescription("Associativity Optimisation", """
         Optimises sequences of the form:
@@ -19,19 +18,9 @@ internal object AssociativityOptimisation : Optimisation<MathOperation> {
         By reducing all constants
     """.trimIndent())
 
-    override fun accepts(computable: Computable): Boolean = computable is Add || computable is Multiply
-
-    override fun MathOperation.optimise(replace: (Computable) -> Boolean): Boolean {
-        val result = if(this is Add) {
-            val reducer = AssociativityReducer(Add::class, ::Add, Long::plus)
-            reducer.reduce(this)
-        } else {
-            val reducer = AssociativityReducer(Multiply::class, ::Multiply, Long::times)
-            reducer.reduce(this as Multiply)
-        }
-        if(result !== this) {
-            return replace(result)
-        }
-        return false
+    override fun optimise(computable: Computable): Computable? = when(computable) {
+        is Add -> AssociativityReducer(Add::class, ::Add, Long::plus).reduce(computable)
+        is Multiply -> AssociativityReducer(Multiply::class, ::Multiply, Long::times).reduce(computable)
+        else -> null
     }
 }

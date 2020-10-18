@@ -6,10 +6,10 @@ import com.tobi.mc.computable.control.IfStatement
 import com.tobi.mc.computable.control.WhileLoop
 import com.tobi.mc.computable.data.DataTypeInt
 import com.tobi.mc.parser.optimisation.Optimisation
-import com.tobi.mc.parser.util.SimpleDescription
 import com.tobi.mc.util.DescriptionMeta
+import com.tobi.mc.util.SimpleDescription
 
-internal object BranchOptimisation : Optimisation<Computable> {
+internal object BranchOptimisation : Optimisation {
 
     override val description: DescriptionMeta = SimpleDescription("Unnecessary branch removal", """
         Some if statements or while loops can be be determined to either always or never happen.
@@ -21,23 +21,21 @@ internal object BranchOptimisation : Optimisation<Computable> {
         while(0) {...} -> Nothing
     """.trimIndent())
 
-    override fun accepts(computable: Computable): Boolean = computable is IfStatement || computable is WhileLoop
+    override fun optimise(computable: Computable): Computable? = when(computable) {
+        is IfStatement -> optimiseIf(computable)
+        is WhileLoop -> optimiseWhile(computable)
+        else -> null
+    }
 
-    override fun Computable.optimise(replace: (Computable) -> Boolean): Boolean {
-        if(this is IfStatement) {
-            return when(checkType(this.check)) {
-                CheckType.SUCCEED -> replace(ifBody)
-                CheckType.FAIL -> replace(elseBody ?: ExpressionSequence(emptyList()))
-                CheckType.UNKNOWN -> false
-            }
-        }
-        if(this is WhileLoop) {
-            return when(checkType(this.check)) {
-                CheckType.FAIL -> replace(ExpressionSequence(emptyList()))
-                else -> false
-            }
-        }
-        return false
+    private fun optimiseIf(ifStatement: IfStatement): Computable? = when(checkType(ifStatement.check)) {
+        CheckType.SUCCEED -> ifStatement.ifBody
+        CheckType.FAIL -> ifStatement.elseBody ?: ExpressionSequence(emptyList())
+        CheckType.UNKNOWN -> null
+    }
+
+    private fun optimiseWhile(whileLoop: WhileLoop): Computable? = when(checkType(whileLoop.check)) {
+        CheckType.FAIL -> ExpressionSequence(emptyList())
+        else -> null
     }
 
     private fun checkType(computable: Computable) = when {

@@ -5,20 +5,22 @@ import com.tobi.mc.computable.ExpressionSequence
 import com.tobi.mc.computable.data.Data
 import com.tobi.mc.computable.operation.MathOperation
 import com.tobi.mc.parser.optimisation.InstanceOptimisation
-import com.tobi.mc.parser.util.SimpleDescription
 import com.tobi.mc.util.DescriptionMeta
+import com.tobi.mc.util.SimpleDescription
 
 internal object RedundantOperationOptimisation : InstanceOptimisation<ExpressionSequence>(ExpressionSequence::class) {
 
-    override val description: DescriptionMeta = SimpleDescription("Redundant Expression Removal", """
+    override val description: DescriptionMeta = SimpleDescription(
+        "Redundant Expression Removal", """
         Removes redundant expressions, e.g:
         5;
         "hello";
-        [empty statement]
+        {}
         are removed
-    """.trimIndent())
+    """.trimIndent()
+    )
 
-    override fun ExpressionSequence.optimise(replace: (Computable) -> Boolean): Boolean {
+    override fun ExpressionSequence.optimiseInstance(): Computable? {
         val newOperations = ArrayList<Computable>(this.operations.size)
         var modified = false
         for(operation in this.operations) {
@@ -33,9 +35,9 @@ internal object RedundantOperationOptimisation : InstanceOptimisation<Expression
             }
         }
         if(!modified) {
-            return false
+            return null
         }
-        return replace(ExpressionSequence(newOperations))
+        return ExpressionSequence(newOperations)
     }
 
     private fun isRequired(computable: Computable): Boolean = when {

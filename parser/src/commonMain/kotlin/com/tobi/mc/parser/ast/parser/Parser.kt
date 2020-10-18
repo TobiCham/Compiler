@@ -3,6 +3,7 @@
 //----------------------------------------------------
 package com.tobi.mc.parser.ast.parser
 
+import com.tobi.mc.computable.Context
 import com.tobi.mc.parser.ast.parser.runtime.LRParser
 import com.tobi.mc.parser.ast.parser.runtime.Scanner
 import com.tobi.mc.parser.ast.parser.runtime.Symbol
@@ -15,10 +16,11 @@ import com.tobi.mc.util.Stack
 internal class Parser(
     scanner: Scanner,
     factory: SymbolFactory,
-    symbolIdNameMapping: (Int) -> String
+    symbolIdNameMapping: (Int) -> String,
+    defaultContext: Context
 ) : LRParser(scanner, factory, symbolIdNameMapping) {
 
-    private val action_obj = ParserActions(this)
+    private val action_obj = ParserActions(this, defaultContext)
 
     override fun production_table() = PRODUCTION_TABLE
 

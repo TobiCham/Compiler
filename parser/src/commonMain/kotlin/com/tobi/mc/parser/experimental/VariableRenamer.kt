@@ -2,19 +2,23 @@ package com.tobi.mc.parser.experimental
 
 import com.tobi.mc.computable.Computable
 import com.tobi.mc.computable.ExpressionSequence
-import com.tobi.mc.computable.control.IfStatement
-import com.tobi.mc.computable.control.ReturnStatement
-import com.tobi.mc.computable.control.WhileLoop
+import com.tobi.mc.computable.control.*
 import com.tobi.mc.computable.data.Data
 import com.tobi.mc.computable.function.FunctionCall
 import com.tobi.mc.computable.function.FunctionDeclaration
 import com.tobi.mc.computable.function.Parameter
 import com.tobi.mc.computable.operation.MathOperation
+import com.tobi.mc.computable.operation.Negation
+import com.tobi.mc.computable.operation.StringConcat
 import com.tobi.mc.computable.variable.DefineVariable
 import com.tobi.mc.computable.variable.VariableReference
 import com.tobi.mc.parser.util.getComponents
 
-internal object VariableRenamer {
+object VariableRenamer {
+
+    fun renameVariable(sequence: ExpressionSequence, startPosition: Int, from: String, to: String) {
+
+    }
 
     fun renameVariable(computable: Computable, from: String, to: String) {
         return computable.rename(from, to)
@@ -27,9 +31,11 @@ internal object VariableRenamer {
         function.body.rename(from, to)
     }
 
+
+
     private fun <T : Computable> T.rename(from: String, to: String) {
         when(this) {
-            is Data -> return
+            is Data, is BreakStatement, is ContinueStatement -> return
             is DefineVariable -> {
                 if(this.name == to) {
                     throw IllegalStateException("Conflict - variable declaration already uses variable '$to'")
@@ -81,6 +87,11 @@ internal object VariableRenamer {
             is ReturnStatement -> {
                 toReturn?.rename(from, to)
             }
+            is StringConcat -> {
+                str1.rename(from, to)
+                str2.rename(from, to)
+            }
+            is Negation -> negation.rename(from, to)
             else -> throw RuntimeException("Unknown computable $this")
         }
         for(component in this.getComponents()) {

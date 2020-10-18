@@ -3,8 +3,9 @@ package com.tobi.mc.parser.optimisation
 import com.tobi.mc.parser.optimisation.optimisations.*
 import com.tobi.mc.parser.optimisation.optimisations.number.*
 
-internal object OptimisationsList {
-    val NUMBER_OPTIMISATIONS = arrayOf(
+internal object Optimisations {
+
+    val ALL_OPTIMISATIONS = listOf(
         UnaryMinusOptimisation,
         NegationOptimisation,
         NegationOfEquals,
@@ -16,13 +17,10 @@ internal object OptimisationsList {
         RedundantVariablesOptimisation,
         NestedSequenceOptimisation,
         AssociativityOptimisation,
-        StringConcatOptimisation
-    )
+        StringConcatOptimisation,
 
-    val DEFAULT_OPTIMISATIONS = arrayOf(
-        *NUMBER_OPTIMISATIONS,
         BranchOptimisation,
-        FlowInterruptOptimisation,
+        UnreachableCodeOptimisation,
         RedundantOperationOptimisation,
         ConstantReferenceOptimisation,
         TailRecursionOptimisation

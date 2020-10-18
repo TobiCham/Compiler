@@ -1,6 +1,7 @@
 package com.tobi.mc.parser.types
 
 import com.tobi.mc.ParseException
+import com.tobi.mc.computable.control.ReturnStatement
 import com.tobi.mc.computable.function.FunctionDeclaration
 import com.tobi.mc.type.ExpandedType
 import com.tobi.mc.type.VoidType
@@ -13,14 +14,14 @@ internal class FunctionTypeData(val function: FunctionDeclaration, declaredRetur
         return returnType ?: VoidType
     }
 
-    fun addReturnType(type: ExpandedType) {
+    fun addReturnType(returnStatement: ReturnStatement, type: ExpandedType) {
         if(returnType == null) returnType = type
         else {
             if(!TypeMerger.canBeAssignedTo(returnType!!, type)) {
                 if(function.returnType == null) {
-                    throw ParseException("Conflicting return types for function ${function.name}: '$returnType' and '$type'")
+                    throw ParseException("Conflicting calculated return types '$returnType' and '$type'", returnStatement)
                 } else {
-                    throw ParseException("Cannot return '$type' from ${function.name} ($returnType)")
+                    throw ParseException("Cannot return '${type}', expected '$returnType'", returnStatement)
                 }
             }
             returnType = TypeMerger.mergeTypes(returnType!!, type)

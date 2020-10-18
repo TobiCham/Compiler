@@ -1,53 +1,119 @@
-#code-area {
-    margin-bottom: 1rem;
-    width: 100%;
-    height: 100%;
-    display: block;
-    font-family: Monospace, monospaced;
-    font-size: 0.9rem;
-    tab-size: 2rem;
+/* Tailwind */
+
+.bg-gray-0 {
+    background-color: #000000;
+}
+.bg-gray-1 {
+    background-color: #161718;
+}
+.bg-gray-2 {
+    background-color: #2C2E2F;
+    /*background-color: #D3D1D0;*/
+}
+.bg-gray-3 {
+    background-color: #3C3F41;
+}
+.bg-gray-4 {
+    background-color: #4E5254;
+}
+.bg-gray-8 {
+    background-color: #BBBBBB;
+}
+.bg-vscode {
+    background-color: #1E1E1E;
+}
+.hover\:bg-gray-0:hover {
+    background-color: #000000;
+}
+.hover\:bg-gray-2:hover {
+    background-color: #2C2E2F;
+}
+.hover\:bg-gray-3:hover {
+    background-color: #3C3F41;
+}
+.hover\:bg-gray-4:hover {
+    background-color: #4E5254;
+}
+.hover\:bg-gray-8:hover {
+    background-color: #BBBBBB;
+}
+.border-light {
+    border-color: #BBBBBB;
+}
+.py-1\/2 {
+    padding-top: 0.125rem;
+    padding-bottom: 0.125rem;
 }
 
-.actionButton {
-    margin-bottom: 0.5rem;
+#optimise.active>span {
+    color: #59A869;
+}
+#optimise.active>svg>path {
+    fill: #59A869;
+}
+
+button {
+    /*cursor: pointer;*/
+}
+button:disabled {
+    cursor: default;
+}
+
+#header-bar>button:hover {
+    background-color: #3C3F41;
+}
+#header-bar>button:disabled {
+    background-color: transparent;
+}
+#header-bar>button:disabled>span {
+    color: gray;
+}
+#header-bar>button:disabled>svg>path {
+    fill: gray;
+}
+
+/* -------- */
+
+/*#container {*/
+/*    margin-bottom: 1rem;*/
+/*    width: 100%;*/
+/*    height: 100%;*/
+/*    display: block;*/
+/*    border: 1px solid #aaaaaa;*/
+/*    border-radius: 4px;*/
+/*}*/
+
+/*#output {*/
+/*    display: block;*/
+/*    border: 1px solid #aaaaaa;*/
+/*    border-radius: 4px;*/
+/*    padding: 4px;*/
+/*    height: calc(100% - 6.5rem);*/
+/*    background-color: #eeeeee;*/
+/*    color: #5e5e5e;*/
+/*}*/
+
+@media (max-width: 67rem) {
+    #header-bar > button > span {
+        display: none;
+    }
+}
+
+input:disabled {
+    cursor: default;
 }
 
 #output {
-    display: block;
-    border: 1px solid #aaaaaa;
-    border-radius: 4px;
-    padding: 4px;
-    height: calc(100% - 6.5rem);
     background-color: #eeeeee;
     color: #5e5e5e;
 }
 
-.col-md-6 {
-    height: 100%;
-}
-
-.row {
-    height: calc(100% - 5rem);
-}
-
-.container-fluid {
-    height: 100%;
-}
-
-#input {
-    width: calc(100% - 110px);
-    display: inline-block;
-    height: 2.5rem;
-    border: 1px solid #aaaaaa;
-    margin-right: 5px;
-}
-#inputButton {
-    height: 2.5rem;
-    width: 100px;
+.border-gray {
+    border-color: #808080;
 }
 
 .style-string {
-    color: #4222d
+    color: #04222d;
 }
 
 .style-number {

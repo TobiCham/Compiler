@@ -4,8 +4,8 @@ import com.tobi.mc.computable.Computable
 import com.tobi.mc.computable.data.DataTypeInt
 import com.tobi.mc.computable.operation.Negation
 import com.tobi.mc.parser.optimisation.InstanceOptimisation
-import com.tobi.mc.parser.util.SimpleDescription
 import com.tobi.mc.util.DescriptionMeta
+import com.tobi.mc.util.SimpleDescription
 
 internal object NegationOptimisation : InstanceOptimisation<Negation>(Negation::class) {
 
@@ -13,11 +13,8 @@ internal object NegationOptimisation : InstanceOptimisation<Negation>(Negation::
         Optimises negations of constants
     """.trimIndent())
 
-    override fun Negation.optimise(replace: (Computable) -> Boolean): Boolean {
-        if(negation is DataTypeInt) {
-            val value = (negation as DataTypeInt).value
-            return replace(DataTypeInt(if(value == 0L) 1L else 0L))
-        }
-        return false
+    override fun Negation.optimiseInstance(): Computable? = when(val negation = negation) {
+        is DataTypeInt -> DataTypeInt(if(negation.value == 0L) 1L else 0L)
+        else -> null
     }
 }

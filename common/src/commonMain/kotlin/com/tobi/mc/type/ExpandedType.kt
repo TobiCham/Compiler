@@ -24,7 +24,7 @@ data class FunctionType(val returnType: ExpandedType, val parameters: AnalysisPa
         } else {
             "???"
         }
-        return "[$returnType($paramList)]"
+        return "function ($paramList) -> ${returnType}"
     }
 }
 

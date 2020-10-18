@@ -4,3 +4,4 @@ build/
 libs/
 .gradle/
 jflex.jar
+mars.jar

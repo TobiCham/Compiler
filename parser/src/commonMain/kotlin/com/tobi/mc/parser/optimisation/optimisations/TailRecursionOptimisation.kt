@@ -14,9 +14,9 @@ import com.tobi.mc.computable.variable.GetVariable
 import com.tobi.mc.computable.variable.SetVariable
 import com.tobi.mc.computable.variable.VariableReference
 import com.tobi.mc.parser.optimisation.InstanceOptimisation
-import com.tobi.mc.parser.util.SimpleDescription
 import com.tobi.mc.parser.util.traverseAllNodes
 import com.tobi.mc.util.DescriptionMeta
+import com.tobi.mc.util.SimpleDescription
 
 internal object TailRecursionOptimisation : InstanceOptimisation<FunctionDeclaration>(FunctionDeclaration::class) {
 
@@ -24,9 +24,9 @@ internal object TailRecursionOptimisation : InstanceOptimisation<FunctionDeclara
         Converts tail recursive functions into iterative functions
     """.trimIndent())
 
-    override fun FunctionDeclaration.optimise(replace: (Computable) -> Boolean): Boolean {
+    override fun FunctionDeclaration.optimiseInstance(): Computable? {
         if(!this.isTailRecursive()) {
-            return false
+            return null
         }
 
         val names = HashSet<String>()
@@ -48,7 +48,7 @@ internal object TailRecursionOptimisation : InstanceOptimisation<FunctionDeclara
         val newBody = ExpressionSequence(listOf(
             WhileLoop(DataTypeInt(1), body.convertToTailrec(this, paramNames) as ExpressionSequence)
         ))
-        return replace(FunctionDeclaration(name, parameters, newBody, returnType))
+        return FunctionDeclaration(name, parameters, newBody, returnType)
     }
 
     private fun findVariableName(preferredName: String, names: MutableSet<String>): String {
@@ -88,7 +88,7 @@ internal object TailRecursionOptimisation : InstanceOptimisation<FunctionDeclara
         for((_, name) in tailRecFunc.parameters) {
             list.add(SetVariable(name, 0, GetVariable(tempParamNames[name]!!, 0)))
         }
-        list.add(ContinueStatement)
+        list.add(ContinueStatement())
         return ExpressionSequence(list)
     }
 

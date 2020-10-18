@@ -1,8 +1,9 @@
 package com.tobi.mc.computable
 
+import com.tobi.mc.SourceObject
 import com.tobi.mc.computable.data.Data
 
-interface Computable {
+interface Computable : SourceObject {
 
     val description: String
 

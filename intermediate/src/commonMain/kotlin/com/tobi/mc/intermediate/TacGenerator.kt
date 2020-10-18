@@ -34,7 +34,11 @@ class TacGenerator(private val program: Program) {
         functions.clear()
         environments.clear()
 
-        FunctionDeclaration("main", emptyList(), program.code, DataType.VOID).toTac(TacEnvironment("global", null), TacGenerationContext(), ArrayList())
+        val newCode = ArrayList(program.code.operations)
+        newCode.add(
+            FunctionCall(GetVariable("exit", 0), arrayOf(DataTypeInt(0L)))
+        )
+        FunctionDeclaration("main", emptyList(), ExpressionSequence(newCode), DataType.VOID).toTac(TacEnvironment("global", null), TacGenerationContext(), ArrayList())
 
         return TacProgram(stringIndices.keys.toTypedArray(), environments, functions)
     }

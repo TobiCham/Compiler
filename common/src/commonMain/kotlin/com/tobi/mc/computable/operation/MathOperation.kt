@@ -7,11 +7,11 @@ import com.tobi.mc.computable.ExecutionEnvironment
 import com.tobi.mc.computable.data.Data
 import com.tobi.mc.computable.data.DataTypeInt
 
-open class MathOperation(
+abstract class MathOperation(
     var arg1: Computable,
     var arg2: Computable,
     val operationString: String,
-    val computation: (Long, Long) -> Long
+    val computation: (Long, Long) -> Long,
 ) : Computable {
 
     override val description: String = operationString
@@ -24,12 +24,12 @@ open class MathOperation(
     private suspend fun getValue(computable: Computable, context: Context, environment: ExecutionEnvironment): Long {
         val value = computable.compute(context, environment)
         if(value !is DataTypeInt) {
-            throw ScriptException("Expected int, got ${value.description}")
+            throw ScriptException("Expected int, got ${value.description}", this)
         }
         return value.value
     }
 
     override fun toString(): String {
-        return "${this::class.simpleName}{$arg1, $arg2}"
+        return "${this::class.simpleName}<$arg1, $arg2>"
     }
 }

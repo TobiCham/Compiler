@@ -19,26 +19,24 @@ import com.tobi.mc.computable.operation.UnaryMinus
 import com.tobi.mc.computable.variable.DefineVariable
 import com.tobi.mc.computable.variable.GetVariable
 import com.tobi.mc.computable.variable.SetVariable
-import com.tobi.mc.parser.TypeDetection
-import com.tobi.mc.parser.util.SimpleDescription
 import com.tobi.mc.parser.util.getComponents
 import com.tobi.mc.type.*
-import com.tobi.mc.util.DescriptionMeta
 
-internal object TypeDetectionImpl : TypeDetection {
+/**
+ * Performs two roles:
+ * 1. Infers types when the 'auto' keyword is used
+ * 2. Ensures types and operations are possible
+ */
+internal object TypeDetector {
 
-    override val description: DescriptionMeta = SimpleDescription("Type Detection & Validation", """
-        Infers types when the 'auto' keyword is used, and ensures types are and operations are possible
-    """.trimIndent())
-
-    override fun processProgram(program: Program) {
+    fun inferAndValidateTypes(program: Program) {
         program.detectTypes(
             createNewState(program.context),
             FunctionTypeData(FunctionDeclaration("main", emptyList(), program.code, DataType.VOID), VoidType)
         )
     }
 
-    override fun inferAndValidateTypes(computable: Computable, context: Context) {
+    fun inferAndValidateTypes(computable: Computable, context: Context) {
         computable.detectTypes(createNewState(context), null)
     }
 
@@ -92,11 +90,11 @@ internal object TypeDetectionImpl : TypeDetection {
         val assignedType = value.calculateType(state)
 
         if(!TypeMerger.canBeAssignedTo(currentType, assignedType)) {
-            throw ParseException("$name: $assignedType cannot be assigned to '$currentType'")
+            throw ParseException("$assignedType cannot be assigned to $currentType", this)
         }
         if(currentType is ComplexType) {
             var mergedType = TypeMerger.mergeTypes(currentType, assignedType)
-            mergedType = TypeMerger.restrictType(mergedType, TypeMerger.getSimpleType(currentType)!!)
+            mergedType = TypeMerger.restrictType(this, mergedType, TypeMerger.getSimpleType(currentType)!!)
             state.set(name, mergedType)
         }
     }
@@ -107,15 +105,15 @@ internal object TypeDetectionImpl : TypeDetection {
 
         if(expected == null) {
             val simpleType = TypeMerger.getSimpleType(actualType) ?:
-                throw ParseException("Unable to infer type for '$name'. Please specify it manually")
+                throw ParseException("Unable to infer type. Please specify it manually", this)
             this.expectedType = simpleType
         } else {
             if(!TypeMerger.canBeAssignedTo(expected, actualType)) {
-                throw ParseException("$name: $actualType cannot be assigned to '$expected'")
+                throw ParseException("$actualType cannot be assigned to $expected", this)
             }
         }
         if(expectedType == DataType.VOID || actualType is VoidType) {
-            throw ParseException("Can't define variable '$name' as void")
+            throw ParseException("Can't define a variable as void", this)
         }
         state.define(name, actualType)
     }
@@ -123,7 +121,7 @@ internal object TypeDetectionImpl : TypeDetection {
     private fun FunctionCall.handle(state: VariableTypeState) {
         val funcType = function.calculateType(state)
         val args = this.arguments.map { it.calculateType(state) }
-        TypeMerger.invokeFunction(funcType, args)
+        TypeMerger.invokeFunction(this, funcType, args)
     }
 
     private fun FunctionDeclaration.handle(state: VariableTypeState) {
@@ -138,7 +136,7 @@ internal object TypeDetectionImpl : TypeDetection {
         val simpleReturnType = returnType.run(TypeMerger::getSimpleType)
 
         if(simpleReturnType == null) {
-            throw ParseException("Unable to infer return type for function '${this.name}. Please specify it manually'")
+            throw ParseException("Unable to infer return type. Please specify it manually'", this)
         }
         if(this.returnType == null) {
             this.returnType = simpleReturnType
@@ -151,10 +149,10 @@ internal object TypeDetectionImpl : TypeDetection {
 
     private fun ReturnStatement.handle(state: VariableTypeState, currentFunction: FunctionTypeData) {
         if(toReturn == null) {
-            currentFunction.addReturnType(VoidType)
+            currentFunction.addReturnType(this, VoidType)
         } else {
             val returnType = toReturn!!.calculateType(state)
-            currentFunction.addReturnType(returnType)
+            currentFunction.addReturnType(this, returnType)
         }
     }
 
@@ -169,7 +167,7 @@ internal object TypeDetectionImpl : TypeDetection {
     private fun Computable.ensureType(name: String, type: ExpandedType, typeDescription: String, state: VariableTypeState) {
         val thisType = this.calculateType(state)
         if(!TypeMerger.canBeAssignedTo(type, thisType)) {
-            throw ParseException("Expected $typeDescription expression for $name, got $type")
+            throw ParseException("Expected an expression of type $typeDescription, got $type", this)
         }
     }
 
@@ -186,7 +184,7 @@ internal object TypeDetectionImpl : TypeDetection {
         is FunctionCall -> {
             val function = function.calculateType(state)
             val args = this.arguments.map { it.calculateType(state) }
-            TypeMerger.invokeFunction(function, args)
+            TypeMerger.invokeFunction(this, function, args)
         }
         else -> throw IllegalStateException()
     }

@@ -1,6 +1,7 @@
 package com.tobi.mc.parser.ast.parser.runtime
 
-import com.tobi.mc.parser.ParseException
+import com.tobi.mc.FilePosition
+import com.tobi.mc.SourceRange
 import com.tobi.mc.parser.ast.ReaderHelpers
 import com.tobi.mc.util.ArrayListStack
 import com.tobi.mc.util.Stack
@@ -46,14 +47,22 @@ internal abstract class LRParser(
     fun reportError(message: String, info: Any?) {
         if (info is Symbol) {
             var actualMessage = if(info.symbol == EOF_sym()) "Unexpected end of file" else message
-            actualMessage += ". Valid tokens: "
-            actualMessage += expectedTokenIds().joinToString(", ", transform = symbolIdNameMapping)
+            actualMessage += ". Valid tokens:\n"
+            actualMessage += expectedTokenIds().joinToString("\n") {
+                " - ${symbolIdNameMapping(it)}"
+            }
 
-            throw ParseException(
-                actualMessage,
-                info.locationLeft,
-                info.locationRight
-            )
+            val range: SourceRange = if (info.startPosition != null && info.endPosition != null) {
+                SourceRange(info.startPosition, info.endPosition)
+            } else {
+                val topSymbol = if(!stack.isEmpty()) stack.peek() else null
+                if(topSymbol?.startPosition != null && topSymbol.endPosition != null) {
+                    SourceRange(topSymbol.startPosition, topSymbol.endPosition)
+                } else {
+                    SourceRange(FilePosition(0, 0), FilePosition(0, 0))
+                }
+            }
+            throw com.tobi.mc.ParseException(actualMessage, range)
         }
     }
 

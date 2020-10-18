@@ -1,6 +1,7 @@
 package com.tobi.mc.parser.syntax
 
 import com.tobi.mc.ParseException
+import com.tobi.mc.computable.variable.VariableReference
 
 internal data class VariablesState(val parent: VariablesState?) {
 
@@ -8,17 +9,17 @@ internal data class VariablesState(val parent: VariablesState?) {
 
     fun exists(name: String) = find(name, this)
 
-    fun ensureExists(name: String) {
-        if(!exists(name)) {
-            throw ParseException("Unknown variable '$name'")
+    fun ensureExists(variable: VariableReference) {
+        if(!exists(variable.name)) {
+            throw ParseException("Unknown variable", variable)
         }
     }
 
     fun canBeDefined(name: String) = !variables.contains(name)
 
-    fun ensureCanBeDefined(name: String) {
-        if(!canBeDefined(name)) {
-            throw ParseException("Cannot define variable '$name' - already defined")
+    fun ensureCanBeDefined(variable: VariableReference) {
+        if(!canBeDefined(variable.name)) {
+            throw ParseException("Variable already defined", variable)
         }
     }
 

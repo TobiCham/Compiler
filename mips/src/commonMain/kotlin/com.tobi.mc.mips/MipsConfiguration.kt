@@ -6,14 +6,7 @@ interface MipsConfiguration {
 
     fun formatArgument(argument: MipsArgument): String
 
-    fun getSysCallCode(type: SysCallType) = when(type) {
-        SysCallType.PRINT_INT -> 1
-        SysCallType.PRINT_STRING -> 4
-        SysCallType.READ_INT -> 5
-        SysCallType.READ_STRING -> 8
-        SysCallType.ALLOCATE_HEAP -> 9
-        SysCallType.EXIT -> 17
-    }
+    fun getSysCallCode(type: SysCallType): Int
 
     val temporaryRegisters: Array<String>
 
@@ -50,6 +43,15 @@ interface MipsConfiguration {
 
         override val argumentRegisters: Array<String> = Array(3) {
             "a$it"
+        }
+
+        override fun getSysCallCode(type: SysCallType) = when(type) {
+            SysCallType.PRINT_INT -> 1
+            SysCallType.PRINT_STRING -> 4
+            SysCallType.READ_INT -> 5
+            SysCallType.READ_STRING -> 8
+            SysCallType.ALLOCATE_HEAP -> 9
+            SysCallType.EXIT -> 17
         }
 
         override val stackPointer: String = "sp"

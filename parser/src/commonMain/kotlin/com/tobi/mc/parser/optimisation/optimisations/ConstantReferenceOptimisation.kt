@@ -11,19 +11,19 @@ import com.tobi.mc.computable.variable.GetVariable
 import com.tobi.mc.computable.variable.SetVariable
 import com.tobi.mc.computable.variable.VariableReference
 import com.tobi.mc.parser.optimisation.InstanceOptimisation
-import com.tobi.mc.parser.util.SimpleDescription
 import com.tobi.mc.parser.util.getComponents
 import com.tobi.mc.parser.util.updateComponentAtIndex
 import com.tobi.mc.util.DescriptionMeta
+import com.tobi.mc.util.SimpleDescription
 import com.tobi.mc.util.copyExceptIndex
 
 internal object ConstantReferenceOptimisation : InstanceOptimisation<ExpressionSequence>(ExpressionSequence::class) {
 
     override val description: DescriptionMeta = SimpleDescription("Constant Reference Optimisation", """
-        Replaces references to constants with the constants themselves  
+        Replaces references to variables who's value is a constant and is not modified to the value itself  
     """.trimIndent())
 
-    override fun ExpressionSequence.optimise(replace: (Computable) -> Boolean): Boolean {
+    override fun ExpressionSequence.optimiseInstance(): Computable? {
         for ((i, operation) in this.operations.withIndex()) {
             if(operation !is DefineVariable) continue
             val value = operation.value
@@ -34,9 +34,9 @@ internal object ConstantReferenceOptimisation : InstanceOptimisation<ExpressionS
 
             this.replaceReferences(i + 1, operation.name, value as Data)
             this.operations = this.operations.copyExceptIndex(i)
-            return true
+            return this
         }
-        return false
+        return null
     }
 
     private fun Computable.replaceReferences(startIndex: Int, name: String, value: Data) {

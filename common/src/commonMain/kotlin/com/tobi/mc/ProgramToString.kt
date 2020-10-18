@@ -19,18 +19,6 @@ import com.tobi.mc.util.TabbedBuilder
 
 class ProgramToString(val styler: ProgramToStringStyler = Stylers.NONE) {
 
-    fun toString(program: Program): String {
-        val builder = TabbedBuilder()
-        for(func in program.code.operations) {
-            func.toString(builder)
-            if(func.requiresSemiColon()) {
-                builder.print(";")
-            }
-            builder.println("")
-        }
-        return builder.toString()
-    }
-
     fun toString(computable: Computable): String {
         val builder = TabbedBuilder()
         computable.toString(builder)
@@ -171,7 +159,15 @@ class ProgramToString(val styler: ProgramToStringStyler = Stylers.NONE) {
             builder.print(" ")
             str2.toString(builder)
         }
-//        else -> builder.print(this.toString())
+        is Program -> {
+            for (operation in this.code.operations) {
+                operation.toString(builder)
+                if(operation.requiresSemiColon()) {
+                    builder.print(';')
+                }
+                builder.println("")
+            }
+        }
         else -> throw IllegalStateException("Unknown value $this")
     }
 

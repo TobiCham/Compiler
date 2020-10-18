@@ -1,5 +1,6 @@
 package com.tobi.mc.parser.util
 
+import com.tobi.mc.SourceRange
 import com.tobi.mc.computable.Computable
 import com.tobi.mc.computable.ExpressionSequence
 import com.tobi.mc.computable.Program
@@ -66,9 +67,10 @@ private fun newList(list: List<Computable>, index: Int, newValue: Computable) = 
 }
 
 fun Computable.getComponents(): Array<Computable> = when(this) {
-    is ContinueStatement, BreakStatement -> emptyArray()
+    is ContinueStatement -> emptyArray()
+    is BreakStatement -> emptyArray()
     is Data -> emptyArray()
-    is ReturnStatement -> if(toReturn == null) emptyArray() else arrayOf<Computable>(toReturn!!)
+    is ReturnStatement -> if(toReturn == null) emptyArray() else arrayOf(toReturn!!)
     is IfStatement -> if(elseBody == null) arrayOf(check, ifBody) else arrayOf(check, ifBody, elseBody!!)
     is WhileLoop -> arrayOf(check, body)
     is ExpressionSequence -> operations.toTypedArray()
@@ -106,3 +108,10 @@ fun Computable.traverseAllNodes(): Sequence<Computable> = sequence {
 internal fun Computable.isNumber(number: Long) = this is DataTypeInt && this.value == number
 internal fun Computable.isZero() = this.isNumber(0)
 internal fun Computable.isOne() = this.isNumber(1)
+
+internal fun <T : Computable> T.copySource(start: Computable, end: Computable): T {
+    if(start.sourceRange != null && end.sourceRange != null) {
+        this.sourceRange = SourceRange(start.sourceRange!!.start, end.sourceRange!!.end)
+    }
+    return this
+}

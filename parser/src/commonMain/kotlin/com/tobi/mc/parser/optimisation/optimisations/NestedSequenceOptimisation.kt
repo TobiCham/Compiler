@@ -9,12 +9,8 @@ import com.tobi.mc.computable.variable.SetVariable
 import com.tobi.mc.computable.variable.VariableReference
 import com.tobi.mc.parser.experimental.VariableRenamer
 import com.tobi.mc.parser.optimisation.InstanceOptimisation
-import com.tobi.mc.parser.util.SimpleDescription
 import com.tobi.mc.parser.util.getComponents
-import com.tobi.mc.util.DescriptionMeta
-import com.tobi.mc.util.copyAndReplaceIndex
-import com.tobi.mc.util.copyExceptIndex
-import com.tobi.mc.util.getAfterIndex
+import com.tobi.mc.util.*
 
 internal object NestedSequenceOptimisation : InstanceOptimisation<ExpressionSequence>(ExpressionSequence::class) {
 
@@ -23,17 +19,17 @@ internal object NestedSequenceOptimisation : InstanceOptimisation<ExpressionSequ
         This will split those sequences out
     """.trimIndent())
 
-    override fun ExpressionSequence.optimise(replace: (Computable) -> Boolean): Boolean {
+    override fun ExpressionSequence.optimiseInstance(): Computable? {
         for((i, operation) in this.operations.withIndex()) {
             if(operation is ExpressionSequence && operation.operations.isNotEmpty()) {
                 val otherOps = this.operations.copyExceptIndex(i)
                 operation.renameVariables(otherOps)
                 val newOps = this.operations.copyAndReplaceIndex(i, operation.operations)
 
-                return replace(ExpressionSequence(newOps))
+                return ExpressionSequence(newOps)
             }
         }
-        return false
+        return null
     }
 
     private fun ExpressionSequence.renameVariables(otherOps: List<Computable>) {
@@ -56,7 +52,7 @@ internal object NestedSequenceOptimisation : InstanceOptimisation<ExpressionSequ
         }
     }
 
-    private fun findNewName(used: Set<String>, usedInBlock: Set<String>,original: String): String {
+    private fun findNewName(used: Set<String>, usedInBlock: Set<String>, original: String): String {
         var counter = 0
         var current = original
         while(used.contains(current) || usedInBlock.contains(current)) {

@@ -1,6 +1,7 @@
 package com.tobi.mc.computable
 
 import com.tobi.mc.ScriptException
+import com.tobi.mc.SourceObject
 import com.tobi.mc.computable.data.Data
 
 open class Context(parent: Context?) {
@@ -21,20 +22,20 @@ open class Context(parent: Context?) {
         return variables[contextIndex][name]
     }
 
-    fun defineVariable(name: String, data: Data) {
+    fun defineVariable(name: String, data: Data, obj: SourceObject? = null) {
         val vars = variables[0]
         if(vars.containsKey(name)) {
-            throw ScriptException("Variable '$name' already exists, cannot redefine")
+            throw ScriptException("Variable '$name' already exists, cannot redefine", obj)
         }
         vars[name] = data
     }
 
-    fun setVariable(name: String, contextIndex: Int, data: Data) {
+    fun setVariable(name: String, contextIndex: Int, data: Data, obj: SourceObject) {
         checkIndex(contextIndex)
         val vars = variables[contextIndex]
-        val existing = vars[name] ?: throw ScriptException("Unknown variable '$name'")
+        val existing = vars[name] ?: throw ScriptException("Unknown variable '$name'", obj)
         if(existing.type != data.type) {
-            throw ScriptException("Cannot reassign variable $name:${existing.type} to ${data.type}")
+            throw ScriptException("Cannot reassign variable $name:${existing.type} to ${data.type}", obj)
         }
         vars[name] = data
     }

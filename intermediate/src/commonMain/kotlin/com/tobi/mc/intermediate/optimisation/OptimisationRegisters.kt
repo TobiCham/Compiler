@@ -4,8 +4,8 @@ import com.tobi.mc.intermediate.TacStructure
 import com.tobi.mc.intermediate.construct.TacFunction
 import com.tobi.mc.intermediate.construct.code.RegisterVariable
 import com.tobi.mc.intermediate.util.getComponents
-import com.tobi.mc.parser.util.SimpleDescription
 import com.tobi.mc.util.DescriptionMeta
+import com.tobi.mc.util.SimpleDescription
 
 object OptimisationRegisters : TacInstanceOptimisation<TacFunction>(TacFunction::class) {
 

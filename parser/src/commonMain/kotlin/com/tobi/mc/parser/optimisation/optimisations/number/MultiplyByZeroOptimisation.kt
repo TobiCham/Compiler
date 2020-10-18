@@ -7,11 +7,11 @@ import com.tobi.mc.computable.operation.MathOperation
 import com.tobi.mc.computable.operation.Multiply
 import com.tobi.mc.computable.variable.GetVariable
 import com.tobi.mc.parser.optimisation.Optimisation
-import com.tobi.mc.parser.util.SimpleDescription
 import com.tobi.mc.parser.util.isZero
 import com.tobi.mc.util.DescriptionMeta
+import com.tobi.mc.util.SimpleDescription
 
-internal object MultiplyByZeroOptimisation : Optimisation<MathOperation> {
+internal object MultiplyByZeroOptimisation : Optimisation {
 
     override val description: DescriptionMeta = SimpleDescription("Multiply by 0 identity", """
         Optimises expressions of the form:
@@ -21,12 +21,15 @@ internal object MultiplyByZeroOptimisation : Optimisation<MathOperation> {
         To 0
     """.trimIndent())
 
-    override fun accepts(computable: Computable): Boolean = computable is Multiply || computable is Divide
+    override fun optimise(computable: Computable): Computable? = when(computable) {
+        is Multiply, is Divide -> optimise(computable as MathOperation)
+        else -> null
+    }
 
-    override fun MathOperation.optimise(replace: (Computable) -> Boolean) = when {
-        arg1.isZero() && isValid(arg2) -> replace(DataTypeInt(0))
-        this is Multiply && arg2.isZero() && isValid(arg1) -> replace(DataTypeInt(0))
-        else -> false
+    private fun optimise(math: MathOperation): Computable? = when {
+        math.arg1.isZero() && isValid(math.arg2) -> DataTypeInt(0)
+        math is Multiply && math.arg2.isZero() && isValid(math.arg1) -> DataTypeInt(0)
+        else -> null
     }
 
     private fun isValid(computable: Computable) = computable is DataTypeInt || computable is GetVariable

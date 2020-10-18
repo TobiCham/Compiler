@@ -10,9 +10,9 @@ import com.tobi.mc.computable.variable.SetVariable
 import com.tobi.mc.computable.variable.VariableReference
 import com.tobi.mc.parser.syntax.InstanceSyntaxRule
 import com.tobi.mc.parser.syntax.VariablesState
-import com.tobi.mc.parser.util.SimpleDescription
 import com.tobi.mc.parser.util.getComponents
 import com.tobi.mc.util.DescriptionMeta
+import com.tobi.mc.util.SimpleDescription
 
 internal object RuleVariableExists : InstanceSyntaxRule<Program>(Program::class) {
 
@@ -24,7 +24,7 @@ internal object RuleVariableExists : InstanceSyntaxRule<Program>(Program::class)
          - A variable is not already defined in scope with the same name of a new function which is being defined
     """.trimIndent())
 
-    override fun Program.validate() {
+    override fun Program.validateInstance() {
         val parentState = VariablesState(null)
         for(name in this.context.getVariables().keys) {
             parentState.define(name)
@@ -40,7 +40,6 @@ internal object RuleVariableExists : InstanceSyntaxRule<Program>(Program::class)
 
         when(this) {
             is ExpressionSequence -> newState = VariablesState(state)
-            is DefineVariable -> state.define(name)
             is FunctionDeclaration -> {
                 state.define(name)
                 newState = VariablesState(state)
@@ -58,9 +57,8 @@ internal object RuleVariableExists : InstanceSyntaxRule<Program>(Program::class)
     }
 
     private fun VariableReference.validateReference(state: VariablesState) = when(this) {
-        is GetVariable, is SetVariable -> state.ensureExists(name)
-        is DefineVariable -> state.ensureCanBeDefined(name)
-        is FunctionDeclaration -> state.ensureCanBeDefined(name)
+        is GetVariable, is SetVariable -> state.ensureExists(this)
+        is DefineVariable, is FunctionDeclaration -> state.ensureCanBeDefined(this)
         else -> Unit
     }
 }

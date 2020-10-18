@@ -3,7 +3,12 @@ package com.tobi.mc.parser.optimisation
 import com.tobi.mc.computable.Computable
 import kotlin.reflect.KClass
 
-internal abstract class InstanceOptimisation<T : Computable>(private val `class`: KClass<T>) : Optimisation<T> {
+abstract class InstanceOptimisation<T : Computable>(private val `class`: KClass<T>) : Optimisation {
 
-    final override fun accepts(computable: Computable): Boolean = `class`.isInstance(computable)
+    override fun optimise(computable: Computable): Computable? = when {
+        `class`.isInstance(computable) -> (computable as T).optimiseInstance()
+        else -> null
+    }
+
+    abstract fun T.optimiseInstance(): Computable?
 }

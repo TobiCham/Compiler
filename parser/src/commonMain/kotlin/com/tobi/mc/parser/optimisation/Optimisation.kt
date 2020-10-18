@@ -3,15 +3,12 @@ package com.tobi.mc.parser.optimisation
 import com.tobi.mc.computable.Computable
 import com.tobi.mc.util.DescriptionMeta
 
-internal interface Optimisation<T : Computable> {
+interface Optimisation {
 
     val description: DescriptionMeta
 
-    fun accepts(computable: Computable): Boolean
-
     /**
-     * @param replace Tells the optimiser to replace this branch in the tree with the given value. Returns true
-     * @return Whether a modification was made
+     * @return The new value to replace in the tree with, or null if no changes have been made
      */
-    fun T.optimise(replace: (Computable) -> Boolean): Boolean
+    fun optimise(computable: Computable): Computable?
 }

@@ -18,7 +18,8 @@ class TacToMips(val config: MipsConfiguration) {
 
     private fun addFunctions(functions: List<TacFunction>, builder: MipsProgram.Builder) {
         for (function in functions) {
-            builder.addFunction(FunctionToMips.toMips(function, config))
+            val mips = FunctionToMips.toMips(function, config)
+            builder.addFunction(mips)
         }
     }
 }

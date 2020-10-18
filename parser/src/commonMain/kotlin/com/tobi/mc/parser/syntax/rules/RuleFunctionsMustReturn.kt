@@ -11,9 +11,9 @@ import com.tobi.mc.computable.data.DataType
 import com.tobi.mc.computable.data.DataTypeInt
 import com.tobi.mc.computable.function.FunctionDeclaration
 import com.tobi.mc.parser.syntax.InstanceSyntaxRule
-import com.tobi.mc.parser.util.SimpleDescription
 import com.tobi.mc.parser.util.getComponents
 import com.tobi.mc.util.DescriptionMeta
+import com.tobi.mc.util.SimpleDescription
 
 internal object RuleFunctionsMustReturn : InstanceSyntaxRule<FunctionDeclaration>(FunctionDeclaration::class) {
 
@@ -21,9 +21,9 @@ internal object RuleFunctionsMustReturn : InstanceSyntaxRule<FunctionDeclaration
         With the exception of void or auto functions, ensures that there is a return expression on all possible paths
     """.trimIndent())
 
-    override fun FunctionDeclaration.validate() {
+    override fun FunctionDeclaration.validateInstance() {
         if(returnType != DataType.VOID && returnType != null && !body.hasReturnPath()) {
-            throw ParseException("Function '${name}' must have a return on all possible paths")
+            throw ParseException("Function must have a return on all possible paths", this)
         }
     }
 

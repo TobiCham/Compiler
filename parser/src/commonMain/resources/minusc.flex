@@ -16,7 +16,7 @@ import java.lang.NumberFormatException;
         return makeNode(type, null);
     }
     private LexerNode makeNode(LexerNodeType type, Object value) {
-        return new LexerNode(type, value, yyline, yycolumn);
+        return new LexerNode(type, yytext(), value, yyline, yycolumn);
     }
 %}
 

@@ -5,13 +5,22 @@ import com.tobi.mc.computable.Context
 class DefaultContext : Context(null) {
 
     init {
-        defineVariable("printInt", FunctionPrintInt)
-        defineVariable("printString", FunctionPrintString)
-        defineVariable("readInt", FunctionReadInt)
-        defineVariable("readString", FunctionReadString)
-        defineVariable("intToString", FunctionIntToString)
-        defineVariable("concat", FunctionConcat)
-        defineVariable("unixTime", FunctionUnixTime)
-        defineVariable("sleep", FunctionSleep)
+        defineFunctions(
+            FunctionPrintInt, FunctionPrintString,
+            FunctionReadInt, FunctionReadString,
+            FunctionIntToString,
+            FunctionConcat,
+            FunctionUnixTime,
+            FunctionSleep,
+            FunctionExit
+        )
+    }
+
+    private fun defineFunctions(vararg functions: InbuiltFunction) {
+        functions.forEach(this::defineFunction)
+    }
+
+    private fun defineFunction(function: InbuiltFunction) {
+        defineVariable(function.functionDescription.name, function)
     }
 }

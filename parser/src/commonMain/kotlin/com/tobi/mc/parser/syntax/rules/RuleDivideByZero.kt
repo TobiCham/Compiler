@@ -5,9 +5,9 @@ import com.tobi.mc.computable.operation.Divide
 import com.tobi.mc.computable.operation.MathOperation
 import com.tobi.mc.computable.operation.Mod
 import com.tobi.mc.parser.syntax.InstanceSyntaxRule
-import com.tobi.mc.parser.util.SimpleDescription
 import com.tobi.mc.parser.util.isZero
 import com.tobi.mc.util.DescriptionMeta
+import com.tobi.mc.util.SimpleDescription
 
 internal object RuleDivideByZero : InstanceSyntaxRule<MathOperation>(MathOperation::class) {
 
@@ -15,9 +15,9 @@ internal object RuleDivideByZero : InstanceSyntaxRule<MathOperation>(MathOperati
         Prevents division or modulus by 0
     """.trimIndent())
 
-    override fun MathOperation.validate() {
+    override fun MathOperation.validateInstance() {
         if((this is Divide || this is Mod) && this.arg2.isZero()) {
-            throw ParseException("Invalid division by zero - will always fail")
+            throw ParseException("Invalid division by zero - will always fail", this)
         }
     }
 }

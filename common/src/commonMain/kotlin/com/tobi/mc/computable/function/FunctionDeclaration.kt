@@ -1,6 +1,7 @@
 package com.tobi.mc.computable.function
 
 import com.tobi.mc.ScriptException
+import com.tobi.mc.SourceRange
 import com.tobi.mc.computable.Computable
 import com.tobi.mc.computable.Context
 import com.tobi.mc.computable.ExecutionEnvironment
@@ -13,15 +14,16 @@ class FunctionDeclaration(
     override var name: String,
     var parameters: List<Parameter>,
     var body: ExpressionSequence,
-    var returnType: DataType?
+    var returnType: DataType?,
+    override var sourceRange: SourceRange? = null
 ) : VariableReference, Computable {
 
     override val description: String = "function declaration"
 
     override suspend fun compute(context: Context, environment: ExecutionEnvironment): DataTypeClosure {
         val closure = DataTypeClosure(parameters, context, body, returnType
-            ?: throw ScriptException("Return type cannot be auto when executing"))
-        context.defineVariable(name, closure)
+            ?: throw ScriptException("Return type cannot be auto when executing", this))
+        context.defineVariable(name, closure, this)
         return closure
     }
 }
