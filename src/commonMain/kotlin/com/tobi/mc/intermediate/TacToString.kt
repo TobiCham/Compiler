@@ -14,44 +14,22 @@ object TacToString {
         }
         builder.println("")
 
-        for(env in program.environments) {
-            env.print(builder)
-        }
-        for(function in program.functions) {
-            function.print(builder)
-        }
-    }.toString().trim()
+        program.code.environment.print(builder)
+        program.code.printVariables(builder)
 
-    private fun TacEnvironment.print(builder: TabbedBuilder) {
-        builder.println("Env ${this.name} ${this.parent!!.name}")
-        builder.indent()
-        for((name, type) in this.variables) {
-            builder.println("$type $name")
-        }
-        builder.outdent()
-        builder.println("End")
-        builder.println("")
-    }
-
-    private fun TacFunction.print(builder: TabbedBuilder) {
-        builder.println("BeginFunc ${this.name}")
-        builder.indent()
-        for(line in this.code) {
+        for(line in program.code.code) {
             line.print(builder)
             builder.println("")
         }
-        builder.outdent()
-        builder.println("End")
-        builder.println("")
-    }
+    }.toString().trim()
 
-    private fun TacCodeConstruct.print(builder: TabbedBuilder): Any = when(this) {
-        is ConstructBranchZero -> {
+    private fun TacStructure.print(builder: TabbedBuilder): Any = when(this) {
+        is TacFunction -> this.print(builder)
+        is ConstructBranchEqualZero -> {
             builder.print("BrZ ")
             this.conditionVariable.print(builder)
             builder.print(" ${this.branchLabel}")
         }
-        is ConstructCreateClosure -> builder.print("make ${this.environment.name}")
         is ConstructFunctionCall -> {
             builder.print("Call ")
             this.function.print(builder)
@@ -82,23 +60,59 @@ object TacToString {
             this.variable.print(builder)
         }
         is ConstructPopArgument -> builder.print("PopArg")
-        is ConstructReturn -> {
-            builder.print("return")
-            if(this.toReturn != null) {
-                builder.print(" ")
-                this.toReturn.print(builder)
-            } else Unit
-        }
+        is ConstructReturn -> builder.print("return")
         is ConstructSetVariable -> {
-            (this.variable as TacCodeConstruct).print(builder)
+            this.variable.print(builder)
             builder.print(" = ")
             this.value.print(builder)
         }
         is RegisterVariable -> builder.print("r${this.register}")
         is StringVariable -> builder.print("STRING ${this.stringIndex}")
-        is EnvironmentVariable -> builder.print(this.name)
+        is EnvironmentVariable -> builder.print("*(${this.name},${this.index})")
+        is ReturnedValue -> builder.print("@return")
+        is StackVariable -> builder.print(this.name)
         is IntValue -> builder.print(this.value)
         is ParamReference -> builder.print("GetParam ${this.index}")
         else -> throw IllegalArgumentException("Unknown tac construct ${this::class.simpleName}")
+    }
+
+    private fun TacEnvironment.print(builder: TabbedBuilder) {
+        val vars = this.newVariables
+        if(!vars.isEmpty()) {
+            builder.println("Env")
+            builder.indent()
+            for((name, type) in vars) {
+                builder.println("$type $name")
+            }
+            builder.outdent()
+            builder.println("End")
+        }
+    }
+
+    private fun TacFunction.print(builder: TabbedBuilder) {
+        builder.println("BeginFunc (${this.parameters}, ${this.registersUsed})")
+        builder.indent()
+        this.environment.print(builder)
+        printVariables(builder)
+
+        for(line in this.code) {
+            line.print(builder)
+            builder.println("")
+        }
+        builder.outdent()
+        builder.print("End")
+    }
+
+    private fun TacFunction.printVariables(builder: TabbedBuilder) {
+        if(this.variables.isNotEmpty()) {
+            builder.println("Vars")
+            builder.indent()
+
+            for((name, type) in this.variables) {
+                builder.println("$type $name")
+            }
+            builder.outdent()
+            builder.println("End")
+        }
     }
 }

@@ -24,3 +24,18 @@ while(1) {
 if(!(2 != x)) {
     printString("idk");
 }
+
+auto rec1();
+auto rec2();
+
+auto rec1() {
+    void closure() {
+        rec2();
+    }
+    closure();
+    rec2();
+}
+
+auto rec2() {
+    rec1();
+}

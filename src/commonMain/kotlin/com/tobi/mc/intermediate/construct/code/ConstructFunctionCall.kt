@@ -1,5 +1,5 @@
 package com.tobi.mc.intermediate.construct.code
 
-import com.tobi.mc.intermediate.construct.TacExpression
+import com.tobi.mc.intermediate.TacStructure
 
-class ConstructFunctionCall(val function: TacVariableReference) : TacExpression
+data class ConstructFunctionCall(val function: TacVariableReference) : TacStructure

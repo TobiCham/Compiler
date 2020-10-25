@@ -3,7 +3,7 @@ auto makeRandom() {
 	auto multiplier = 1103515245;
 	auto increment = 12345;
 	auto mod = 9235357;
-	
+
 	auto gen(int max) {
 		auto result = 0;
 		start = ((start * multiplier) + increment) % mod;

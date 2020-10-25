@@ -16,6 +16,8 @@ interface MipsConfiguration {
 
     val stackPointer: String
 
+    val framePointer: String
+
     val sysCallRegister: String
 
     val returnRegister: String
@@ -55,6 +57,7 @@ interface MipsConfiguration {
         }
 
         override val stackPointer: String = "sp"
+        override val framePointer: String = "fp"
         override val sysCallRegister: String = "v0"
         override val zeroRegister: String = "zero"
         override val returnRegister: String = "v0"

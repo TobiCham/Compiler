@@ -7,7 +7,7 @@ class TacToMips(val config: MipsConfiguration) {
 
     fun toMips(program: TacProgram): MipsProgram = MipsProgram.Builder().also { builder ->
         addStrings(program.strings, builder)
-        addFunctions(program.functions, builder)
+        addFunctions(listOf(program.code), builder)
     }.build(config)
 
     private fun addStrings(strings: Array<String>, builder: MipsProgram.Builder) {

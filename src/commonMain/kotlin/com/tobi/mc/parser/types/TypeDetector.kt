@@ -12,6 +12,8 @@ import com.tobi.mc.computable.data.Data
 import com.tobi.mc.computable.data.DataType
 import com.tobi.mc.computable.function.FunctionCall
 import com.tobi.mc.computable.function.FunctionDeclaration
+import com.tobi.mc.computable.function.FunctionPrototype
+import com.tobi.mc.computable.function.Parameter
 import com.tobi.mc.computable.operation.MathOperation
 import com.tobi.mc.computable.operation.Negation
 import com.tobi.mc.computable.operation.StringConcat
@@ -74,6 +76,7 @@ object TypeDetector {
                 this.handle(state)
                 return
             }
+            is FunctionPrototype -> this.handle(state)
         }
         for (component in this.getComponents()) {
             component.detectTypes(newState, currentFunction)
@@ -100,7 +103,7 @@ object TypeDetector {
     }
 
     private fun DefineVariable.handle(state: VariableTypeState) {
-        val expected = this.expectedType?.mapToType()
+        val expected = this.expectedType?.mapToExpandedType()
         val actualType = this.value.calculateType(state)
 
         if(expected == null) {
@@ -124,16 +127,28 @@ object TypeDetector {
         TypeMerger.invokeFunction(this, funcType, args)
     }
 
-    private fun FunctionDeclaration.handle(state: VariableTypeState) {
-        val (functionState, functionType) = state.initialiseFunction(this) { it.mapToType() }
-        val newFunc = FunctionTypeData(this, this.returnType?.mapToType())
+    private fun FunctionPrototype.handle(state: VariableTypeState) {
+        val expandedParameters = parameters.map(Parameter::type).map(DataType::mapToExpandedType)
+        val expandedReturnType = returnType?.mapToExpandedType() ?: UnknownType
+        state.define(name, FunctionType(expandedReturnType, KnownParameters(expandedParameters)))
+        state.addPrototype(name, this)
+    }
 
-        for(component in getComponents()) {
-            component.detectTypes(functionState, newFunc)
+    private fun FunctionDeclaration.handle(state: VariableTypeState) {
+        val expandedParameters = parameters.map(Parameter::type).map(DataType::mapToExpandedType)
+        val expandedReturnType = returnType?.mapToExpandedType() ?: UnknownType
+        state.define(name, FunctionType(expandedReturnType, KnownParameters(expandedParameters)))
+
+        val functionState = VariableTypeState(state)
+        for (parameter in parameters) {
+            functionState.define(parameter.name, parameter.type.mapToExpandedType())
         }
 
-        val returnType = newFunc.getReturnType()
-        val simpleReturnType = returnType.run(TypeMerger::getSimpleType)
+        val functionData = FunctionTypeData(this, this.returnType?.mapToExpandedType())
+        body.detectTypes(functionState, functionData)
+
+        val newReturnType = functionData.getReturnType()
+        val simpleReturnType = TypeMerger.getSimpleType(newReturnType)
 
         if(simpleReturnType == null) {
             throw ParseException("Unable to infer return type. Please specify it manually", this)
@@ -141,10 +156,12 @@ object TypeDetector {
         if(this.returnType == null) {
             this.returnType = simpleReturnType
         }
+        val prototype = state.getPrototype(name)
+        if(prototype != null && prototype.returnType == null) {
+            prototype.returnType = simpleReturnType
+        }
 
-        state.define(name,
-            FunctionType(returnType, functionType.parameters)
-        )
+        state.define(name, FunctionType(newReturnType, KnownParameters(expandedParameters)))
     }
 
     private fun ReturnStatement.handle(state: VariableTypeState, currentFunction: FunctionTypeData) {
@@ -173,11 +190,7 @@ object TypeDetector {
 
     private fun Computable.calculateType(state: VariableTypeState): ExpandedType = when (this) {
         is TypedComputable -> this.expandedType
-        is Data -> type.mapToType()
-        is FunctionDeclaration -> {
-            val returnType = this.returnType ?: throw IllegalStateException()
-            returnType.mapToType()
-        }
+        is Data -> type.mapToExpandedType()
         is GetVariable -> state.getType(name)!!
         is MathOperation, is Negation, is UnaryMinus -> IntType
         is StringConcat -> StringType
@@ -186,17 +199,6 @@ object TypeDetector {
             val args = this.arguments.map { it.calculateType(state) }
             TypeMerger.invokeFunction(this, function, args)
         }
-        else -> throw IllegalStateException()
-    }
-
-    private fun DataType.mapToType(): ExpandedType = when(this) {
-        DataType.INT -> IntType
-        DataType.STRING -> StringType
-        DataType.VOID -> VoidType
-        //Cannot get function type without more information
-        DataType.FUNCTION -> FunctionType(
-            UnknownType,
-            UnknownParameters
-        )
+        else -> throw IllegalStateException("Cannot calculate type for ${this.description}")
     }
 }

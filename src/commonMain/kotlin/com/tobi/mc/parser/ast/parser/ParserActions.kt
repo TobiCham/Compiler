@@ -12,6 +12,7 @@ import com.tobi.mc.computable.data.DataTypeInt
 import com.tobi.mc.computable.data.DataTypeString
 import com.tobi.mc.computable.function.FunctionCall
 import com.tobi.mc.computable.function.FunctionDeclaration
+import com.tobi.mc.computable.function.FunctionPrototype
 import com.tobi.mc.computable.function.Parameter
 import com.tobi.mc.computable.operation.*
 import com.tobi.mc.computable.variable.DefineVariable
@@ -119,7 +120,11 @@ class ParserActions(
             val type = typeSymbol.value as DataType?
             val name = stack.peek().value as String
 
-            if (type === DataType.VOID) throwException("Can't define a parameter type as void", stackTop - 1, stackTop - 1)
+            if (type === DataType.VOID) throwException(
+                "Can't define a parameter type as void",
+                stackTop - 1,
+                stackTop - 1
+            )
             else if (type == null) throwException("Can't define a parameter type as auto", stackTop - 1, stackTop - 1)
 
             val RESULT = Parameter(type, name)
@@ -242,48 +247,48 @@ class ParserActions(
             val RESULT = FunctionDeclaration(name, ArrayList(), body, returnType)
             this.parser.symbolFactory.newSymbol("functionDeclaration", 5, stack[stackTop - 4], stack.peek(), RESULT)
         }
-        42, 43, 44, 45, 46, 47 -> makeExisting("terminatedExpression", 14)
-        48 -> {
+        42, 43, 44, 45, 46, 47, 48 -> makeExisting("terminatedExpression", 14)
+        49 -> {
             val RESULT = stack[stackTop - 1].value as Computable
             this.parser.symbolFactory.newSymbol("expression", 13, stack[stackTop - 1], stack.peek(), RESULT)
         }
-        49, 50, 51 -> makeExisting("expression", 13)
-        52 -> {
+        50, 51, 52 -> makeExisting("expression", 13)
+        53 -> {
             val exp = stack.peek().value as Computable
             val RESULT: MutableList<Computable> = ArrayList()
             RESULT.add(exp)
             this.parser.symbolFactory.newSymbol("expressionList", 16, stack.peek(), stack.peek(), RESULT)
         }
-        53 -> {
+        54 -> {
             val list = stack[stackTop - 1].value as MutableList<Computable>
             val exp = stack.peek().value as Computable
             list.add(exp)
             this.parser.symbolFactory.newSymbol("expressionList", 16, stack[stackTop - 1], stack.peek(), list)
         }
-        54 -> {
+        55 -> {
             val RESULT = ExpressionSequence(ArrayList())
             this.parser.symbolFactory.newSymbol("expressionSequence", 15, stack[stackTop - 1], stack.peek(), RESULT)
         }
-        55 -> {
+        56 -> {
             val list = stack[stackTop - 1].value as List<Computable>
             val RESULT = ExpressionSequence(list)
             this.parser.symbolFactory.newSymbol("expressionSequence", 15, stack[stackTop - 2], stack.peek(), RESULT)
         }
-        56 -> {
+        57 -> {
             val exp = stack.peek().value as Computable
             val list: MutableList<Computable> = ArrayList()
             list.add(exp)
             val RESULT = ExpressionSequence(list)
             this.parser.symbolFactory.newSymbol("expressionSequence", 15, stack.peek(), stack.peek(), RESULT)
         }
-        57 -> {
+        58 -> {
             val condition = stack[stackTop - 2].value as Computable
             val body = stack.peek().value as ExpressionSequence
             if (!isMath(condition)) throwException("Invalid condition", stackTop - 2)
             val RESULT = WhileLoop(condition, body)
             this.parser.symbolFactory.newSymbol("whileLoop", 20, stack[stackTop - 4], stack.peek(), RESULT)
         }
-        58 -> {
+        59 -> {
             val condition = stack[stackTop - 4].value as Computable
             val body = stack[stackTop - 2].value as ExpressionSequence
             val elseBody = stack.peek().value as ExpressionSequence
@@ -292,21 +297,38 @@ class ParserActions(
 
             this.parser.symbolFactory.newSymbol("ifStatement", 21, stack[stackTop - 6], stack.peek(), ifStatement)
         }
-        59 -> {
+        60 -> {
             val condition = stack[stackTop - 2].value as Computable
             val body = stack.peek().value as ExpressionSequence
             if (!isMath(condition)) throwException("Invalid condition", stackTop - 2)
             val RESULT = IfStatement(condition, body, null)
             this.parser.symbolFactory.newSymbol("ifStatement", 21, stack[stackTop - 4], stack.peek(), RESULT)
         }
-        60 -> {
+        61 -> {
             val toReturn = stack.peek().value as Computable
             val RESULT = ReturnStatement(toReturn)
             this.parser.symbolFactory.newSymbol("returnExpression", 19, stack[stackTop - 1], stack.peek(), RESULT)
         }
-        61 -> makeSimple("returnExpression", 19, ReturnStatement(null))
-        62 -> makeSimple("breakStatement", 18, BreakStatement())
-        63 -> makeSimple("continueStatement", 17, ContinueStatement())
+        62 -> makeSimple("returnExpression", 19, ReturnStatement(null))
+        63 -> makeSimple("breakStatement", 18, BreakStatement())
+        64 -> makeSimple("continueStatement", 17, ContinueStatement())
+        65 -> {
+            // functionPrototype ::= dataType IDENTIFIER LEFT_BRACKET functionParams RIGHT_BRACKET
+            val returnType = stack[stackTop - 4].value as DataType?
+            val name = stack[stackTop - 3].value as String
+            val params = stack[stackTop - 1].value as List<Parameter>
+
+            val prototype = FunctionPrototype(name, params, returnType)
+            this.parser.symbolFactory.newSymbol("functionPrototype", 23, stack[stackTop - 4], stack.peek(), prototype)
+        }
+        66 -> {
+            // functionPrototype ::= dataType IDENTIFIER LEFT_BRACKET RIGHT_BRACKET
+            val returnType = stack[stackTop - 3].value as DataType?
+            val name = stack[stackTop - 2].value as String
+
+            val result = FunctionPrototype(name, ArrayList(), returnType)
+            this.parser.symbolFactory.newSymbol("functionPrototype", 23, stack[stackTop - 3], stack.peek(), result)
+        }
         else -> throw Exception("Invalid action number " + actionId + "found in internal parse table")
     }
 }

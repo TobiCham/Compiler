@@ -31,6 +31,10 @@ class ArrayListStack<T> : MutableStack<T> {
         return backingList[index]
     }
 
+    override fun toList(): List<T> {
+        return ArrayList(this.backingList)
+    }
+
     private companion object {
         val EMPTY_EXCEPTION = NoSuchElementException("Stack is empty")
     }

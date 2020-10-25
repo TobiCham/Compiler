@@ -5,6 +5,7 @@ import com.tobi.mc.computable.Computable
 import com.tobi.mc.computable.ExpressionSequence
 import com.tobi.mc.computable.Program
 import com.tobi.mc.computable.function.FunctionDeclaration
+import com.tobi.mc.computable.function.FunctionPrototype
 import com.tobi.mc.computable.variable.DefineVariable
 import com.tobi.mc.computable.variable.GetVariable
 import com.tobi.mc.computable.variable.SetVariable
@@ -25,10 +26,10 @@ object ContextIndexResolver {
         program.calculate(contexts)
     }
 
-    private fun Computable.calculate(contexts: MutableStack<MutableSet<String>>) {
+    fun Computable.calculate(contexts: MutableStack<MutableSet<String>>) {
         if(this is ExpressionSequence) {
             contexts.push(HashSet())
-        } else if(this is DefineVariable || this is FunctionDeclaration) {
+        } else if(this is DefineVariable || this is FunctionDeclaration || this is FunctionPrototype) {
             contexts.peek().add((this as VariableReference).name)
         }
         if(this is FunctionDeclaration) {

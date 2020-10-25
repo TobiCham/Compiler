@@ -1,6 +1,6 @@
 package com.tobi.mc.util
 
-interface Stack<out T> {
+interface Stack<T> {
 
     /**
      * Returns the size of the collection.
@@ -24,4 +24,6 @@ interface Stack<out T> {
      * @return The element at the index
      */
     operator fun get(index: Int): T
+
+    fun toList(): List<T>
 }

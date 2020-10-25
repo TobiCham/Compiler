@@ -4,6 +4,7 @@ import com.tobi.mc.computable.Computable
 import com.tobi.mc.computable.ExpressionSequence
 import com.tobi.mc.computable.Program
 import com.tobi.mc.computable.function.FunctionDeclaration
+import com.tobi.mc.computable.function.FunctionPrototype
 import com.tobi.mc.computable.variable.DefineVariable
 import com.tobi.mc.computable.variable.GetVariable
 import com.tobi.mc.computable.variable.SetVariable
@@ -27,7 +28,7 @@ object RuleVariableExists : InstanceSyntaxRule<Program>(Program::class) {
     override fun Program.validateInstance() {
         val parentState = VariablesState(null)
         for(name in this.context.getVariables().keys) {
-            parentState.define(name)
+            parentState.define(name, VariablesState.VariableType.VARIABLE)
         }
         this.code.validate(parentState)
     }
@@ -41,24 +42,27 @@ object RuleVariableExists : InstanceSyntaxRule<Program>(Program::class) {
         when(this) {
             is ExpressionSequence -> newState = VariablesState(state)
             is FunctionDeclaration -> {
-                state.define(name)
+                state.define(name, VariablesState.VariableType.FUNCTION_DEFINITION)
                 newState = VariablesState(state)
                 for ((_, paramName) in parameters) {
-                    newState.define(paramName)
+                    newState.define(paramName, VariablesState.VariableType.VARIABLE)
                 }
             }
+            is FunctionPrototype -> state.define(name, VariablesState.VariableType.FUNCTION_PROTOTYPE)
         }
         for(component in this.getComponents()) {
             component.validate(newState)
         }
         if(this is DefineVariable) {
-            state.define(this.name)
+            state.define(this.name, VariablesState.VariableType.VARIABLE)
         }
     }
 
     private fun VariableReference.validateReference(state: VariablesState) = when(this) {
         is GetVariable, is SetVariable -> state.ensureExists(this)
-        is DefineVariable, is FunctionDeclaration -> state.ensureCanBeDefined(this)
+        is DefineVariable -> state.ensureCanBeDefined(this, VariablesState.VariableType.VARIABLE)
+        is FunctionDeclaration -> state.ensureCanBeDefined(this, VariablesState.VariableType.FUNCTION_DEFINITION)
+        is FunctionPrototype -> state.ensureCanBeDefined(this, VariablesState.VariableType.FUNCTION_PROTOTYPE)
         else -> Unit
     }
 }

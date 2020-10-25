@@ -3,6 +3,7 @@ package com.tobi.mc.parser.optimisation.optimisations
 import com.tobi.mc.computable.Computable
 import com.tobi.mc.computable.ExpressionSequence
 import com.tobi.mc.computable.function.FunctionDeclaration
+import com.tobi.mc.computable.function.FunctionPrototype
 import com.tobi.mc.computable.variable.DefineVariable
 import com.tobi.mc.computable.variable.GetVariable
 import com.tobi.mc.computable.variable.SetVariable
@@ -20,8 +21,15 @@ object RedundantVariablesOptimisation : InstanceOptimisation<ExpressionSequence>
     """.trimIndent())
 
     override fun ExpressionSequence.optimiseInstance(): Computable? {
+        val functionPrototypes = HashSet<String>()
         for ((i, operation) in this.operations.withIndex()) {
+            if(operation is FunctionDeclaration && functionPrototypes.contains(operation.name)) {
+                continue
+            }
             if(hasUsages(i, operation)) {
+                if(operation is FunctionPrototype) {
+                    functionPrototypes.add(operation.name)
+                }
                 continue
             }
             val newOps = if(operation is DefineVariable) {

@@ -1,25 +1,22 @@
 package com.tobi.mc.intermediate.construct
 
 import com.tobi.mc.computable.data.DataType
-import com.tobi.mc.intermediate.TacStructure
+import com.tobi.mc.intermediate.construct.code.EnvironmentVariable
 
-open class TacEnvironment(val name: String, var parent: TacEnvironment?): TacStructure {
+open class TacEnvironment(parent: TacEnvironment?) {
 
-    val variables: Map<String, DataType> = LinkedHashMap()
+    private val allVariables: List<Map<String, DataType>>
 
-    /**
-     * @return A new [TacEnvironment] with no parent, consisting of all the variables defined by this
-     * environment and all parent environments
-     */
-    fun collapse(): TacEnvironment {
-        val newEnv = TacEnvironment(name, null)
-        
-        val collapsedParent = parent?.collapse()
-        if(collapsedParent != null) {
-            (newEnv.variables as MutableMap).putAll(collapsedParent.variables)
+    val newVariables: Map<String, DataType>
+        get() = LinkedHashMap(allVariables.first())
+
+    init {
+        allVariables = ArrayList<Map<String, DataType>>().apply {
+            add(LinkedHashMap())
+            if(parent != null) {
+                addAll(parent.allVariables)
+            }
         }
-        (newEnv.variables as MutableMap).putAll(variables)
-        return newEnv
     }
 
     fun getVariableOffsetsAsMap(): Map<String, Int> {
@@ -32,14 +29,11 @@ open class TacEnvironment(val name: String, var parent: TacEnvironment?): TacStr
 
     fun getVariableOffsets(): Array<String> {
         val result = LinkedHashSet<String>()
-        fun addOffsets(environment: TacEnvironment?) {
-            if(environment == null) return
-            for((name, _) in environment.variables.entries.reversed()) {
+        for (variable in allVariables) {
+            for((name, _) in variable.entries.reversed()) {
                 result.add(name)
             }
-            addOffsets(environment.parent)
         }
-        addOffsets(this)
         return result.reversed().toTypedArray()
     }
 
@@ -47,8 +41,18 @@ open class TacEnvironment(val name: String, var parent: TacEnvironment?): TacStr
         if(type == DataType.VOID) {
             throw IllegalArgumentException("Type cannot be void")
         }
-        (variables as MutableMap)[name] = type
+        (allVariables.first() as MutableMap)[name] = type
     }
 
-    fun getType(name: String) = variables[name]
+    fun indexOf(variable: EnvironmentVariable): Int {
+        if(variable.index < 0 || variable.index >= this.allVariables.size) {
+            return -1
+        }
+        var index = 0
+        for(i in 0 until variable.index) {
+            index += allVariables[allVariables.size - i - 1].size
+        }
+        val map = allVariables[allVariables.size - variable.index - 1].keys.toList()
+        return map.indexOf(variable.name) + index
+    }
 }

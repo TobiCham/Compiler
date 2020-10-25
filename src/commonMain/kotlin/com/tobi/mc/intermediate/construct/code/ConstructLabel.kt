@@ -1,3 +1,5 @@
 package com.tobi.mc.intermediate.construct.code
 
-data class ConstructLabel(val label: String) : TacCodeConstruct
+import com.tobi.mc.intermediate.TacStructure
+
+data class ConstructLabel(val label: String) : TacStructure

@@ -1,3 +1,5 @@
 package com.tobi.mc.intermediate.construct.code
 
-object ConstructPopArgument : TacCodeConstruct
+import com.tobi.mc.intermediate.TacStructure
+
+object ConstructPopArgument : TacStructure

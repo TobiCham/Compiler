@@ -1,3 +1,5 @@
 package com.tobi.mc.intermediate.construct.code
 
-class ConstructPushArgument(val variable: TacVariableReference) : TacCodeConstruct
+import com.tobi.mc.intermediate.TacStructure
+
+data class ConstructPushArgument(val variable: TacVariableReference) : TacStructure

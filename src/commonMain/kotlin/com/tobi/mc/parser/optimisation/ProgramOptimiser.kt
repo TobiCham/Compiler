@@ -28,7 +28,7 @@ class ProgramOptimiser(
             val oldSource = computable.sourceRange
             val newValue = optimisation.optimise(computable)
             if(newValue != null) {
-                println(optimisation.description.name)
+//                println(optimisation.description.name)
                 if(newValue.sourceRange == null) {
                     newValue.sourceRange = oldSource
                 }

@@ -29,9 +29,4 @@ class RegisterUse {
         val indices = HashSet<Int>()
         operations.push(indices)
     }
-
-    fun endOperation() {
-        val operation = operations.pop()
-        inUse.removeAll(operation)
-    }
 }

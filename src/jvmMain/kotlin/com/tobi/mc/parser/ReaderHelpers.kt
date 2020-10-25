@@ -34,4 +34,10 @@ actual object ReaderHelpers {
     ) {
         string.toCharArray(destination, destinationOffset, startIndex, endIndex)
     }
+
+    actual fun <T> expandArray(source: Array<T?>, newSize: Int): Array<T?> {
+        val newArray = arrayOfNulls<Any>(newSize)
+        System.arraycopy(source, 0, newArray, 0, source.size)
+        return newArray as Array<T?>
+    }
 }

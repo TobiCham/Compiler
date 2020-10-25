@@ -3,6 +3,7 @@ package com.tobi.mc.parser.optimisation.optimisations
 import com.tobi.mc.computable.Computable
 import com.tobi.mc.computable.ExpressionSequence
 import com.tobi.mc.computable.function.FunctionDeclaration
+import com.tobi.mc.computable.function.FunctionPrototype
 import com.tobi.mc.computable.variable.DefineVariable
 import com.tobi.mc.computable.variable.GetVariable
 import com.tobi.mc.computable.variable.SetVariable
@@ -35,15 +36,23 @@ object NestedSequenceOptimisation : InstanceOptimisation<ExpressionSequence>(Exp
     private fun ExpressionSequence.renameVariables(otherOps: List<Computable>) {
         val referencedVariables = ExpressionSequence(otherOps).findUsedVariables()
         val selfReferenced = this.findUsedVariables()
+        val functionRenames = HashMap<String, String>()
 
         for((i, operation) in this.operations.withIndex()) {
-            if(operation is DefineVariable || operation is FunctionDeclaration) {
+            if(operation is DefineVariable || operation is FunctionDeclaration || operation is FunctionPrototype) {
                 val name = (operation as VariableReference).name
-                if(referencedVariables.contains(name)) {
+                if(operation is FunctionDeclaration && functionRenames.containsKey(operation.name)) {
+                    operation.name = functionRenames[operation.name]!!
+                } else if(referencedVariables.contains(name)) {
                     val newName = findNewName(referencedVariables, selfReferenced, name)
                     operation.name = newName
+                    if(operation is FunctionPrototype) {
+                        functionRenames[name] = newName
+                    }
 
-                    VariableRenamer.renameVariable(ExpressionSequence(this.operations.getAfterIndex(i)), name, newName)
+                    VariableRenamer.renameVariable(ExpressionSequence(this.operations.getAfterIndex(i).filter {
+                        !(it is FunctionDeclaration && it.name == name)
+                    }), name, newName)
                     referencedVariables.add(newName)
                 } else {
                     referencedVariables.add(name)
@@ -71,7 +80,7 @@ object NestedSequenceOptimisation : InstanceOptimisation<ExpressionSequence>(Exp
 
     private fun Computable.findUsedVariables(names: MutableSet<String>, definedVariables: MutableSet<String>, depth: Int) {
         var newDepth = depth
-        if(this is DefineVariable || this is FunctionDeclaration) {
+        if(this is DefineVariable || this is FunctionDeclaration || this is FunctionPrototype) {
             val name = (this as VariableReference).name
             if(depth > 0) definedVariables.add(name)
             else names.add(name)

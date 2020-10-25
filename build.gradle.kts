@@ -39,22 +39,22 @@ kotlin {
 //                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.0-M1")
             }
         }
-//        val jvmTest by getting {
-//            dependencies {
-//                implementation("org.junit.jupiter:junit-jupiter:5.6.2")
-//            }
-//        }
-//
-//        val jsMain by getting {
-//            dependencies {
-//                implementation(npm("monaco-editor", "0.21.2"))
-//                implementation(npm("monaco-editor-webpack-plugin", "2.0.0"))
-//                implementation(devNpm("style-loader", "2.0.0"))
-//                implementation(devNpm("css-loader", "5.0.0"))
-//                implementation(devNpm("file-loader", "6.1.1"))
-//                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core-js:1.4.0-M1")
-//            }
-//        }
+        val jvmTest by getting {
+            dependencies {
+                implementation("org.junit.jupiter:junit-jupiter:5.6.2")
+            }
+        }
+
+        val jsMain by getting {
+            dependencies {
+                implementation(npm("monaco-editor", "0.21.2"))
+                implementation(npm("monaco-editor-webpack-plugin", "2.0.0"))
+                implementation(devNpm("style-loader", "2.0.0"))
+                implementation(devNpm("css-loader", "5.0.0"))
+                implementation(devNpm("file-loader", "6.1.1"))
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core-js:1.4.0-M1")
+            }
+        }
 
         all {
             languageSettings.progressiveMode = true

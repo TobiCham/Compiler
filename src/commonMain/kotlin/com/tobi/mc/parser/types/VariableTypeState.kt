@@ -1,15 +1,12 @@
 package com.tobi.mc.parser.types
 
-import com.tobi.mc.computable.data.DataType
-import com.tobi.mc.computable.function.FunctionDeclaration
+import com.tobi.mc.computable.function.FunctionPrototype
 import com.tobi.mc.type.ExpandedType
-import com.tobi.mc.type.FunctionType
-import com.tobi.mc.type.KnownParameters
-import com.tobi.mc.type.UnknownType
 
 class VariableTypeState(private val parent: VariableTypeState?) {
 
     private val variables: MutableMap<String, ExpandedType> = HashMap()
+    private val prototypes: MutableMap<String, FunctionPrototype> = HashMap()
 
     fun getType(name: String) = find(name, VariableTypeState::variables)
 
@@ -24,25 +21,9 @@ class VariableTypeState(private val parent: VariableTypeState?) {
         state.variables[name] = type
     }
 
-    /**
-     * Initialises a new function
-     * @return the new state
-     */
-    fun initialiseFunction(function: FunctionDeclaration, mapping: (DataType) -> ExpandedType): Pair<VariableTypeState, FunctionType> {
-        val params = function.parameters.map { (type, _) -> mapping(type) }
-
-        val returnType = if(function.returnType != null) mapping(function.returnType!!) else UnknownType
-        val functionType = FunctionType(
-            returnType,
-            KnownParameters(params)
-        )
-        define(function.name, functionType)
-
-        val newState = VariableTypeState(this)
-        for ((paramType, paramName) in function.parameters) {
-            newState.define(paramName, mapping(paramType))
-        }
-        return Pair(newState, functionType)
+    fun getPrototype(name: String): FunctionPrototype? = prototypes[name]
+    fun addPrototype(name: String, prototype: FunctionPrototype) {
+        prototypes[name] = prototype
     }
 
     private inline fun <T> find(name: String, getMap: (VariableTypeState) -> Map<String, T>): T? {

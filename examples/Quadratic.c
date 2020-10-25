@@ -8,7 +8,7 @@ auto intDivision(int x, int y) {
 }
 
 auto squareRoot(int n) {
-    auto iterate(int guess) {
+    int iterate(int guess) {
         if(guess == 0) {
             return 0;
         } else {

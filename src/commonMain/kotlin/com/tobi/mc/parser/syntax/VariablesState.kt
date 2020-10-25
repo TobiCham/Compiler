@@ -5,7 +5,8 @@ import com.tobi.mc.computable.variable.VariableReference
 
 data class VariablesState(val parent: VariablesState?) {
 
-    private val variables: MutableSet<String> = HashSet()
+    private val variables: MutableMap<String, VariableType> = HashMap()
+    private val definitionsProvided = HashSet<String>()
 
     fun exists(name: String) = find(name, this)
 
@@ -15,30 +16,25 @@ data class VariablesState(val parent: VariablesState?) {
         }
     }
 
-    fun canBeDefined(name: String) = !variables.contains(name)
-
-    fun ensureCanBeDefined(variable: VariableReference) {
-        if(!canBeDefined(variable.name)) {
-            throw ParseException("Variable already defined", variable)
+    fun ensureCanBeDefined(variable: VariableReference, type: VariableType) {
+        val existingType = variables[variable.name] ?: return
+        if(existingType == VariableType.FUNCTION_PROTOTYPE && type == VariableType.FUNCTION_DEFINITION) {
+            if(!definitionsProvided.add(variable.name)) {
+                throw ParseException("Function definition already provided", variable)
+            }
+        } else {
+            throw ParseException("${existingType.description} already defined", variable)
         }
     }
 
-    fun define(vararg names: String): VariablesState = apply {
-        variables.addAll(names)
+    fun define(name: String, type: VariableType): VariablesState = apply {
+        this.variables[name] = type
     }
 
-    override fun toString(): String = buildString {
-        append('[')
-        if(parent != null) {
-            append(parent.toString())
-
-            if(variables.isNotEmpty()) append(", ")
-        }
-        for((i, variable) in variables.withIndex()) {
-            if(i != 0) append(", ")
-            append(variable)
-        }
-        append(']')
+    enum class VariableType(val description: String) {
+        FUNCTION_PROTOTYPE("Function prototype"),
+        FUNCTION_DEFINITION("Function definition"),
+        VARIABLE("Variable")
     }
 
     private companion object {

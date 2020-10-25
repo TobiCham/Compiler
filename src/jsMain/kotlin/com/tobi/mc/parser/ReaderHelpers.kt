@@ -43,4 +43,10 @@ actual object ReaderHelpers {
             destination[i + destinationOffset] = string[startIndex + i]
         }
     }
+
+    actual fun <T> expandArray(source: Array<T?>, newSize: Int): Array<T?> {
+        val extraSize = newSize - source.size
+        val newArray = js("Array(extraSize)")
+        return js("source.concat(newArray)")
+    }
 }

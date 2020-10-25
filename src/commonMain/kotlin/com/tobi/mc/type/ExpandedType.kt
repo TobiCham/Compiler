@@ -41,3 +41,14 @@ data class KnownParameters(val params: List<ExpandedType>) : AnalysisParamList()
     val size = params.size
 }
 object UnknownParameters : AnalysisParamList()
+
+fun DataType.mapToExpandedType(): ExpandedType = when(this) {
+    DataType.INT -> IntType
+    DataType.STRING -> StringType
+    DataType.VOID -> VoidType
+    //Cannot get function type without more information
+    DataType.FUNCTION -> FunctionType(
+        UnknownType,
+        UnknownParameters
+    )
+}

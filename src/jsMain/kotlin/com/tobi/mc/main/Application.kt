@@ -5,8 +5,9 @@ import com.tobi.mc.ProgramToString
 import com.tobi.mc.ScriptException
 import com.tobi.mc.SourceRange
 import com.tobi.mc.computable.Program
-import com.tobi.mc.computable.data.DataTypeInt
+import com.tobi.mc.intermediate.TacEmulator
 import com.tobi.mc.intermediate.TacGenerator
+import com.tobi.mc.intermediate.TacProgram
 import com.tobi.mc.intermediate.TacToString
 import com.tobi.mc.mips.MipsAssemblyGenerator
 import com.tobi.mc.mips.MipsConfiguration
@@ -62,7 +63,8 @@ class Application {
     }
 
     private fun runProgram() {
-        val program = parse(optimiseButton.enabled) ?: return
+        val tac = parseToTac(optimiseButton.enabled) ?: return
+//        val program = parse(optimiseButton.enabled) ?: return
 
         setButtonsEnabled(false)
         inputElement.disabled = true
@@ -72,7 +74,8 @@ class Application {
         GlobalScope.launch {
             try {
                 val environment = JSExecutionEnvironment(outputWindow, inputElement)
-                val exitCode = (program.compute(environment) as? DataTypeInt)?.value
+                val exitCode = TacEmulator.emulate(tac, environment)
+//                val exitCode = (program.compute(environment) as? DataTypeInt)?.value
                 if (outputWindow.text.isNotEmpty()) outputWindow.text += "\n"
                 outputWindow.text += when (exitCode) {
                     0L -> "Program exited successfully with exit code $exitCode"
@@ -85,6 +88,9 @@ class Application {
                 if(e.source?.sourceRange != null) {
                     setMarkersFromException(e.message, e.source.sourceRange!!)
                 }
+            } catch (e: Throwable) {
+                if (outputWindow.text.isNotEmpty()) outputWindow.text += "\n"
+                outputWindow.text += "Error occured running the program: " + e.message
             } finally {
                 setButtonsEnabled(true)
                 inputElement.disabled = true
@@ -100,25 +106,17 @@ class Application {
     }
 
     private fun createTac() {
-        val program = parse(optimiseButton.enabled) ?: return
-
-        try {
-            val tac = TacGenerator(program).toTac()
-
-            outputWindow.type = OutputWindow.Type.RICH_TEXT
-            outputWindow.text = TacToString.toString(tac)
-            outputWindow.language = "tac"
-        } catch (e: Exception) {
-            outputWindow.type = OutputWindow.Type.PLAIN_TEXT
-            outputWindow.text = "Failed to create TAC: $e"
-        }
+        val tac = parseToTac(optimiseButton.enabled) ?: return
+        outputWindow.type = OutputWindow.Type.RICH_TEXT
+        outputWindow.text = TacToString.toString(tac)
+        outputWindow.language = "tac"
     }
 
     private fun createMips() {
         val program = parse(optimiseButton.enabled) ?: return
 
         val text = try {
-            val tac = TacGenerator(program).toTac()
+            val tac = TacGenerator.toTac(program)
             val mips = TacToMips(MipsConfiguration.StandardMips).toMips(tac)
             MipsAssemblyGenerator.generateAssembly(mips)
         } catch (e: Exception) {
@@ -138,6 +136,18 @@ class Application {
         mipsButton.enabled = enabled
         runButton.enabled = enabled
         prettyPrintButton.enabled = enabled
+    }
+
+    private fun parseToTac(optimise: Boolean): TacProgram? {
+        val program = parse(optimise) ?: return null
+
+        return try {
+            TacGenerator.toTac(program)
+        } catch (e: Exception) {
+            outputWindow.type = OutputWindow.Type.PLAIN_TEXT
+            outputWindow.text = "Failed to create MIPS: $e"
+            return null
+        }
     }
 
     private fun parse(optimise: Boolean): Program? {

@@ -76,6 +76,7 @@ nonterminal WhileLoop whileLoop;
 nonterminal IfStatement ifStatement;
 
 nonterminal Program program;
+nonterminal FunctionPrototype functionPrototype;
 
 precedence nonassoc IF;
 precedence nonassoc ELSE;
@@ -86,6 +87,7 @@ precedence left ADD, MINUS;
 precedence left MULTIPLY, DIVIDE, MOD;
 precedence right MINUS, NOT;
 precedence nonassoc LEFT_BRACKET;
+
 
 start with program;
 
@@ -194,7 +196,8 @@ terminatedExpression ::=
     dataComputable:data {: RESULT = data; :} |
     breakStatement:statement {: RESULT = statement; :} |
     continueStatement:statement {: RESULT = statement; :} |
-    returnExpression:exp {: RESULT = exp; :};
+    returnExpression:exp {: RESULT = exp; :} |
+    functionPrototype:prototype {: RESULT = prototype; :};
 
 expression ::=
     terminatedExpression:exp SEMI_COLON {: RESULT = exp; :} |
@@ -239,3 +242,12 @@ returnExpression ::=
 
 breakStatement ::= BREAK {: RESULT = BreakStatement.INSTANCE; :};
 continueStatement ::= CONTINUE {: RESULT = ContinueStatement.INSTANCE; :};
+
+functionPrototype ::=
+    dataType:returnType IDENTIFIER:name LEFT_BRACKET functionParams:params RIGHT_BRACKET {:
+        RESULT = new FunctionPrototype((String) name, params, returnType);
+    :}
+    |
+    dataType:returnType IDENTIFIER:name LEFT_BRACKET RIGHT_BRACKET {:
+        RESULT = new FunctionPrototype((String) name, new ArrayList<>(), returnType);
+    :};

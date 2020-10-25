@@ -1,11 +1,8 @@
 package com.tobi.mc.main
 
 import com.tobi.mc.ParseException
+import com.tobi.mc.intermediate.TacEmulator
 import com.tobi.mc.intermediate.TacGenerator
-import com.tobi.mc.intermediate.TacToString
-import com.tobi.mc.mips.MipsAssemblyGenerator
-import com.tobi.mc.mips.MipsConfiguration
-import com.tobi.mc.mips.TacToMips
 import com.tobi.mc.parser.MinusCParser
 import kotlinx.coroutines.runBlocking
 import java.io.File
@@ -21,14 +18,18 @@ fun main() {
         System.err.println(e.createDescriptiveErrorMessage(program))
         exitProcess(1)
     }
+//    println(ProgramToString(JVMConsoleStyler).toString(ast))
+
+//    runBlocking {
+//        ast.compute(JVMExecutionEnvironment)
+//    }
+
+    val tac = TacGenerator.toTac(ast)
+//    println(TacToString.toString(tac))
 
     runBlocking {
-        ast.compute(JVMExecutionEnvironment)
+        TacEmulator.emulate(tac, JVMExecutionEnvironment)
     }
-    val tac = TacGenerator(ast).toTac()
-    println(TacToString.toString(tac))
-    val mips = TacToMips(MipsConfiguration.StandardMips).toMips(tac)
-    println(MipsAssemblyGenerator.generateAssembly(mips))
 }
 
 fun ParseException.createDescriptiveErrorMessage(originalSource: String): String {
