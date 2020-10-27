@@ -40,7 +40,7 @@ object MipsGlobalFunctions {
     const val UNIX_TIME = """
         li ${'$'}v0, 30
         syscall
-        move ${'$'}t6, ${'$'}v0
+        move ${'$'}t6, ${'$'}a0
         b removeClosureFrame
     """
 }

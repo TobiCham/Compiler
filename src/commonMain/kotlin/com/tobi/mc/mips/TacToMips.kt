@@ -34,6 +34,7 @@ class TacToMips(val config: MipsConfiguration) {
         newInstructions.addAll(globalFunction.instructions)
         globalFunction.instructions = newInstructions
 
+        builder.addInitialCode(MipsInstruction("main:"))
         builder.addInitialCode(
             MipsInstruction("move", MipsArgument.Register(config.framePointer), MipsArgument.Register(config.stackPointer)),
         )

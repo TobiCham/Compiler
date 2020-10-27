@@ -15,12 +15,16 @@ class FunctionToMips private constructor(
     val builder = MipsFunction.Builder("main")
     private val endFuncLabel = "${this.functionName}_end"
 
+    private val excessRegesterStackLocs = HashMap<Int, Int>()
+
     companion object {
 
         const val PROCEDURE_PUSH_ARG = "pushArg"
         const val PROCEDURE_CALL_CLOSURE = "callClosure"
         const val REMOVE_CLOSURE_FRAME = "removeClosureFrame"
         const val PROCEDURE_CREATE_CLOSURE = "createClosure"
+
+        private const val RESERVED_REGISTERS = 3
 
         fun toMips(functionName: String, function: TacFunction, config: MipsConfiguration, programBuilder: MipsProgram.Builder): MipsFunction {
             val instance = FunctionToMips(functionName, function, config, programBuilder)
@@ -29,8 +33,7 @@ class FunctionToMips private constructor(
             }
 
             val registers = instance.findRegistersUsed(instance.builder.instructions)
-            //TODO Store variables that don't fit as temps on the stack
-            val stackVariables = function.variables.size
+            val stackVariables = function.variables.size + instance.excessRegesterStackLocs.size
             val environmentVariables = function.environment.newVariables.size
 
             val storeRegistersInstructions = instance.createStoreRegistersInstructions(registers)
@@ -52,14 +55,14 @@ class FunctionToMips private constructor(
 
     private fun createRegistersInstructions(registers: Set<String>, instruction: String): List<MipsInstruction> {
         val instructions = ArrayList<MipsInstruction>()
-        var offset = -4
+        var offset = 4
         for(register in registers) {
             instructions.add(MipsInstruction(
                 instruction,
                 MipsArgument.Register(register),
                 MipsArgument.IndirectRegister(config.framePointer, offset)
             ))
-            offset -= 4
+            offset += 4
         }
         return instructions
     }
@@ -94,13 +97,20 @@ class FunctionToMips private constructor(
             }
             is ConstructPopArgument -> {
                 val register = MipsArgument.Register(config.argsPushedRegister)
-                builder.add(MipsInstruction("subi", register, register, MipsArgument.Value(4)))
+                builder.add(MipsInstruction("addi", register, register, MipsArgument.Value(-4)))
             }
             is ConstructFunctionCall -> handleFunction(construct)
             is ConstructSetVariable -> {
                 val variable = construct.variable
                 when(variable) {
-                    is RegisterVariable -> copyToRegister(MipsArgument.Register(config.temporaryRegisters[variable.register]), construct.value)
+                    is RegisterVariable -> {
+                        if(isValidRegister(variable.register)) {
+                            copyToRegister(MipsArgument.Register(config.temporaryRegisters[variable.register]), construct.value)
+                        } else {
+                            val register = allocateRegister(construct.value, config.temporaryRegisters.last())
+                            builder.add(MipsInstruction("sw", register, getExcessRegisterRegister(variable.register)))
+                        }
+                    }
                     is StackVariable -> {
                         val register = allocateRegister(construct.value, config.temporaryRegisters.last())
                         builder.add(MipsInstruction("sw", register, getVariableRegister(variable.name)))
@@ -142,7 +152,7 @@ class FunctionToMips private constructor(
     }
 
     private fun getVariableRegister(name: String): MipsArgument.IndirectRegister {
-        return MipsArgument.IndirectRegister(config.framePointer, getFrameOffset(name) * 4)
+        return MipsArgument.IndirectRegister(config.framePointer, getFrameOffset(name) * -4)
     }
 
     private fun getFrameOffset(name: String): Int {
@@ -164,7 +174,7 @@ class FunctionToMips private constructor(
     }
 
     private fun allocateRegister(expression: TacExpression, defaultRegister: String): MipsArgument.Register {
-        if(expression is RegisterVariable) {
+        if(expression is RegisterVariable && isValidRegister(expression.register)) {
             return MipsArgument.Register(config.temporaryRegisters[expression.register])
         }
         if(expression is EnvironmentVariable) {
@@ -187,10 +197,11 @@ class FunctionToMips private constructor(
             MipsInstruction("li", MipsArgument.Value(value.toInt()))
         }
         is RegisterVariable -> {
-            if(register >= config.temporaryRegisters.size - 3) {
-                throw IllegalArgumentException("Temporary register ${register} is too large")
+            if(isValidRegister(this.register)) {
+                MipsInstruction("move", MipsArgument.Register(config.temporaryRegisters[register]))
+            } else {
+                MipsInstruction("lw", getExcessRegisterRegister(register))
             }
-            MipsInstruction("move", MipsArgument.Register(config.temporaryRegisters[register]))
         }
         is ReturnedValue -> MipsInstruction("move", MipsArgument.Register(config.returnRegister))
         is StackVariable -> MipsInstruction("lw", getVariableRegister(name))
@@ -204,7 +215,7 @@ class FunctionToMips private constructor(
             copyToRegister(MipsArgument.Register(config.argumentRegisters[0]), toNegate)
             MipsInstruction("neg", MipsArgument.Register(config.argumentRegisters[0]))
         }
-        is ParamReference -> MipsInstruction("lw", MipsArgument.IndirectRegister(config.stackPointer, this.index * 4))
+        is ParamReference -> MipsInstruction("lw", MipsArgument.IndirectRegister(config.stackPointer, this.index * -4))
         is ConstructMath -> {
             val r1 = allocateRegister(arg1, config.temporaryRegisters[config.temporaryRegisters.size - 2])
             val r2 = allocateRegister(arg2, config.temporaryRegisters[config.temporaryRegisters.size - 3])
@@ -241,5 +252,16 @@ class FunctionToMips private constructor(
             MipsInstruction("move", MipsArgument.Register(config.resultRegister))
         }
         else -> throw IllegalStateException(this::class.simpleName)
+    }
+
+    private fun isValidRegister(register: Int): Boolean {
+        return register < config.temporaryRegisters.size - RESERVED_REGISTERS
+    }
+
+    private fun getExcessRegisterRegister(register: Int): MipsArgument.IndirectRegister {
+        val offsetIndex = this.excessRegesterStackLocs.getOrPut(register) {
+            register - (config.temporaryRegisters.size - RESERVED_REGISTERS) + function.variables.size
+        }
+        return MipsArgument.IndirectRegister(config.framePointer, offsetIndex * - 4)
     }
 }

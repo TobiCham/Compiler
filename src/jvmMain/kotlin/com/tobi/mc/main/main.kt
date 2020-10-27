@@ -6,17 +6,16 @@ import com.tobi.mc.mips.MipsAssemblyGenerator
 import com.tobi.mc.mips.MipsConfiguration
 import com.tobi.mc.mips.TacToMips
 import com.tobi.mc.parser.MinusCParser
-import java.awt.Toolkit
-import java.awt.datatransfer.Clipboard
-import java.awt.datatransfer.StringSelection
-import java.io.File
-import java.nio.file.Files
+import com.tobi.mc.parser.ParserConfiguration
 import kotlin.system.exitProcess
 
 
 fun main() {
-    val program = Files.readAllLines(File("examples/Higher or Lower.c").toPath()).joinToString("\n")
-    val parser = MinusCParser()
+//    val program = Files.readAllLines(File("examples/Higher or Lower.c").toPath()).joinToString("\n")
+    val program = """
+        int x = 1 * 1 * 1 * 1 * 1 * 1 * 1 * 1 * 1 * 1 * 1 * 1 * 1 * 1 * 1 * 1 * 1 * 1 * 1 * 1 * 1 * 1 * 1 * 1 * 1;
+    """.trimIndent()
+    val parser = MinusCParser(ParserConfiguration(optimisations = emptyList()))
     val ast = try {
         parser.parse(program)
     } catch (e: ParseException) {
@@ -39,10 +38,6 @@ fun main() {
     val mips = TacToMips(MipsConfiguration.StandardMips).toMips(tac)
     val result = MipsAssemblyGenerator.generateAssembly(mips)
     println(result)
-
-    val stringSelection = StringSelection(result)
-    val clipboard: Clipboard = Toolkit.getDefaultToolkit().getSystemClipboard()
-    clipboard.setContents(stringSelection, null)
 }
 
 fun ParseException.createDescriptiveErrorMessage(originalSource: String): String {
