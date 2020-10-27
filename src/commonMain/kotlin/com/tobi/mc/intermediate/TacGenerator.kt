@@ -68,7 +68,7 @@ class TacGenerator private constructor() {
             ops,
             treePosition
         )
-        return TacProgram(stringIndices.keys.toTypedArray(), TacFunction(globalEnvironment, mapOf("main" to DataType.FUNCTION), ops, 0))
+        return TacProgram(stringIndices.keys.toTypedArray(), TacFunction("global", globalEnvironment, mapOf("main" to DataType.FUNCTION), ops, 0))
     }
 
     private fun Computable.toTac(
@@ -155,7 +155,7 @@ class TacGenerator private constructor() {
         }
 
         this.body.toTac(newEnvironment, newCode, newData)
-        val function = TacFunction(newEnvironment, newData.stackVariables, newCode, this.parameters.size)
+        val function = TacFunction(this.name, newEnvironment, newData.stackVariables, newCode, this.parameters.size)
 
         code.add(ConstructSetVariable(variable, function))
 

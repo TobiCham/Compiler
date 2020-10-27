@@ -41,9 +41,12 @@ auto printHowToPlay() {
 	printString("Enter a maximum:\n");
 }
 
-auto formatGuesses(int guesses) {
-    if(guesses == 1) return "1 guess";
-    else return intToString(guesses) ++ " guesses";
+auto printGuesses(int guesses) {
+    if(guesses == 1) printString("1 guess");
+    else {
+        printInt(guesses);
+        printString(" guesses");
+    }
 }
 
 printHowToPlay();
@@ -65,4 +68,6 @@ while(1) {
 	guesses = guesses + 1;
 }
 
-printString("Correct! You took " ++ formatGuesses(guesses) ++ "!\nThanks for playing!\n");
+printString("Correct! You took ");
+printGuesses(guesses);
+printString("!\nThanks for playing!\n");

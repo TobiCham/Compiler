@@ -6,6 +6,7 @@ import com.tobi.mc.intermediate.construct.code.RegisterVariable
 import com.tobi.mc.intermediate.util.asDeepSequence
 
 class TacFunction(
+    val codeName: String,
     val environment: TacEnvironment,
     val variables: Map<String, DataType>,
     val code: List<TacStructure>,

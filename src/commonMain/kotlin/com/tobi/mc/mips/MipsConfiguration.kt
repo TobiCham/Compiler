@@ -22,6 +22,14 @@ interface MipsConfiguration {
 
     val returnRegister: String
 
+    val closureRegister: String
+
+    val argsPushedRegister: String
+
+    val currentEnvironmentRegister: String
+
+    val resultRegister: String
+
     object StandardMips : MipsConfiguration {
 
         override fun formatInstruction(instruction: MipsInstruction): String = buildString {
@@ -39,11 +47,12 @@ interface MipsConfiguration {
             is MipsArgument.Value -> argument.value.toString()
         }
 
-        override val temporaryRegisters: Array<String> = Array(10) {
-            "t$it"
-        }
+        override val temporaryRegisters: Array<String> = arrayOf(
+            "t0", "t1", "t2", "t3", "t4", "t5",
+            "s0", "s1", "s2", "s3", "s4", "s5", "s6", "s7"
+        )
 
-        override val argumentRegisters: Array<String> = Array(3) {
+        override val argumentRegisters: Array<String> = Array(4) {
             "a$it"
         }
 
@@ -60,6 +69,10 @@ interface MipsConfiguration {
         override val framePointer: String = "fp"
         override val sysCallRegister: String = "v0"
         override val zeroRegister: String = "zero"
-        override val returnRegister: String = "v0"
+        override val returnRegister: String = "t6"
+        override val closureRegister: String = "k0"
+        override val argsPushedRegister: String = "k1"
+        override val currentEnvironmentRegister: String = "t7"
+        override val resultRegister: String = "v0"
     }
 }

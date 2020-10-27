@@ -1,8 +1,12 @@
 package com.tobi.mc.mips
 
-class MipsFunction(val name: String, val instructions: List<MipsInstruction>) {
-
-    constructor(name: String, vararg instructions: MipsInstruction): this(name, instructions.toList())
+class MipsFunction(
+    val label: String,
+    var instructions: List<MipsInstruction>,
+    val stackVariables: Int,
+    val registers: Int,
+    val environmentVariables: Int
+) {
 
     class Builder(name: String) {
         var name = name
@@ -20,6 +24,8 @@ class MipsFunction(val name: String, val instructions: List<MipsInstruction>) {
             }
         }
 
-        fun build() = MipsFunction(name, instructions)
+        fun build(stackVariables: Int, registers: Int, environmentVariables: Int): MipsFunction {
+            return MipsFunction(name, instructions, stackVariables, registers, environmentVariables)
+        }
     }
 }

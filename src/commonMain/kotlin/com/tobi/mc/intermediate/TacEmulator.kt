@@ -196,7 +196,7 @@ class TacEmulator private constructor(private val program: TacProgram, private v
         stack[stackTop++] = this.line
         stack[stackTop + argsPushed] = this.argsPushed
 
-        framePointer = stackTop + argsPushed + 1
+        framePointer = stackTop + this.argsPushed + 1
 
 
         for(i in 0 until newClosure.registersUsed) {
@@ -216,7 +216,7 @@ class TacEmulator private constructor(private val program: TacProgram, private v
         }
 
         this.argsPushed = this.stack[framePointer--] as Int
-        this.framePointer -= argsPushed
+        this.framePointer -= this.argsPushed
         this.line = this.stack[framePointer--] as Int + 1
 
         this.closure = this.stack[framePointer] as TacClosure

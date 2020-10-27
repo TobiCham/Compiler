@@ -17,19 +17,35 @@ object MipsAssemblyGenerator {
             builder.println("")
         }
 
-        val functions = program.functions
-        if(functions.isNotEmpty()) {
-            builder.println(".text")
-            for(function in functions) {
-                builder.println(".${function.name}:")
-                builder.indent()
-                for(instruction in function.instructions) {
-                    builder.println(program.config.formatInstruction(instruction))
-                }
-                builder.outdent()
-                builder.println("")
-            }
+        builder.println(".text")
+        for(instruction in program.initialCode) {
+            builder.println(program.config.formatInstruction(instruction))
         }
+        builder.println("")
+
+        val functions = program.functions
+        for(function in functions) {
+            builder.println("${function.label}:")
+            builder.indent()
+            for(instruction in function.instructions) {
+                builder.println(program.config.formatInstruction(instruction))
+            }
+            builder.outdent()
+            builder.println("")
+        }
+
+        builder.println("")
+        builder.println(MipsHelperCode.CALL_CLOSURE)
+
+        builder.println("")
+        builder.println(MipsHelperCode.REMOVE_CLOSURE_FRAME)
+
+        builder.println("")
+        builder.println(MipsHelperCode.PUSH_ARG)
+
+        builder.println("")
+        builder.println(MipsHelperCode.CREATE_CLOSURE)
+
         return builder.toString()
     }
 }
