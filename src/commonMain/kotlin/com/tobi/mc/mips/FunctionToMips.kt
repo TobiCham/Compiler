@@ -52,7 +52,7 @@ class FunctionToMips private constructor(
                 MipsInstruction("addi", Register(config.stackPointer), Register(config.stackPointer), Value(-4 * instance.frameSize)),
                 MipsInstruction("move", Register(config.framePointer), Register(config.stackPointer)),
                 MipsInstruction("move", Register(config.closureRegister), Register(config.argumentRegisters[0])),
-                MipsInstruction("lw", Register(config.currentEnvironmentRegister), IndirectRegister(config.closureRegister, 8))
+                MipsInstruction("lw", Register(config.currentEnvironmentRegister), IndirectRegister(config.closureRegister, 4))
             )
             newInstructions.addAll(instance.builder.instructions)
             newInstructions.add(MipsInstruction("${instance.endFuncLabel}:"))

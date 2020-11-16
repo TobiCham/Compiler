@@ -12,11 +12,10 @@ createClosure:
     #Remap a0 to a2 as a0 needs to be used
     move ${'$'}a3, ${'$'}a0
     
-    #Allocate 3 words of space for closure data
+    #Allocate 2 words of space for closure data
     # 0 = function label
-    # 1 = closure size
-    # 2 = pointer to memory where the closure array is stored
-    li ${'$'}a0, 12
+    # 1 = pointer to memory where the closure array is stored
+    li ${'$'}a0, 8
     li ${'$'}v0, 9
     syscall
 
@@ -28,7 +27,6 @@ createClosure:
 
 		#Use a3 to store the new size of the array
 		add ${'$'}a3, ${'$'}a1, ${'$'}a2
-		sw ${'$'}a3, 4(${'$'}v0)
 
 		#Copy closure struct pointer to v1 so v0 can be reused
     move ${'$'}v1, ${'$'}v0
@@ -37,7 +35,7 @@ createClosure:
 		move ${'$'}a0, ${'$'}a3
 		li ${'$'}v0, 9
 		syscall
-		sw ${'$'}v0, 8(${'$'}v1)
+		sw ${'$'}v0, 4(${'$'}v1)
 
 		#Use t8 as the pointer to the array
 		move ${'$'}t8, ${'$'}v0
@@ -72,8 +70,7 @@ createClosure:
 			jr ${'$'}ra
 
 		noNewVariables:
-			sw ${'$'}a2, 4(${'$'}v0)
-			sw ${'$'}k1, 8(${'$'}v0)
+			sw ${'$'}k1, 4(${'$'}v0)
 			move ${'$'}v0, ${'$'}v0
 			jr ${'$'}ra
     """
