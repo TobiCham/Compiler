@@ -20,6 +20,7 @@ import com.tobi.mc.computable.variable.SetVariable
 import com.tobi.mc.intermediate.construct.ControlLabel
 import com.tobi.mc.intermediate.construct.TacEnvironment
 import com.tobi.mc.intermediate.construct.TacFunction
+import com.tobi.mc.intermediate.construct.TacInbuiltFunction
 import com.tobi.mc.intermediate.construct.code.*
 import com.tobi.mc.parser.util.getComponents
 import com.tobi.mc.util.ArrayListStack
@@ -63,6 +64,10 @@ class TacGenerator private constructor() {
         }
 
         val ops = ArrayList<TacStructure>()
+        ops.addAll(inbuiltVariables.map { (name, _) ->
+            ConstructSetVariable(EnvironmentVariable(name, 0), TacInbuiltFunction(name))
+        })
+
         globalFunction.body.toTac(
             globalEnvironment,
             ops,

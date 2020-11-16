@@ -2,6 +2,7 @@ package com.tobi.mc.intermediate
 
 import com.tobi.mc.intermediate.construct.TacEnvironment
 import com.tobi.mc.intermediate.construct.TacFunction
+import com.tobi.mc.intermediate.construct.TacInbuiltFunction
 import com.tobi.mc.intermediate.construct.code.*
 import com.tobi.mc.util.TabbedBuilder
 import com.tobi.mc.util.escapeForPrinting
@@ -73,6 +74,7 @@ object TacToString {
         is StackVariable -> builder.print(this.name)
         is IntValue -> builder.print(this.value)
         is ParamReference -> builder.print("GetParam ${this.index}")
+        is TacInbuiltFunction -> builder.print("BeginFunc Inbuilt<${this.label}>")
         else -> throw IllegalArgumentException("Unknown tac construct ${this::class.simpleName}")
     }
 
@@ -90,7 +92,7 @@ object TacToString {
     }
 
     private fun TacFunction.print(builder: TabbedBuilder) {
-        builder.println("BeginFunc (${this.parameters}, ${this.registersUsed})")
+        builder.println("BeginFunc (${this.parameters}, ${this.variables}, ${this.registersUsed})")
         builder.indent()
         this.environment.print(builder)
         printVariables(builder)

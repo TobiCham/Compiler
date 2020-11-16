@@ -2,45 +2,49 @@ package com.tobi.mc.mips
 
 object MipsGlobalFunctions {
 
-    const val PRINT_INT = """
-        lw ${'$'}a0, (${'$'}sp)
+    val PRINT_INT = """
+    printInt:
+        lw ${'$'}a0, 4(${'$'}sp)
         li ${'$'}v0, 1
         syscall
-        b removeClosureFrame
-    """
+        jr ${'$'}ra
+    """.trimIndent()
 
-    const val PRINT_STRING = """
-        lw ${'$'}a0, (${'$'}sp)
+    val PRINT_STRING = """
+    printString:
+        lw ${'$'}a0, 4(${'$'}sp)
         li ${'$'}v0, 4
         syscall
-        b removeClosureFrame
-    """
+        jr ${'$'}ra
+    """.trimIndent()
     
-    const val EXIT = """
-        lw ${'$'}a0, (${'$'}sp)
+    val EXIT = """
+    exit:
+        lw ${'$'}a0, 4(${'$'}sp)
         li ${'$'}v0, 17
         syscall
-        b removeClosureFrame
-    """
+        jr ${'$'}ra
+    """.trimIndent()
 
-    const val READ_INT = """
+    val READ_INT = """
+    readInt:
         li ${'$'}v0, 5
         syscall
-        move ${'$'}t6, ${'$'}v0
-        b removeClosureFrame
-    """
+        jr ${'$'}ra
+    """.trimIndent()
 
-    const val READ_STRING = """
+    val READ_STRING = """
+    readString:
         li ${'$'}v0, 4
         syscall
-        move ${'$'}t6, ${'$'}v0
-        b removeClosureFrame
-    """
+        jr ${'$'}ra
+    """.trimIndent()
 
-    const val UNIX_TIME = """
+    val UNIX_TIME = """
+    unixTime:
         li ${'$'}v0, 30
         syscall
-        move ${'$'}t6, ${'$'}a0
-        b removeClosureFrame
-    """
+        move ${'$'}v0, ${'$'}a0
+        jr ${'$'}ra
+    """.trimIndent()
 }

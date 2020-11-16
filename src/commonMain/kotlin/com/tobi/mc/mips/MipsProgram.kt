@@ -4,12 +4,15 @@ data class MipsProgram(
     val config: MipsConfiguration,
     val stringConstants: Map<String, String>,
     val functions: List<MipsFunction>,
-    val initialCode: List<MipsInstruction>
+    val initialCode: List<MipsInstruction>,
+    val inbuiltFunctions: List<String>
 ) {
     class Builder {
 
         private val stringConstants: MutableMap<String, String> = LinkedHashMap()
         private val functions: MutableMap<String, MipsFunction> = LinkedHashMap()
+        private val systemFunctions = ArrayList<String>()
+
         var initialCode: MutableList<MipsInstruction> = ArrayList()
 
         fun addStringConstant(name: String, value: String): Builder = also {
@@ -28,6 +31,10 @@ data class MipsProgram(
             this.initialCode.addAll(instructions)
         }
 
-        fun build(config: MipsConfiguration): MipsProgram = MipsProgram(config, stringConstants, functions.values.toList(), initialCode)
+        fun addSystemFunction(code: String): Builder = also {
+            this.systemFunctions.add(code)
+        }
+
+        fun build(config: MipsConfiguration): MipsProgram = MipsProgram(config, stringConstants, functions.values.toList(), initialCode, systemFunctions)
     }
 }

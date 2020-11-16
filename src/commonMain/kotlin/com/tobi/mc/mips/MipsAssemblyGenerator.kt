@@ -34,17 +34,10 @@ object MipsAssemblyGenerator {
             builder.println("")
         }
 
-        builder.println("")
-        builder.println(MipsHelperCode.CALL_CLOSURE)
-
-        builder.println("")
-        builder.println(MipsHelperCode.REMOVE_CLOSURE_FRAME)
-
-        builder.println("")
-        builder.println(MipsHelperCode.PUSH_ARG)
-
-        builder.println("")
-        builder.println(MipsHelperCode.CREATE_CLOSURE)
+        for(function in program.inbuiltFunctions) {
+            builder.println("")
+            builder.println(function)
+        }
 
         return builder.toString()
     }

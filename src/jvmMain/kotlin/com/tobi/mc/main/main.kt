@@ -7,14 +7,13 @@ import com.tobi.mc.mips.MipsConfiguration
 import com.tobi.mc.mips.TacToMips
 import com.tobi.mc.parser.MinusCParser
 import com.tobi.mc.parser.ParserConfiguration
+import java.io.File
+import java.nio.file.Files
 import kotlin.system.exitProcess
 
 
 fun main() {
-//    val program = Files.readAllLines(File("examples/Higher or Lower.c").toPath()).joinToString("\n")
-    val program = """
-        int x = 1 * 1 * 1 * 1 * 1 * 1 * 1 * 1 * 1 * 1 * 1 * 1 * 1 * 1 * 1 * 1 * 1 * 1 * 1 * 1 * 1 * 1 * 1 * 1 * 1;
-    """.trimIndent()
+    val program = Files.readAllLines(File("examples/Higher or Lower.c").toPath()).joinToString("\n")
     val parser = MinusCParser(ParserConfiguration(optimisations = emptyList()))
     val ast = try {
         parser.parse(program)

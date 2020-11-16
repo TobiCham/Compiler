@@ -3,6 +3,7 @@ package com.tobi.mc.intermediate.util
 import com.tobi.mc.intermediate.TacProgram
 import com.tobi.mc.intermediate.TacStructure
 import com.tobi.mc.intermediate.construct.TacFunction
+import com.tobi.mc.intermediate.construct.TacInbuiltFunction
 import com.tobi.mc.intermediate.construct.code.*
 import com.tobi.mc.util.ArrayListStack
 import com.tobi.mc.util.MutableStack
@@ -23,6 +24,7 @@ fun TacStructure.getComponents(): Array<TacStructure> = when(this) {
     is TacFunction -> arrayOf(*this.code.toTypedArray())
     is TacProgram -> arrayOf(this.code)
     is TacVariableReference -> emptyArray()
+    is TacInbuiltFunction -> emptyArray()
     else -> throw IllegalStateException()
 }
 

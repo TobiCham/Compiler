@@ -26,6 +26,9 @@ fun <T> List<T>.getAfterIndex(index: Int): List<T> {
     if(index >= size) return this
     return this.slice(index + 1 until size)
 }
+fun <T> MutableCollection<T>.addAll(vararg elements: T) {
+    elements.forEach(this::add)
+}
 
 inline val Any.typeName: String?
     get() = this::class.simpleName

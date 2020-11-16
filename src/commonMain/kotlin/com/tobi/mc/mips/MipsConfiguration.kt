@@ -20,11 +20,9 @@ interface MipsConfiguration {
 
     val sysCallRegister: String
 
-    val returnRegister: String
+    val returnAddressRegister: String
 
     val closureRegister: String
-
-    val argsPushedRegister: String
 
     val currentEnvironmentRegister: String
 
@@ -41,10 +39,10 @@ interface MipsConfiguration {
         }
 
         override fun formatArgument(argument: MipsArgument): String = when(argument) {
-            is MipsArgument.Register -> "\$${argument.name}"
-            is MipsArgument.IndirectRegister -> "${argument.offset}(\$${argument.name})"
-            is MipsArgument.Label -> argument.label
-            is MipsArgument.Value -> argument.value.toString()
+            is Register -> "\$${argument.name}"
+            is IndirectRegister -> "${argument.offset}(\$${argument.name})"
+            is Label -> argument.label
+            is Value -> argument.value.toString()
         }
 
         override val temporaryRegisters: Array<String> = arrayOf(
@@ -69,10 +67,9 @@ interface MipsConfiguration {
         override val framePointer: String = "fp"
         override val sysCallRegister: String = "v0"
         override val zeroRegister: String = "zero"
-        override val returnRegister: String = "t6"
+        override val returnAddressRegister: String = "ra"
         override val closureRegister: String = "k0"
-        override val argsPushedRegister: String = "k1"
-        override val currentEnvironmentRegister: String = "t7"
+        override val currentEnvironmentRegister: String = "k1"
         override val resultRegister: String = "v0"
     }
 }
