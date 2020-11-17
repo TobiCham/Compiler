@@ -41,3 +41,9 @@ fun String.escapeForPrinting(): String {
 
     return result
 }
+
+fun String.toBooleanOrNull(): Boolean? = when(this.toLowerCase()) {
+    "true", "yes", "aye aye cap'in" -> true
+    "false", "no" -> false
+    else -> null
+}

@@ -1,49 +1,9 @@
 package com.tobi.mc.main
 
 import com.tobi.mc.ParseException
-import com.tobi.mc.intermediate.TacGenerator
-import com.tobi.mc.mips.MipsAssemblyGenerator
-import com.tobi.mc.mips.MipsConfiguration
-import com.tobi.mc.mips.TacToMips
-import com.tobi.mc.parser.MinusCParser
-import com.tobi.mc.parser.ParserConfiguration
-import java.io.File
-import java.nio.file.Files
-import kotlin.system.exitProcess
 
-fun main() {
-    val program = Files.readAllLines(File("examples/Higher or Lower.c").toPath()).joinToString("\n")
-//    val program = """
-//        int a = 5;
-//        void something() {
-//            a = a + 1;
-//        }
-//        something();
-//        printInt(a);
-//    """.trimIndent()
-    val parser = MinusCParser(ParserConfiguration(optimisations = emptyList()))
-    val ast = try {
-        parser.parse(program)
-    } catch (e: ParseException) {
-        System.err.println(e.createDescriptiveErrorMessage(program))
-        exitProcess(1)
-    }
-//    println(ProgramToString(JVMConsoleStyler).toString(ast))
-
-//    runBlocking {
-//        ast.compute(JVMExecutionEnvironment)
-//    }
-
-    val tac = TacGenerator.toTac(ast)
-//    println(TacToString.toString(tac))
-
-//    runBlocking {
-//        TacEmulator.emulate(tac, JVMExecutionEnvironment)
-//    }
-
-    val mips = TacToMips(MipsConfiguration.StandardMips).toMips(tac)
-    val result = MipsAssemblyGenerator.generateAssembly(mips)
-    println(result)
+fun main(args: Array<String>) {
+    MinusCApplication().run(args)
 }
 
 fun ParseException.createDescriptiveErrorMessage(originalSource: String): String {

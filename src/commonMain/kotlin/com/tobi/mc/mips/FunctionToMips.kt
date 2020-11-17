@@ -27,9 +27,9 @@ class FunctionToMips private constructor(
     companion object {
 
         const val PROCEDURE_CREATE_CLOSURE = "createClosure"
-        const val FUNCTION_DATA_SIZE = 4
+        const val FUNCTION_DATA_SIZE = 3
 
-        private const val RESERVED_REGISTERS = 3
+        private const val RESERVED_REGISTERS = 2
 
         fun toMips(functionName: String, function: TacFunction, config: MipsConfiguration, programBuilder: MipsProgram.Builder): MipsFunction {
             val instance = FunctionToMips(functionName, function, config, programBuilder)
@@ -92,8 +92,7 @@ class FunctionToMips private constructor(
         when(construct) {
             is ConstructPushArgument -> {
                 val stackPointer = config.stackPointer
-                val argumentValueRegister = Register(getReservedRegister(0))
-                copyToRegister(argumentValueRegister, construct.variable)
+                val argumentValueRegister = construct.variable.allocateRegister(getReservedRegister(0))
 
                 instructions.add(MipsInstruction("sw", argumentValueRegister, IndirectRegister(stackPointer, 0)))
                 instructions.add(MipsInstruction("addi", Register(stackPointer), Register(stackPointer), Value(-config.wordSize)))
@@ -104,46 +103,14 @@ class FunctionToMips private constructor(
                 instructions.add(MipsInstruction("addi", stackPointer, stackPointer, Value(config.wordSize)))
             }
             is ConstructFunctionCall -> {
-                val closureRegister = Register(config.argumentRegisters[0])
-                copyToRegister(closureRegister, construct.function)
-
-                val codeAddressRegister = Register(config.argumentRegisters[1])
+                val closureRegister = construct.function.allocateRegister(config.argumentRegisters[0])
+                val codeAddressRegister = Register(getTemporaryRegister(0))
                 instructions.add(MipsInstruction("lw", codeAddressRegister, IndirectRegister(closureRegister.name, 0)))
                 instructions.add(MipsInstruction("jalr", codeAddressRegister))
             }
-            is ConstructSetVariable -> {
-                val variable = construct.variable
-                when(variable) {
-                    is RegisterVariable -> {
-                        if(registerMapping.isPhysicalRegister(variable)) {
-                            copyToRegister(createTemporaryRegister(registerMapping.getPhysicalRegister(variable)), construct.value)
-                        } else {
-                            val register = allocateRegister(construct.value, getReservedRegister(0))
-                            instructions.add(MipsInstruction("sw", register, createStackVariableRegister(registerMapping.getStackRegister(variable))))
-                        }
-                    }
-                    is StackVariable -> {
-                        val register = allocateRegister(construct.value, getReservedRegister(0))
-                        instructions.add(MipsInstruction("sw", register, getVariableRegister(variable.name)))
-                    }
-                    is EnvironmentVariable -> {
-                        val valueRegister = allocateRegister(construct.value, getReservedRegister(0))
-                        val memLocationRegister = getReservedRegister(1)
-                        storeEnvironmentVariableArrayPointer(variable, memLocationRegister)
-                        val offset = getEnvironmentVariableOffset(variable)
-
-                        instructions.add(MipsInstruction(
-                            "sw", valueRegister,
-                            IndirectRegister(memLocationRegister, offset)
-                        ))
-                    }
-                    is ReturnedValue -> {
-                        copyToRegister(Register(config.resultRegister), construct.value)
-                    }
-                }
-            }
+            is ConstructSetVariable -> construct.createSetInstructions()
             is ConstructBranchEqualZero -> {
-                val register = allocateRegister(construct.conditionVariable, getReservedRegister(0))
+                val register = construct.conditionVariable.allocateRegister(getReservedRegister(0))
                 instructions.add(MipsInstruction("beq", register, Register(config.zeroRegister), Label(construct.branchLabel)))
             }
             is ConstructGoto -> {
@@ -156,6 +123,37 @@ class FunctionToMips private constructor(
                 instructions.add(MipsInstruction("j", Label(endFuncLabel)))
             }
             else -> throw IllegalStateException(construct::class.simpleName)
+        }
+    }
+
+    private fun ConstructSetVariable.createSetInstructions() {
+        when(variable) {
+            is RegisterVariable -> {
+                if(registerMapping.isPhysicalRegister(variable)) {
+                    value.copyToRegister(createTemporaryRegister(registerMapping.getPhysicalRegister(variable)))
+                } else {
+                    val register = value.allocateRegister(getReservedRegister(0))
+                    instructions.add(MipsInstruction("sw", register, createStackVariableRegister(registerMapping.getStackRegister(variable))))
+                }
+            }
+            is StackVariable -> {
+                val register = value.allocateRegister(getReservedRegister(0))
+                instructions.add(MipsInstruction("sw", register, getVariableRegister(variable.name)))
+            }
+            is EnvironmentVariable -> {
+                val valueRegister = value.allocateRegister(getReservedRegister(0))
+                val memLocationRegister = getReservedRegister(1)
+                storeEnvironmentVariableArrayPointer(variable, memLocationRegister)
+                val offset = getEnvironmentVariableOffset(variable)
+
+                instructions.add(MipsInstruction(
+                    "sw", valueRegister,
+                    IndirectRegister(memLocationRegister, offset)
+                ))
+            }
+            is ReturnedValue -> {
+                value.copyToRegister(Register(config.resultRegister))
+            }
         }
     }
 
@@ -186,7 +184,7 @@ class FunctionToMips private constructor(
                 if(registerMapping.isPhysicalRegister(this)) {
                     val currentRegister = getTemporaryRegister(registerMapping.getPhysicalRegister(this))
                     if(currentRegister != register.name) {
-                        instructions.add(MipsInstruction("move", register, Register(currentRegister))))
+                        instructions.add(MipsInstruction("move", register, Register(currentRegister)))
                     }
                 } else {
                     instructions.add(MipsInstruction("lw", register, createStackVariableRegister(registerMapping.getStackRegister(this))))
@@ -260,19 +258,13 @@ class FunctionToMips private constructor(
         }
     }
 
-    private fun allocateRegister(expression: TacExpression, defaultRegister: String): Register {
-        if(expression is RegisterVariable && registerMapping.isPhysicalRegister(expression)) {
-            return createTemporaryRegister(registerMapping.getPhysicalRegister(expression))
+    private fun TacExpression.allocateRegister(defaultRegister: String): Register {
+        if(this is RegisterVariable && registerMapping.isPhysicalRegister(this)) {
+            return createTemporaryRegister(registerMapping.getPhysicalRegister(this))
         }
-        if(expression is EnvironmentVariable) {
-            storeEnvironmentVariableArrayPointer(expression, defaultRegister)
-            val offset = getEnvironmentVariableOffset(expression)
-
-            instructions.add(MipsInstruction("lw", Register(defaultRegister), IndirectRegister(defaultRegister, offset)))
-            return Register(defaultRegister)
-        }
-        copyToRegister(Register(defaultRegister), expression)
-        return Register(defaultRegister)
+        val register = Register(defaultRegister)
+        this.copyToRegister(register)
+        return register
     }
 
     private fun getTemporaryRegister(index: Int): String {

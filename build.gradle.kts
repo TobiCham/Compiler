@@ -15,7 +15,6 @@ kotlin {
         compilations.all {
             kotlinOptions.jvmTarget = "1.8"
         }
-//        withJava()
     }
     js {
         browser()
@@ -36,7 +35,7 @@ kotlin {
 
         val jvmMain by getting {
             dependencies {
-//                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.0-M1")
+                implementation("commons-cli:commons-cli:1.2")
             }
         }
         val jvmTest by getting {
