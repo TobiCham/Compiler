@@ -11,9 +11,16 @@ import java.io.File
 import java.nio.file.Files
 import kotlin.system.exitProcess
 
-
 fun main() {
     val program = Files.readAllLines(File("examples/Higher or Lower.c").toPath()).joinToString("\n")
+//    val program = """
+//        int a = 5;
+//        void something() {
+//            a = a + 1;
+//        }
+//        something();
+//        printInt(a);
+//    """.trimIndent()
     val parser = MinusCParser(ParserConfiguration(optimisations = emptyList()))
     val ast = try {
         parser.parse(program)

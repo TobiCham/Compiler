@@ -24,9 +24,9 @@ interface MipsConfiguration {
 
     val closureRegister: String
 
-    val currentEnvironmentRegister: String
-
     val resultRegister: String
+
+    val wordSize: Int
 
     object StandardMips : MipsConfiguration {
 
@@ -69,7 +69,8 @@ interface MipsConfiguration {
         override val zeroRegister: String = "zero"
         override val returnAddressRegister: String = "ra"
         override val closureRegister: String = "k0"
-        override val currentEnvironmentRegister: String = "k1"
         override val resultRegister: String = "v0"
+
+        override val wordSize: Int = 4
     }
 }

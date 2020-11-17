@@ -20,12 +20,12 @@ class TacToMips(val config: MipsConfiguration) {
         val globalFunction = FunctionToMips.toMips(function.codeName, function, config, builder)
 
         builder.addInitialCode(MipsInstruction("main:"))
-        builder.initialCode.addAll(FunctionToMips.getClosureCreationCode(config, globalFunction, 0))
+        builder.initialCode.addAll(FunctionToMips.getClosureCreationCode(config, globalFunction))
         builder.addInitialCode(
             MipsInstruction("move", Register(config.argumentRegisters[0]), Register(config.resultRegister)),
             MipsInstruction("jal", Label(globalFunction.label))
         )
-        for(variable in function.environment.newVariables.keys) {
+        for(variable in function.environment.newVariables) {
             builder.addSystemFunction(getSystemFunction(variable))
         }
         builder.addSystemFunction(MipsHelperCode.CREATE_CLOSURE)

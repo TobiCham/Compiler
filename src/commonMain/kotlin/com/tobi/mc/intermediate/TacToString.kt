@@ -83,16 +83,14 @@ object TacToString {
         if(!vars.isEmpty()) {
             builder.println("Env")
             builder.indent()
-            for((name, type) in vars) {
-                builder.println("$type $name")
-            }
+            vars.forEach(builder::println)
             builder.outdent()
             builder.println("End")
         }
     }
 
     private fun TacFunction.print(builder: TabbedBuilder) {
-        builder.println("BeginFunc (${this.parameters}, ${this.variables}, ${this.registersUsed})")
+        builder.println("BeginFunc (${this.parameters}, ${this.variables.size}, ${this.registersUsed})")
         builder.indent()
         this.environment.print(builder)
         printVariables(builder)
@@ -109,10 +107,7 @@ object TacToString {
         if(this.variables.isNotEmpty()) {
             builder.println("Vars")
             builder.indent()
-
-            for((name, type) in this.variables) {
-                builder.println("$type $name")
-            }
+            this.variables.forEach(builder::println)
             builder.outdent()
             builder.println("End")
         }

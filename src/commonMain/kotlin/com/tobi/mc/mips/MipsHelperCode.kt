@@ -3,75 +3,56 @@ package com.tobi.mc.mips
 object MipsHelperCode {
 
     const val CREATE_CLOSURE = """
-#a0 = function code label (remapped to v1)
+#a0 = function code label
 #a1 = size in bytes of the environment variables array
-#a2 = parent size in bytes of the array
+#a2 = size in bytes of parents array
 #k0 = parent closure pointer
-#k1 = parent array pointer
 createClosure:
-    #Remap a0 to a2 as a0 needs to be used
-    move ${'$'}a3, ${'$'}a0
-    
-    #Allocate 2 words of space for closure data
-    # 0 = function label
-    # 1 = pointer to memory where the closure array is stored
-    li ${'$'}a0, 8
-    li ${'$'}v0, 9
-    syscall
+	#Remap a0 to a3 as a0 needs to be used
+	move ${'$'}a3, ${'$'}a0
 
-    #Store the label into the memory location
-    sw ${'$'}a3, 0(${'$'}v0)
+	#Calculate the size of the new closure
+	add ${'$'}a0, ${'$'}a1, ${'$'}a2
+	addi ${'$'}a0, ${'$'}a0, 8 #4 bytes for label, 4 for new array reference
 
-		checkArraySize:
-		beqz ${'$'}a1, noNewVariables
+	#Allocate heap memory for the closure
+	li ${'$'}v0, 9
+	syscall
 
-		#Use a3 to store the new size of the array
-		add ${'$'}a3, ${'$'}a1, ${'$'}a2
+	#Store the label at the first mem loc
+	sw ${'$'}a3, 0(${'$'}v0)
 
-		#Copy closure struct pointer to v1 so v0 can be reused
-    move ${'$'}v1, ${'$'}v0
+	#Use ${'$'}a3 as the pointer for current pos in the closure
+	addi ${'$'}a3, ${'$'}v0, 4
 
-		#Allocate a new array and store location
-		move ${'$'}a0, ${'$'}a3
-		li ${'$'}v0, 9
-		syscall
-		sw ${'$'}v0, 4(${'$'}v1)
+	#Any new variables?
+	blez ${'$'}a1, copyParents
 
-		#Use t8 as the pointer to the array
-		move ${'$'}t8, ${'$'}v0
+	#Allocate space for new variables
+	move ${'$'}a0, ${'$'}a1
+	move ${'$'}v1, ${'$'}v0
+	li ${'$'}v0, 9
+	syscall
+	sw ${'$'}v0, 0(${'$'}a3)
+	move ${'$'}v0, ${'$'}v1
 
-		#Use a1 as the loop counter
-		move ${'$'}a1, ${'$'}zero
+	copyParents:
+		addi ${'$'}a3, ${'$'}a3, 4
 
-		copyClosureLoop:
-			beq ${'$'}a1, ${'$'}a3, endCopyClosureLoop
+		#Use a0 as loop counter
+		li ${'$'}a0, 4
 
-			blt ${'$'}a1, ${'$'}a2, copyParentValue
+		copyParentLoop:
+			bgt ${'$'}a0, ${'$'}a2, exitCopyParentLoop
+			add ${'$'}v1, ${'$'}k0, ${'$'}a0
+			lw ${'$'}v1, 0(${'$'}v1)
+			sw ${'$'}v1, 0(${'$'}a3)
 
-			li ${'$'}a0, 4
-			li ${'$'}v0, 9
-			syscall
-			sw ${'$'}v0, 0(${'$'}t8)
-			b incrementCounter
+			addi ${'$'}a0, ${'$'}a0, 4
+			addi ${'$'}a3, ${'$'}a3, 4
+			b copyParentLoop
 
-			copyParentValue:
-				add ${'$'}t9, ${'$'}a1, ${'$'}k1
-				lw ${'$'}t9, 0(${'$'}t9)
-				sw ${'$'}t9, 0(${'$'}t8)
-
-			incrementCounter:
-				addi ${'$'}a1, ${'$'}a1, 4
-				addi ${'$'}t8, ${'$'}t8, 4
-				b copyClosureLoop
-
-
-		endCopyClosureLoop:
-			move ${'$'}v0, ${'$'}v1
-			jr ${'$'}ra
-
-		noNewVariables:
-			sw ${'$'}k1, 4(${'$'}v0)
-			move ${'$'}v0, ${'$'}v0
+		exitCopyParentLoop:
 			jr ${'$'}ra
     """
 }

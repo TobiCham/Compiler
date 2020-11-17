@@ -1,6 +1,5 @@
 package com.tobi.mc.intermediate.construct
 
-import com.tobi.mc.computable.data.DataType
 import com.tobi.mc.intermediate.TacStructure
 import com.tobi.mc.intermediate.construct.code.RegisterVariable
 import com.tobi.mc.intermediate.util.asDeepSequence
@@ -8,7 +7,7 @@ import com.tobi.mc.intermediate.util.asDeepSequence
 class TacFunction(
     val codeName: String,
     val environment: TacEnvironment,
-    val variables: Map<String, DataType>,
+    val variables: Set<String>,
     val code: List<TacStructure>,
     val parameters: Int
 ) : TacExpression {

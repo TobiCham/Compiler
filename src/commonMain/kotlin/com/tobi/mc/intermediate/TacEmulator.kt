@@ -1,9 +1,9 @@
 package com.tobi.mc.intermediate
 
 import com.tobi.mc.computable.ExecutionEnvironment
-import com.tobi.mc.computable.data.DataType
 import com.tobi.mc.intermediate.construct.TacExpression
 import com.tobi.mc.intermediate.construct.TacFunction
+import com.tobi.mc.intermediate.construct.TacInbuiltFunction
 import com.tobi.mc.intermediate.construct.code.*
 import com.tobi.mc.parser.ReaderHelpers
 import com.tobi.mc.util.TimeUtils
@@ -34,13 +34,6 @@ class TacEmulator private constructor(private val program: TacProgram, private v
         }
 
         val closure = TacFunctionClosure(program.code, Array(program.code.environment.newVariables.size) { TacData(null) })
-        for(func in this.INBUILT_FUNCTIONS) {
-            val index = program.code.environment.indexOf(EnvironmentVariable(func.name, 0))
-            if(index >= 0) {
-                closure.values[index] = TacData(func)
-            }
-        }
-
         saveForFunction(closure)
         return try {
             emulateCode()
@@ -146,10 +139,16 @@ class TacEmulator private constructor(private val program: TacProgram, private v
                 }
             }
             is TacFunction -> {
-                val newArray = if(this.environment.newVariables.size == 0) closure.values else Array(closure.values.size + this.environment.newVariables.size) {
-                    if(it < closure.values.size) closure.values[it] else TacData(null)
+                val newVars = this.environment.newVariables.size
+                val newArray = if(newVars == 0) closure.values else Array(closure.values.size + newVars) {
+                    if(it < newVars) TacData(null) else closure.values[it - newVars]
                 }
                 TacFunctionClosure(this, newArray)
+            }
+            is TacInbuiltFunction -> {
+                InbuiltFunction(this.label, 0, INBUILT_FUNCTIONS.find {
+                    it.name == this.label
+                }?.execute ?: throw IllegalArgumentException("Unknown inbuilt function ${this.label}"))
             }
             else -> throw IllegalArgumentException(this::class.simpleName)
         }
@@ -230,8 +229,8 @@ class TacEmulator private constructor(private val program: TacProgram, private v
         return code.indexOfFirst { it is ConstructLabel && it.label == label }
     }
 
-    private fun indexOf(variable: String, variables: Map<String, DataType>): Int {
-        return variables.keys.indexOf(variable)
+    private fun indexOf(variable: String, variables: Set<String>): Int {
+        return variables.indexOf(variable)
     }
 
     private interface TacClosure {

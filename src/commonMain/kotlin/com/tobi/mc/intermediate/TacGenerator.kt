@@ -51,15 +51,15 @@ class TacGenerator private constructor() {
         )), DataType.VOID)
 
         val globalEnvironment = TacEnvironment(null)
-        val treePosition = TreePositionData(-2, 0, globalFunction.body, 0, LinkedHashMap(), LinkedHashMap(), LinkedHashMap())
+        val treePosition = TreePositionData(-2, 0, globalFunction.body, 0, LinkedHashMap(), LinkedHashSet(), LinkedHashMap())
         val inbuiltVariables = ArrayList(program.context.getVariables().filter {
             program.findVariable(it.key, 0, true) != null
         }.map {
             Pair(it.key, it.value.type)
         })
         inbuiltVariables.add("exit" to DataType.FUNCTION)
-        for ((name, type) in inbuiltVariables) {
-            globalEnvironment.addVariable(name, type)
+        for ((name, _) in inbuiltVariables) {
+            globalEnvironment.addVariable(name)
             treePosition.environmentVariables[0 to name] = 0
         }
 
@@ -73,7 +73,7 @@ class TacGenerator private constructor() {
             ops,
             treePosition
         )
-        return TacProgram(stringIndices.keys.toTypedArray(), TacFunction("global", globalEnvironment, mapOf("main" to DataType.FUNCTION), ops, 0))
+        return TacProgram(stringIndices.keys.toTypedArray(), TacFunction("global", globalEnvironment, setOf("main"), ops, 0))
     }
 
     private fun Computable.toTac(
@@ -85,16 +85,16 @@ class TacGenerator private constructor() {
         is FunctionCall -> this.toTac(currentEnvironment, RegisterUse(), code, null, positionData)
         is DefineVariable -> {
             val variable = if(isVariableInClosure(this.name, positionData.currentBlock, positionData.blockLine)) {
-                currentEnvironment.addVariable(this.name, this.expectedType ?: throw IllegalStateException())
+                currentEnvironment.addVariable(this.name)
                 positionData.createEnvironmentVariable(this.name)
             } else {
-                positionData.createStackVariable(this.name, this.expectedType ?: throw IllegalStateException())
+                positionData.createStackVariable(this.name)
             }
             code.add(ConstructSetVariable(variable, this.value.calculateIntermediate(currentEnvironment, RegisterUse(), code, positionData)))
         }
         is FunctionPrototype -> {
             if(isVariableInClosure(this.name, positionData.currentBlock, positionData.blockLine)) {
-                currentEnvironment.addVariable(this.name, DataType.FUNCTION)
+                currentEnvironment.addVariable(this.name)
                 positionData.createEnvironmentVariable(this.name)
             }
             Unit
@@ -118,7 +118,7 @@ class TacGenerator private constructor() {
         }
         is ExpressionSequence -> this.operations.withIndex().forEach { (i, it) ->
             val newData = TreePositionData(
-                totalDepth = positionData.totalDepth + 1,
+                contextDepth = positionData.contextDepth + 1,
                 functionCount = positionData.functionCount,
                 currentBlock = this,
                 blockLine = i,
@@ -137,24 +137,24 @@ class TacGenerator private constructor() {
         positionData: TreePositionData
     ): TacFunction {
         val variable = if(isVariableInClosure(this.name, positionData.currentBlock, positionData.blockLine)) {
-            currentEnvironment.addVariable(name, DataType.FUNCTION)
+            currentEnvironment.addVariable(name)
             positionData.createEnvironmentVariable(this.name)
         } else {
-            positionData.createStackVariable(this.name, DataType.FUNCTION)
+            positionData.createStackVariable(this.name)
         }
 
         val newEnvironment = TacEnvironment(currentEnvironment)
         val newVars = HashMap(positionData.environmentVariables)
 
-        val newData = TreePositionData(positionData.totalDepth + 1, positionData.functionCount + 1, this.body, 0, newVars, LinkedHashMap(), LinkedHashMap())
+        val newData = TreePositionData(positionData.contextDepth + 1, positionData.functionCount + 1, this.body, 0, newVars, LinkedHashSet(), LinkedHashMap())
         val newCode = ArrayList<TacStructure>()
 
         for((i, parameter) in this.parameters.withIndex()) {
             val variable = if(this.body.findVariable(parameter.name, 0, false) != null) {
-                newEnvironment.addVariable(parameter.name, parameter.type)
+                newEnvironment.addVariable(parameter.name)
                 newData.createEnvironmentVariable(parameter.name)
             } else {
-                newData.createStackVariable(parameter.name, parameter.type)
+                newData.createStackVariable(parameter.name)
             }
             newCode.add(ConstructSetVariable(variable, ParamReference(i)))
         }
