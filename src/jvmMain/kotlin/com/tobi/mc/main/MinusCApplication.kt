@@ -26,6 +26,7 @@ class MinusCApplication {
         optionGroup.addOption(OptionGenerateMips.option)
         optionGroup.addOption(OptionGenerateTac.option)
         optionGroup.addOption(OptionRunProgram.option)
+        optionGroup.isRequired = true
 
         options.addOptionGroup(optionGroup)
         options.addOption(OptionOptimisations.option)
@@ -49,6 +50,7 @@ class MinusCApplication {
 
     fun showHelp() {
         helpFormatter.printHelp("minusc [options] <file>", options)
+        println("Specify '-' for the input file to read from stdin")
     }
 
     private fun runApplication(args: Array<String>) {
@@ -63,15 +65,21 @@ class MinusCApplication {
         if(line.argList.size > 1) {
             throw ParseException("Too many files specified")
         }
-        val file = File(line.argList[0].toString())
-        if(!file.exists() || !file.isFile) {
-            throw ParseException("Invalid file '${line.argList[0]}'")
-        }
 
-        val fileText = try {
-            file.readText()
-        } catch (e: IOException) {
-            throw ParseException("Failed to read file: " + e.message)
+        val fileText: String
+        if(line.argList[0] == "-") {
+            fileText = readFromInput()
+        } else {
+            val file = File(line.argList[0].toString())
+            if(!file.exists() || !file.isFile) {
+                throw ParseException("Invalid file '${line.argList[0]}'")
+            }
+
+            fileText = try {
+                file.readText()
+            } catch (e: IOException) {
+                throw ParseException("Failed to read file: " + e.message)
+            }
         }
 
         val compiler = if(OptionOptimisations.getValue(line)) {
@@ -101,6 +109,14 @@ class MinusCApplication {
             runBlocking {
                 TacEmulator.emulate(tac, JVMExecutionEnvironment)
             }
+        }
+    }
+
+    private fun readFromInput(): String = buildString {
+        while(true) {
+            val line = readLine() ?: break
+            append(line)
+            append('\n')
         }
     }
 
