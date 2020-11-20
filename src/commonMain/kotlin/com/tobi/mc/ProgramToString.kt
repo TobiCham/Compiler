@@ -8,7 +8,6 @@ import com.tobi.mc.computable.data.DataTypeInt
 import com.tobi.mc.computable.data.DataTypeString
 import com.tobi.mc.computable.function.FunctionCall
 import com.tobi.mc.computable.function.FunctionDeclaration
-import com.tobi.mc.computable.function.FunctionPrototype
 import com.tobi.mc.computable.operation.MathOperation
 import com.tobi.mc.computable.operation.Negation
 import com.tobi.mc.computable.operation.StringConcat
@@ -67,17 +66,6 @@ class ProgramToString(val styler: ProgramToStringStyler = Stylers.NONE) {
             builder.print(styler.style(StyleType.BRACKET, ")"))
             builder.print(" ")
             body.toString(builder)
-        }
-        is FunctionPrototype -> {
-            builder.print(styler.style(StyleType.TYPE_DECLARATION, returnType?.toString() ?: "auto"))
-            builder.print(' ')
-            builder.print(styler.style(StyleType.NAME, name))
-            builder.print(styler.style(StyleType.BRACKET, "("))
-            builder.print(parameters.joinToString(styler.style(StyleType.PARAMS_SEPARATOR, ",") + " ") {
-                "${styler.style(StyleType.TYPE_DECLARATION, it.type.toString())} ${styler.style(StyleType.NAME, it.name)}"
-            })
-            builder.print(styler.style(StyleType.BRACKET, ")"))
-            builder.println(";")
         }
         is FunctionDeclaration -> {
             builder.print(styler.style(StyleType.TYPE_DECLARATION, returnType?.toString() ?: "auto"))
@@ -187,7 +175,6 @@ class ProgramToString(val styler: ProgramToStringStyler = Stylers.NONE) {
         is IfStatement -> false
         is WhileLoop -> false
         is FunctionDeclaration -> false
-        is FunctionPrototype -> false
         else -> true
     }
 }

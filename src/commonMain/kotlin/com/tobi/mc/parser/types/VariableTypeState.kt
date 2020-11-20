@@ -1,12 +1,10 @@
 package com.tobi.mc.parser.types
 
-import com.tobi.mc.computable.function.FunctionPrototype
 import com.tobi.mc.type.ExpandedType
 
 class VariableTypeState(private val parent: VariableTypeState?) {
 
     private val variables: MutableMap<String, ExpandedType> = HashMap()
-    private val prototypes: MutableMap<String, FunctionPrototype> = HashMap()
 
     fun getType(name: String) = find(name, VariableTypeState::variables)
 
@@ -19,11 +17,6 @@ class VariableTypeState(private val parent: VariableTypeState?) {
             if(it.variables.containsKey(name)) it else null
         } ?: throw IllegalStateException()
         state.variables[name] = type
-    }
-
-    fun getPrototype(name: String): FunctionPrototype? = prototypes[name]
-    fun addPrototype(name: String, prototype: FunctionPrototype) {
-        prototypes[name] = prototype
     }
 
     private inline fun <T> find(name: String, getMap: (VariableTypeState) -> Map<String, T>): T? {

@@ -9,7 +9,6 @@ import com.tobi.mc.computable.data.DataTypeInt
 import com.tobi.mc.computable.data.DataTypeString
 import com.tobi.mc.computable.function.FunctionCall
 import com.tobi.mc.computable.function.FunctionDeclaration
-import com.tobi.mc.computable.function.FunctionPrototype
 import com.tobi.mc.computable.operation.MathOperation
 import com.tobi.mc.computable.operation.Negation
 import com.tobi.mc.computable.operation.StringConcat
@@ -91,13 +90,6 @@ class TacGenerator private constructor() {
                 positionData.createStackVariable(this.name)
             }
             code.add(ConstructSetVariable(variable, this.value.calculateIntermediate(currentEnvironment, RegisterUse(), code, positionData)))
-        }
-        is FunctionPrototype -> {
-            if(isVariableInClosure(this.name, positionData.currentBlock, positionData.blockLine)) {
-                currentEnvironment.addVariable(this.name)
-                positionData.createEnvironmentVariable(this.name)
-            }
-            Unit
         }
         is SetVariable -> {
             val variable = positionData.getVariable(this.contextIndex, this.name)

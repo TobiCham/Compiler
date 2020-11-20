@@ -4,7 +4,6 @@ import com.tobi.mc.computable.Computable
 import com.tobi.mc.computable.ExpressionSequence
 import com.tobi.mc.computable.Program
 import com.tobi.mc.computable.function.FunctionDeclaration
-import com.tobi.mc.computable.function.FunctionPrototype
 import com.tobi.mc.computable.variable.DefineVariable
 import com.tobi.mc.computable.variable.GetVariable
 import com.tobi.mc.computable.variable.SetVariable
@@ -40,15 +39,21 @@ object RuleVariableExists : InstanceSyntaxRule<Program>(Program::class) {
         }
 
         when(this) {
-            is ExpressionSequence -> newState = VariablesState(state)
+            is ExpressionSequence -> {
+                newState = VariablesState(state)
+
+                for(component in this.operations) {
+                    if(component is FunctionDeclaration) {
+                        state.define(component.name, VariablesState.VariableType.FUNCTION_DEFINITION)
+                    }
+                }
+            }
             is FunctionDeclaration -> {
-                state.define(name, VariablesState.VariableType.FUNCTION_DEFINITION)
                 newState = VariablesState(state)
                 for ((_, paramName) in parameters) {
                     newState.define(paramName, VariablesState.VariableType.VARIABLE)
                 }
             }
-            is FunctionPrototype -> state.define(name, VariablesState.VariableType.FUNCTION_PROTOTYPE)
         }
         for(component in this.getComponents()) {
             component.validate(newState)
@@ -62,7 +67,6 @@ object RuleVariableExists : InstanceSyntaxRule<Program>(Program::class) {
         is GetVariable, is SetVariable -> state.ensureExists(this)
         is DefineVariable -> state.ensureCanBeDefined(this, VariablesState.VariableType.VARIABLE)
         is FunctionDeclaration -> state.ensureCanBeDefined(this, VariablesState.VariableType.FUNCTION_DEFINITION)
-        is FunctionPrototype -> state.ensureCanBeDefined(this, VariablesState.VariableType.FUNCTION_PROTOTYPE)
         else -> Unit
     }
 }

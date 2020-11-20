@@ -9,7 +9,6 @@ import com.tobi.mc.computable.data.Data
 import com.tobi.mc.computable.data.DataTypeInt
 import com.tobi.mc.computable.function.FunctionCall
 import com.tobi.mc.computable.function.FunctionDeclaration
-import com.tobi.mc.computable.function.FunctionPrototype
 import com.tobi.mc.computable.operation.MathOperation
 import com.tobi.mc.computable.operation.Negation
 import com.tobi.mc.computable.operation.StringConcat
@@ -80,7 +79,6 @@ fun Computable.getComponents(): Array<Computable> = when(this) {
     is DefineVariable -> arrayOf(value)
     is FunctionDeclaration -> arrayOf(body)
     is FunctionCall -> arrayOf(function, *arguments)
-    is FunctionPrototype -> emptyArray()
     is MathOperation -> arrayOf(arg1, arg2)
     is UnaryMinus -> arrayOf(expression)
     is Negation -> arrayOf(negation)

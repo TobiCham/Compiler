@@ -12,7 +12,6 @@ import com.tobi.mc.computable.data.DataTypeInt
 import com.tobi.mc.computable.data.DataTypeString
 import com.tobi.mc.computable.function.FunctionCall
 import com.tobi.mc.computable.function.FunctionDeclaration
-import com.tobi.mc.computable.function.FunctionPrototype
 import com.tobi.mc.computable.function.Parameter
 import com.tobi.mc.computable.operation.*
 import com.tobi.mc.computable.variable.DefineVariable
@@ -314,20 +313,26 @@ class ParserActions(
         64 -> makeSimple("continueStatement", 17, ContinueStatement())
         65 -> {
             // functionPrototype ::= dataType IDENTIFIER LEFT_BRACKET functionParams RIGHT_BRACKET
-            val returnType = stack[stackTop - 4].value as DataType?
-            val name = stack[stackTop - 3].value as String
-            val params = stack[stackTop - 1].value as List<Parameter>
-
-            val prototype = FunctionPrototype(name, params, returnType)
-            this.parser.symbolFactory.newSymbol("functionPrototype", 23, stack[stackTop - 4], stack.peek(), prototype)
+//            val returnType = stack[stackTop - 4].value as DataType?
+//            val name = stack[stackTop - 3].value as String
+//            val params = stack[stackTop - 1].value as List<Parameter>
+//
+//            val prototype = FunctionPrototype(name, params, returnType)
+//            this.parser.symbolFactory.newSymbol("functionPrototype", 23, stack[stackTop - 4], stack.peek(), prototype)
+            throw ParseException("Functions must have a body", SourceRange(
+                stack[stackTop - 4].startPosition!!, stack[stackTop - 1].endPosition!!
+            ))
         }
         66 -> {
             // functionPrototype ::= dataType IDENTIFIER LEFT_BRACKET RIGHT_BRACKET
-            val returnType = stack[stackTop - 3].value as DataType?
-            val name = stack[stackTop - 2].value as String
-
-            val result = FunctionPrototype(name, ArrayList(), returnType)
-            this.parser.symbolFactory.newSymbol("functionPrototype", 23, stack[stackTop - 3], stack.peek(), result)
+//            val returnType = stack[stackTop - 3].value as DataType?
+//            val name = stack[stackTop - 2].value as String
+//
+//            val result = FunctionPrototype(name, ArrayList(), returnType)
+//            this.parser.symbolFactory.newSymbol("functionPrototype", 23, stack[stackTop - 3], stack.peek(), result)
+            throw ParseException("Functions must have a body", SourceRange(
+                stack[stackTop - 3].startPosition!!, stack[stackTop - 1].endPosition!!
+            ))
         }
         else -> throw Exception("Invalid action number " + actionId + "found in internal parse table")
     }

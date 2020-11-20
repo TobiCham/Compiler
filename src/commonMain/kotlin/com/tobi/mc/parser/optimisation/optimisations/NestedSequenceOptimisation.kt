@@ -3,7 +3,6 @@ package com.tobi.mc.parser.optimisation.optimisations
 import com.tobi.mc.computable.Computable
 import com.tobi.mc.computable.ExpressionSequence
 import com.tobi.mc.computable.function.FunctionDeclaration
-import com.tobi.mc.computable.function.FunctionPrototype
 import com.tobi.mc.computable.variable.DefineVariable
 import com.tobi.mc.computable.variable.GetVariable
 import com.tobi.mc.computable.variable.SetVariable
@@ -39,16 +38,13 @@ object NestedSequenceOptimisation : InstanceOptimisation<ExpressionSequence>(Exp
         val functionRenames = HashMap<String, String>()
 
         for((i, operation) in this.operations.withIndex()) {
-            if(operation is DefineVariable || operation is FunctionDeclaration || operation is FunctionPrototype) {
+            if(operation is DefineVariable || operation is FunctionDeclaration) {
                 val name = (operation as VariableReference).name
                 if(operation is FunctionDeclaration && functionRenames.containsKey(operation.name)) {
                     operation.name = functionRenames[operation.name]!!
                 } else if(referencedVariables.contains(name)) {
                     val newName = findNewName(referencedVariables, selfReferenced, name)
                     operation.name = newName
-                    if(operation is FunctionPrototype) {
-                        functionRenames[name] = newName
-                    }
 
                     VariableRenamer.renameVariable(ExpressionSequence(this.operations.getAfterIndex(i).filter {
                         !(it is FunctionDeclaration && it.name == name)
@@ -80,7 +76,7 @@ object NestedSequenceOptimisation : InstanceOptimisation<ExpressionSequence>(Exp
 
     private fun Computable.findUsedVariables(names: MutableSet<String>, definedVariables: MutableSet<String>, depth: Int) {
         var newDepth = depth
-        if(this is DefineVariable || this is FunctionDeclaration || this is FunctionPrototype) {
+        if(this is DefineVariable || this is FunctionDeclaration) {
             val name = (this as VariableReference).name
             if(depth > 0) definedVariables.add(name)
             else names.add(name)

@@ -12,7 +12,6 @@ import com.tobi.mc.computable.data.Data
 import com.tobi.mc.computable.data.DataType
 import com.tobi.mc.computable.function.FunctionCall
 import com.tobi.mc.computable.function.FunctionDeclaration
-import com.tobi.mc.computable.function.FunctionPrototype
 import com.tobi.mc.computable.function.Parameter
 import com.tobi.mc.computable.operation.MathOperation
 import com.tobi.mc.computable.operation.Negation
@@ -58,25 +57,33 @@ object TypeDetector {
         when(this) {
             is FunctionCall -> this.handle(state)
             is ReturnStatement -> this.handle(state, currentFunction!!)
-            is ExpressionSequence -> newState = VariableTypeState(state)
+            is ExpressionSequence -> {
+                newState = VariableTypeState(state)
+
+                for (operation in this.operations) {
+                    if(operation is FunctionDeclaration) {
+                        val expandedParameters = operation.parameters.map(Parameter::type).map(DataType::mapToExpandedType)
+                        val expandedReturnType = operation.returnType?.mapToExpandedType() ?: UnknownType
+                        newState.define(operation.name, FunctionType(expandedReturnType, KnownParameters(expandedParameters)))
+                    }
+                }
+            }
             is MathOperation -> {
-                val name = this::class.simpleName!!.toLowerCase()
-                arg1.ensureNumeric(name, state)
-                arg2.ensureNumeric(name, state)
+                arg1.ensureNumeric(state)
+                arg2.ensureNumeric(state)
             }
-            is UnaryMinus -> expression.ensureNumeric("unary minus", state)
-            is Negation -> negation.ensureNumeric("negation", state)
+            is UnaryMinus -> expression.ensureNumeric(state)
+            is Negation -> negation.ensureNumeric(state)
             is StringConcat -> {
-                str1.ensureString("string concatenation", state)
-                str2.ensureString("string concatenation", state)
+                str1.ensureString(state)
+                str2.ensureString(state)
             }
-            is IfStatement -> check.ensureNumeric("if", state)
-            is WhileLoop -> check.ensureNumeric("while", state)
+            is IfStatement -> check.ensureNumeric(state)
+            is WhileLoop -> check.ensureNumeric(state)
             is FunctionDeclaration -> {
                 this.handle(state)
                 return
             }
-            is FunctionPrototype -> this.handle(state)
         }
         for (component in this.getComponents()) {
             component.detectTypes(newState, currentFunction)
@@ -127,18 +134,7 @@ object TypeDetector {
         TypeMerger.invokeFunction(this, funcType, args)
     }
 
-    private fun FunctionPrototype.handle(state: VariableTypeState) {
-        val expandedParameters = parameters.map(Parameter::type).map(DataType::mapToExpandedType)
-        val expandedReturnType = returnType?.mapToExpandedType() ?: UnknownType
-        state.define(name, FunctionType(expandedReturnType, KnownParameters(expandedParameters)))
-        state.addPrototype(name, this)
-    }
-
     private fun FunctionDeclaration.handle(state: VariableTypeState) {
-        val expandedParameters = parameters.map(Parameter::type).map(DataType::mapToExpandedType)
-        val expandedReturnType = returnType?.mapToExpandedType() ?: UnknownType
-        state.define(name, FunctionType(expandedReturnType, KnownParameters(expandedParameters)))
-
         val functionState = VariableTypeState(state)
         for (parameter in parameters) {
             functionState.define(parameter.name, parameter.type.mapToExpandedType())
@@ -150,18 +146,16 @@ object TypeDetector {
         val newReturnType = functionData.getReturnType()
         val simpleReturnType = TypeMerger.getSimpleType(newReturnType)
 
-        if(simpleReturnType == null) {
+        if(simpleReturnType == null && this.returnType == null) {
             throw ParseException("Unable to infer return type. Please specify it manually", this)
         }
         if(this.returnType == null) {
             this.returnType = simpleReturnType
         }
-        val prototype = state.getPrototype(name)
-        if(prototype != null && prototype.returnType == null) {
-            prototype.returnType = simpleReturnType
+        if(simpleReturnType != null) {
+            val expandedParameters = parameters.map(Parameter::type).map(DataType::mapToExpandedType)
+            state.define(name, FunctionType(newReturnType, KnownParameters(expandedParameters)))
         }
-
-        state.define(name, FunctionType(newReturnType, KnownParameters(expandedParameters)))
     }
 
     private fun ReturnStatement.handle(state: VariableTypeState, currentFunction: FunctionTypeData) {
@@ -173,15 +167,15 @@ object TypeDetector {
         }
     }
 
-    private fun Computable.ensureNumeric(name: String, state: VariableTypeState) {
-        ensureType(name, IntType, "int", state)
+    private fun Computable.ensureNumeric(state: VariableTypeState) {
+        ensureType(IntType, "int", state)
     }
 
-    private fun Computable.ensureString(name: String, state: VariableTypeState) {
-        ensureType(name, StringType, "string", state)
+    private fun Computable.ensureString(state: VariableTypeState) {
+        ensureType(StringType, "string", state)
     }
 
-    private fun Computable.ensureType(name: String, type: ExpandedType, typeDescription: String, state: VariableTypeState) {
+    private fun Computable.ensureType(type: ExpandedType, typeDescription: String, state: VariableTypeState) {
         val thisType = this.calculateType(state)
         if(!TypeMerger.canBeAssignedTo(type, thisType)) {
             throw ParseException("Expected an expression of type $typeDescription, got $type", this)
