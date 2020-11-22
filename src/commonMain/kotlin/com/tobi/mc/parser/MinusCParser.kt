@@ -28,6 +28,9 @@ class MinusCParser(val config: ParserConfiguration = ParserConfiguration()) {
     }
 
     private fun processAST(program: Program): Program {
+        if(config.resolveIndices) {
+            ContextIndexResolver.calculateVariableContexts(program)
+        }
         SyntaxValidator(config.syntaxRules).validateSyntax(program)
 
         if(config.doTypeInference) {
@@ -36,7 +39,8 @@ class MinusCParser(val config: ParserConfiguration = ParserConfiguration()) {
 
         val optimisedProgram = optimiseProgram(program)
 
-        if(config.resolveIndices) {
+        if(config.resolveIndices && config.optimisations.isNotEmpty()) {
+            //Resolve indices again - may have changed as a result of optimisations
             ContextIndexResolver.calculateVariableContexts(optimisedProgram)
         }
 

@@ -5,3 +5,5 @@ int x() {
 auto y() {
     return x();
 }
+
+x();

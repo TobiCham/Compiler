@@ -5,6 +5,7 @@ import com.tobi.mc.computable.Computable
 import com.tobi.mc.computable.ExpressionSequence
 import com.tobi.mc.computable.Program
 import com.tobi.mc.computable.function.FunctionDeclaration
+import com.tobi.mc.computable.function.FunctionPrototype
 import com.tobi.mc.computable.variable.DefineVariable
 import com.tobi.mc.computable.variable.GetVariable
 import com.tobi.mc.computable.variable.SetVariable
@@ -29,13 +30,7 @@ object ContextIndexResolver {
         if(this is ExpressionSequence) {
             val newContext = HashSet<String>()
             contexts.push(newContext)
-
-            for(component in this.operations) {
-                if(component is FunctionDeclaration) {
-                    newContext.add(component.name)
-                }
-            }
-        } else if(this is DefineVariable) {
+        } else if(this is DefineVariable || this is FunctionPrototype) {
             contexts.peek().add((this as VariableReference).name)
         }
         if(this is FunctionDeclaration) {

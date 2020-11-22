@@ -1,5 +1,6 @@
 package com.tobi.mc.main
 
+import com.tobi.mc.ProgramToString
 import com.tobi.mc.intermediate.TacEmulator
 import com.tobi.mc.intermediate.TacGenerator
 import com.tobi.mc.intermediate.TacToString
@@ -26,6 +27,7 @@ class MinusCApplication {
         optionGroup.addOption(OptionGenerateMips.option)
         optionGroup.addOption(OptionGenerateTac.option)
         optionGroup.addOption(OptionRunProgram.option)
+        optionGroup.addOption(OptionsPrintCode.option)
         optionGroup.isRequired = true
 
         options.addOptionGroup(optionGroup)
@@ -96,6 +98,13 @@ class MinusCApplication {
             exitProcess(1)
         }
 
+        writeToFile(line, OptionsPrintCode) {
+            if(OptionsPrintCode.getValue(line)?.name == "-") {
+                ProgramToString(JVMConsoleStyler).toString(program)
+            } else {
+                ProgramToString().toString(program)
+            }
+        }
         val tac = TacGenerator.toTac(program)
         writeToFile(line, OptionGenerateTac) {
             TacToString.toString(tac)

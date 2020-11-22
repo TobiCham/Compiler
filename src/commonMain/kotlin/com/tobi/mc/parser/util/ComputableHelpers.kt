@@ -9,6 +9,7 @@ import com.tobi.mc.computable.data.Data
 import com.tobi.mc.computable.data.DataTypeInt
 import com.tobi.mc.computable.function.FunctionCall
 import com.tobi.mc.computable.function.FunctionDeclaration
+import com.tobi.mc.computable.function.FunctionPrototype
 import com.tobi.mc.computable.operation.MathOperation
 import com.tobi.mc.computable.operation.Negation
 import com.tobi.mc.computable.operation.StringConcat
@@ -70,10 +71,20 @@ fun Computable.getComponents(): Array<Computable> = when(this) {
     is ContinueStatement -> emptyArray()
     is BreakStatement -> emptyArray()
     is Data -> emptyArray()
+    is FunctionPrototype -> emptyArray()
     is ReturnStatement -> if(toReturn == null) emptyArray() else arrayOf(toReturn!!)
     is IfStatement -> if(elseBody == null) arrayOf(check, ifBody) else arrayOf(check, ifBody, elseBody!!)
     is WhileLoop -> arrayOf(check, body)
-    is ExpressionSequence -> operations.toTypedArray()
+    is ExpressionSequence -> {
+        val newList = ArrayList<Computable>(this.operations.size)
+        for(operation in operations) {
+            if(operation is FunctionDeclaration) {
+                newList.add(FunctionPrototype(operation))
+            }
+        }
+        newList.addAll(this.operations)
+        newList.toTypedArray()
+    }
     is GetVariable -> emptyArray()
     is SetVariable -> arrayOf(value)
     is DefineVariable -> arrayOf(value)
@@ -103,7 +114,6 @@ fun Computable.traverseAllNodes(): Sequence<Computable> = sequence {
         }
     }
 }
-
 
 fun Computable.isNumber(number: Long) = this is DataTypeInt && this.value == number
 fun Computable.isZero() = this.isNumber(0)

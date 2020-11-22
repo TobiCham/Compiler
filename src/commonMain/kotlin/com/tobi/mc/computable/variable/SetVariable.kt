@@ -8,10 +8,10 @@ import com.tobi.mc.computable.data.Data
 
 class SetVariable(
     override var name: String,
-    var contextIndex: Int,
+    override var contextIndex: Int,
     var value: Computable,
     override var sourceRange: SourceRange? = null
-) : Computable, VariableReference {
+) : Computable, VariableContext {
 
     override val description: String = "set variable"
 

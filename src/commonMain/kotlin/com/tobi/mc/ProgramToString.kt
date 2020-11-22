@@ -8,6 +8,7 @@ import com.tobi.mc.computable.data.DataTypeInt
 import com.tobi.mc.computable.data.DataTypeString
 import com.tobi.mc.computable.function.FunctionCall
 import com.tobi.mc.computable.function.FunctionDeclaration
+import com.tobi.mc.computable.function.FunctionPrototype
 import com.tobi.mc.computable.operation.MathOperation
 import com.tobi.mc.computable.operation.Negation
 import com.tobi.mc.computable.operation.StringConcat
@@ -168,6 +169,7 @@ class ProgramToString(val styler: ProgramToStringStyler = Stylers.NONE) {
                 builder.println("")
             }
         }
+        is FunctionPrototype -> {}
         else -> throw IllegalStateException("Unknown value $this")
     }
 

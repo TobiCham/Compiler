@@ -35,6 +35,6 @@ fun ParseException.createDescriptiveErrorMessage(originalSource: String): String
         append(CharArray(length) { ' ' })
         append('^')
         append('\n')
-        append("Syntax Error at [${source.start.line}:${source.start.column} - ${source.end.line}:${source.end.column}]: $message")
+        append("Syntax Error at [${source.start.line + 1}:${source.start.column} - ${source.end.line + 1}:${source.end.column}]: $message")
     }
 }

@@ -9,9 +9,9 @@ import com.tobi.mc.computable.data.Data
 
 class GetVariable(
     override var name: String,
-    var contextIndex: Int,
+    override var contextIndex: Int,
     override var sourceRange: SourceRange? = null
-) : VariableReference, Computable {
+) : VariableContext, Computable {
 
     override val description: String = "get variable"
 

@@ -12,6 +12,7 @@ import com.tobi.mc.computable.data.Data
 import com.tobi.mc.computable.data.DataType
 import com.tobi.mc.computable.function.FunctionCall
 import com.tobi.mc.computable.function.FunctionDeclaration
+import com.tobi.mc.computable.function.FunctionPrototype
 import com.tobi.mc.computable.function.Parameter
 import com.tobi.mc.computable.operation.MathOperation
 import com.tobi.mc.computable.operation.Negation
@@ -59,14 +60,6 @@ object TypeDetector {
             is ReturnStatement -> this.handle(state, currentFunction!!)
             is ExpressionSequence -> {
                 newState = VariableTypeState(state)
-
-                for (operation in this.operations) {
-                    if(operation is FunctionDeclaration) {
-                        val expandedParameters = operation.parameters.map(Parameter::type).map(DataType::mapToExpandedType)
-                        val expandedReturnType = operation.returnType?.mapToExpandedType() ?: UnknownType
-                        newState.define(operation.name, FunctionType(expandedReturnType, KnownParameters(expandedParameters)))
-                    }
-                }
             }
             is MathOperation -> {
                 arg1.ensureNumeric(state)
@@ -80,6 +73,11 @@ object TypeDetector {
             }
             is IfStatement -> check.ensureNumeric(state)
             is WhileLoop -> check.ensureNumeric(state)
+            is FunctionPrototype -> {
+                val expandedParameters = function.parameters.map(Parameter::type).map(DataType::mapToExpandedType)
+                val expandedReturnType = function.returnType?.mapToExpandedType() ?: UnknownType
+                newState.define(function.name, FunctionType(expandedReturnType, KnownParameters(expandedParameters)))
+            }
             is FunctionDeclaration -> {
                 this.handle(state)
                 return
