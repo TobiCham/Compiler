@@ -6,7 +6,7 @@ import com.tobi.mc.computable.Context
 import com.tobi.mc.computable.ExecutionEnvironment
 import com.tobi.mc.computable.data.Data
 
-class SetVariable(
+data class SetVariable(
     override var name: String,
     override var contextIndex: Int,
     var value: Computable,

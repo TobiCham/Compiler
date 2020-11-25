@@ -10,7 +10,7 @@ import com.tobi.mc.computable.data.Data
 import com.tobi.mc.computable.data.DataTypeInt
 import com.tobi.mc.computable.data.DataTypeVoid
 
-class WhileLoop(
+data class WhileLoop(
     var check: Computable,
     var body: ExpressionSequence,
     override var sourceRange: SourceRange? = null

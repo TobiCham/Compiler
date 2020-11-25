@@ -8,11 +8,12 @@ import com.tobi.mc.computable.data.Data
 import com.tobi.mc.computable.data.DataTypeInt
 
 abstract class MathOperation(
-    var arg1: Computable,
-    var arg2: Computable,
     val operationString: String,
     val computation: (Long, Long) -> Long,
 ) : Computable {
+
+    abstract var arg1: Computable
+    abstract var arg2: Computable
 
     override val description: String = operationString
 

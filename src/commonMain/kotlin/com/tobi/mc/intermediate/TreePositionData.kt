@@ -9,7 +9,6 @@ data class TreePositionData(
     val contextDepth: Int, //Context depth
     val functionCount: Int,
     val currentBlock: ExpressionSequence,
-    val blockLine: Int,
     val environmentVariables: MutableMap<Pair<Int, String>, Int>,
     val stackVariables: MutableSet<String>,
     val variableNameMapping: MutableMap<Pair<Int, String>, String>

@@ -14,9 +14,9 @@ import com.tobi.mc.computable.function.FunctionCall
 import com.tobi.mc.computable.function.FunctionDeclaration
 import com.tobi.mc.computable.function.Parameter
 import com.tobi.mc.computable.operation.*
-import com.tobi.mc.computable.variable.DefineVariable
 import com.tobi.mc.computable.variable.GetVariable
 import com.tobi.mc.computable.variable.SetVariable
+import com.tobi.mc.computable.variable.VariableDeclaration
 import com.tobi.mc.parser.ast.parser.runtime.LRParser
 import com.tobi.mc.parser.ast.parser.runtime.Symbol
 import com.tobi.mc.util.Stack
@@ -159,7 +159,7 @@ class ParserActions(
             if (type === DataType.VOID) {
                 throwException("Cannot define variables as void", stackTop - 3, stackTop - 3)
             }
-            val RESULT = DefineVariable(name, value, type)
+            val RESULT = VariableDeclaration(name, value, type)
             this.parser.symbolFactory.newSymbol("defineVariable", 9, stack[stackTop - 3], stack.peek(), RESULT)
         }
         15 -> {
@@ -210,13 +210,13 @@ class ParserActions(
             val func = stack[stackTop - 3].value as Computable
             val args = stack[stackTop - 1].value as List<Computable>
             if (!isCallable(func)) throwException("Not callable", stackTop - 3)
-            val RESULT = FunctionCall(func, args.toTypedArray())
+            val RESULT = FunctionCall(func, args)
             this.parser.symbolFactory.newSymbol("functionCall", 10, stack[stackTop - 3], stack.peek(), RESULT)
         }
         37 -> {
             val func = stack[stackTop - 2].value as Computable
             if (!isCallable(func)) throwException("Not callable", stackTop - 2)
-            val RESULT = FunctionCall(func, emptyArray())
+            val RESULT = FunctionCall(func, emptyList())
             this.parser.symbolFactory.newSymbol("functionCall", 10, stack[stackTop - 2], stack.peek(), RESULT)
         }
         38 -> {

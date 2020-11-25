@@ -10,7 +10,7 @@ import com.tobi.mc.computable.data.DataType
 import com.tobi.mc.computable.data.DataTypeClosure
 import com.tobi.mc.computable.variable.VariableReference
 
-class FunctionDeclaration(
+data class FunctionDeclaration(
     override var name: String,
     var parameters: List<Parameter>,
     var body: ExpressionSequence,

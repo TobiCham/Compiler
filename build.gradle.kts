@@ -2,7 +2,7 @@ group = "com.tobi"
 version = "1.0"
 
 plugins {
-    kotlin("multiplatform") version "1.4.10"
+    kotlin("multiplatform") version "1.4.20"
 }
 
 repositories {
@@ -26,7 +26,20 @@ kotlin {
         }
     }
     js {
-        browser()
+        browser {
+            binaries.executable()
+            testTask {
+                useKarma {
+                    useChromeHeadless()
+                }
+            }
+//            testTask {
+//                useKarma {
+//                    useChromeHeadless()
+//                    webpackConfig.cssSupport.enabled = true
+//                }
+//            }
+        }
     }
 
     sourceSets {
@@ -49,7 +62,7 @@ kotlin {
         }
         val jvmTest by getting {
             dependencies {
-                implementation("org.junit.jupiter:junit-jupiter:5.6.2")
+                implementation(kotlin("test-junit"))
             }
         }
 
@@ -61,6 +74,12 @@ kotlin {
                 implementation(devNpm("css-loader", "5.0.0"))
                 implementation(devNpm("file-loader", "6.1.1"))
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core-js:1.4.0-M1")
+            }
+        }
+
+        val jsTest by getting {
+            dependencies {
+                implementation(kotlin("test-js"))
             }
         }
 

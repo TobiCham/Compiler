@@ -8,6 +8,8 @@ class ProgramOptimiser(
     val optimisations: List<Optimisation>
 ) {
 
+    constructor(vararg optimisations: Optimisation): this(optimisations.toList())
+
     fun optimise(computable: Computable): Computable {
         var output = computable
         while(true) {
@@ -28,7 +30,6 @@ class ProgramOptimiser(
             val oldSource = computable.sourceRange
             val newValue = optimisation.optimise(computable)
             if(newValue != null) {
-//                println(optimisation.description.name)
                 if(newValue.sourceRange == null) {
                     newValue.sourceRange = oldSource
                 }

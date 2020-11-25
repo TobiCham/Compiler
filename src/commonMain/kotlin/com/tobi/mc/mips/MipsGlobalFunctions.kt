@@ -35,8 +35,15 @@ object MipsGlobalFunctions {
 
     val READ_STRING = """
     readString:
-        li ${'$'}v0, 4
+        li ${'$'}a0, 256
+        li ${'$'}v0, 9
         syscall
+        
+        move ${'$'}a0, ${'$'}v0
+        li ${'$'}a1, 256
+        li ${'$'}v0, 8
+        syscall
+        move ${'$'}v0, ${'$'}a0
         jr ${'$'}ra
     """.trimIndent()
 

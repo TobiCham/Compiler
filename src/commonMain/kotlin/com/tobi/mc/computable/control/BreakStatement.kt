@@ -4,7 +4,7 @@ import com.tobi.mc.SourceRange
 import com.tobi.mc.computable.Context
 import com.tobi.mc.computable.ExecutionEnvironment
 
-class BreakStatement(override var sourceRange: SourceRange? = null) : FlowInterruptComputable {
+data class BreakStatement(override var sourceRange: SourceRange? = null) : FlowInterruptComputable {
 
     override val description: String = "break"
 

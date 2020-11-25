@@ -38,12 +38,6 @@ class MinusCParser(val config: ParserConfiguration = ParserConfiguration()) {
         }
 
         val optimisedProgram = optimiseProgram(program)
-
-        if(config.resolveIndices && config.optimisations.isNotEmpty()) {
-            //Resolve indices again - may have changed as a result of optimisations
-            ContextIndexResolver.calculateVariableContexts(optimisedProgram)
-        }
-
         return optimisedProgram
     }
 

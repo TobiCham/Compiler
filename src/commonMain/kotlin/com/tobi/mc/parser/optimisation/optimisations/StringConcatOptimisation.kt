@@ -8,6 +8,7 @@ import com.tobi.mc.util.DescriptionMeta
 import com.tobi.mc.util.SimpleDescription
 
 object StringConcatOptimisation : InstanceOptimisation<StringConcat>(StringConcat::class) {
+
     override val description: DescriptionMeta = SimpleDescription("String concatenation", """
         Optimises "xxx" ++ "yyy" to "xxxyyy"
     """.trimIndent())

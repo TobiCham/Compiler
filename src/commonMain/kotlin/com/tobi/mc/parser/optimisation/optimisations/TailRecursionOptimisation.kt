@@ -9,12 +9,11 @@ import com.tobi.mc.computable.control.WhileLoop
 import com.tobi.mc.computable.data.DataTypeInt
 import com.tobi.mc.computable.function.FunctionCall
 import com.tobi.mc.computable.function.FunctionDeclaration
-import com.tobi.mc.computable.variable.DefineVariable
-import com.tobi.mc.computable.variable.GetVariable
-import com.tobi.mc.computable.variable.SetVariable
-import com.tobi.mc.computable.variable.VariableReference
+import com.tobi.mc.computable.function.Parameter
+import com.tobi.mc.computable.variable.*
 import com.tobi.mc.parser.optimisation.InstanceOptimisation
 import com.tobi.mc.parser.util.traverseAllNodes
+import com.tobi.mc.parser.util.traverseWithDepth
 import com.tobi.mc.util.DescriptionMeta
 import com.tobi.mc.util.SimpleDescription
 
@@ -29,67 +28,53 @@ object TailRecursionOptimisation : InstanceOptimisation<FunctionDeclaration>(Fun
             return null
         }
 
-        val names = HashSet<String>()
-        for(component in traverseAllNodes()) {
-            if(component is FunctionDeclaration) {
-                for (parameter in component.parameters) {
-                    names.add(parameter.name)
-                }
-            }
-            if(component is VariableReference) {
-                names.add(component.name)
-            }
-        }
-        val paramNames = HashMap<String, String>()
-        for((_, name) in parameters) {
-            paramNames[name] = findVariableName("tail_$name", names)
-        }
+        val loopBody = body.convertToTailrec(this, 0) as ExpressionSequence
+        loopBody.incrementVariableContexts()
 
         val newBody = ExpressionSequence(listOf(
-            WhileLoop(DataTypeInt(1), body.convertToTailrec(this, paramNames) as ExpressionSequence)
-        ))
-        return FunctionDeclaration(name, parameters, newBody, returnType)
+            WhileLoop(DataTypeInt(1), loopBody, this.body.sourceRange)
+        ), this.body.sourceRange)
+        return FunctionDeclaration(name, parameters, newBody, returnType, this.sourceRange)
     }
 
-    private fun findVariableName(preferredName: String, names: MutableSet<String>): String {
-        if(!names.contains(preferredName)) {
-            names.add(preferredName)
-            return preferredName
-        }
-        var counter = 0
-        while(true) {
-            val name = "$preferredName$counter"
-            if(!names.contains(name)) {
-                names.add(name)
-                return name
-            }
-            counter++
-        }
-    }
-
-    private fun Computable.convertToTailrec(tailRecFunc: FunctionDeclaration, tempParamNames: Map<String, String>): Computable = when(this) {
-        is ReturnStatement -> this.convertToTailrec(tailRecFunc, tempParamNames)
-        is ExpressionSequence -> ExpressionSequence(operations.map { it.convertToTailrec(tailRecFunc, tempParamNames) })
-        is IfStatement -> IfStatement(check, ifBody.convertToTailrec(tailRecFunc, tempParamNames) as ExpressionSequence,
-            elseBody?.convertToTailrec(tailRecFunc, tempParamNames) as ExpressionSequence?
+    private fun Computable.convertToTailrec(tailRecFunc: FunctionDeclaration, parameterDepth: Int): Computable = when(this) {
+        is ReturnStatement -> this.convertReturnToTailrec(tailRecFunc, parameterDepth)
+        is ExpressionSequence -> ExpressionSequence(operations.map { it.convertToTailrec(tailRecFunc, parameterDepth + 1) }, this.sourceRange)
+        is IfStatement -> IfStatement(
+            check,
+            ifBody.convertToTailrec(tailRecFunc, parameterDepth) as ExpressionSequence,
+            elseBody?.convertToTailrec(tailRecFunc, parameterDepth) as ExpressionSequence?,
+            this.sourceRange
         )
-        is WhileLoop -> WhileLoop(check, body.convertToTailrec(tailRecFunc, tempParamNames) as ExpressionSequence)
+        is WhileLoop -> WhileLoop(check, body.convertToTailrec(tailRecFunc, parameterDepth) as ExpressionSequence, this.sourceRange)
         else -> this
     }
 
-    private fun ReturnStatement.convertToTailrec(tailRecFunc: FunctionDeclaration, tempParamNames: Map<String, String>): Computable {
+    private fun ReturnStatement.convertReturnToTailrec(tailRecFunc: FunctionDeclaration, parameterDepth: Int): Computable {
         if(!this.toReturn.isTailRecursiveCall(tailRecFunc.name)) {
             return this
         }
         val list = ArrayList<Computable>()
-        for((i, value) in tailRecFunc.parameters.withIndex()) {
-            list.add(DefineVariable(tempParamNames[value.name]!!, (this.toReturn as FunctionCall).arguments[i], value.type))
+        val paramNames = HashSet(tailRecFunc.parameters.map(Parameter::name))
+        val paramNameMapping = HashMap<String, String>()
+
+        for((i, parameter) in tailRecFunc.parameters.withIndex()) {
+            val mappingName = findNewName(paramNames, "tail_" + parameter.name)
+            paramNames.add(mappingName)
+            paramNameMapping[parameter.name] = mappingName
+
+            val argument = (this.toReturn as FunctionCall).arguments[i]
+            ExpressionSequence(listOf(argument)).incrementVariableContexts()
+            list.add(VariableDeclaration(mappingName, argument, parameter.type, argument.sourceRange))
         }
-        for((_, name) in tailRecFunc.parameters) {
-            list.add(SetVariable(name, 0, GetVariable(tempParamNames[name]!!, 0)))
+        for((i, param) in tailRecFunc.parameters.withIndex()) {
+            val name = param.name
+            val arg = (this.toReturn as FunctionCall).arguments[i]
+            list.add(SetVariable(name, parameterDepth + 1, GetVariable(paramNameMapping[name]!!, 0, arg.sourceRange), arg.sourceRange))
         }
-        list.add(ContinueStatement())
-        return ExpressionSequence(list)
+        //No source mapping for the "continue", so just use the return statement
+        list.add(ContinueStatement(this.sourceRange))
+        return ExpressionSequence(list, this.sourceRange)
     }
 
     private fun Computable?.isTailRecursiveCall(functionName: String): Boolean {
@@ -123,5 +108,23 @@ object TailRecursionOptimisation : InstanceOptimisation<FunctionDeclaration>(Fun
             }
         }
         return false
+    }
+
+    private fun ExpressionSequence.incrementVariableContexts() {
+        for((component, depth) in this.traverseWithDepth()) {
+            if(component is VariableContext && component.contextIndex >= depth) {
+                component.contextIndex++
+            }
+        }
+    }
+
+    private fun findNewName(used: Set<String>, name: String): String {
+        var counter = 0
+        var current = name
+        while(used.contains(current)) {
+            current = name + counter.toString()
+            counter++
+        }
+        return current
     }
 }

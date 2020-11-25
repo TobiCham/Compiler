@@ -5,7 +5,7 @@ import com.tobi.mc.SourceRange
 import com.tobi.mc.computable.control.FlowInterrupt
 import com.tobi.mc.computable.data.Data
 
-class Program(var code: ExpressionSequence, var context: Context, override var sourceRange: SourceRange? = null) : Computable {
+data class Program(var code: ExpressionSequence, var context: Context, override var sourceRange: SourceRange? = null) : Computable {
 
     override val description: String = "program"
 

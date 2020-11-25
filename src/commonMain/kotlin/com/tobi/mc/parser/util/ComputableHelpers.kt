@@ -14,9 +14,9 @@ import com.tobi.mc.computable.operation.MathOperation
 import com.tobi.mc.computable.operation.Negation
 import com.tobi.mc.computable.operation.StringConcat
 import com.tobi.mc.computable.operation.UnaryMinus
-import com.tobi.mc.computable.variable.DefineVariable
 import com.tobi.mc.computable.variable.GetVariable
 import com.tobi.mc.computable.variable.SetVariable
+import com.tobi.mc.computable.variable.VariableDeclaration
 import com.tobi.mc.util.ArrayListStack
 import com.tobi.mc.util.copyAndReplaceIndex
 import com.tobi.mc.util.typeName
@@ -36,13 +36,16 @@ fun Computable.updateComponentAtIndex(index: Int, component: Computable) {
         is IfStatement -> update(this::check, this::ifBody, this::elseBody)
         is WhileLoop -> update(this::check, this::body)
         is ExpressionSequence -> {
-            if(index >= 0 && index < this.operations.size) {
-                this.operations = newList(this.operations, index, component)
+            val functions = this.operations.count { it is FunctionDeclaration }
+            if(index < functions || index < 0 || index >= this.operations.size + functions) {
+                false
+            } else {
+                this.operations = this.operations.copyAndReplaceIndex(index - functions, component)
                 true
-            } else false
+            }
         }
         is SetVariable -> update(this::value)
-        is DefineVariable -> update(this::value)
+        is VariableDeclaration -> update(this::value)
         is FunctionDeclaration -> update(this::body)
         is FunctionCall -> {
             if(index >= 0 && index < this.arguments.size + 1) {
@@ -61,10 +64,6 @@ fun Computable.updateComponentAtIndex(index: Int, component: Computable) {
     if(!updated) {
         throw IllegalStateException("Invalid component index $index for ${this.typeName}")
     }
-}
-
-private fun newList(list: List<Computable>, index: Int, newValue: Computable) = list.mapIndexed { i, computable ->
-    if(i == index) newValue else computable
 }
 
 fun Computable.getComponents(): Array<Computable> = when(this) {
@@ -87,9 +86,9 @@ fun Computable.getComponents(): Array<Computable> = when(this) {
     }
     is GetVariable -> emptyArray()
     is SetVariable -> arrayOf(value)
-    is DefineVariable -> arrayOf(value)
+    is VariableDeclaration -> arrayOf(value)
     is FunctionDeclaration -> arrayOf(body)
-    is FunctionCall -> arrayOf(function, *arguments)
+    is FunctionCall -> arrayOf(function, *arguments.toTypedArray())
     is MathOperation -> arrayOf(arg1, arg2)
     is UnaryMinus -> arrayOf(expression)
     is Negation -> arrayOf(negation)
@@ -112,6 +111,19 @@ fun Computable.traverseAllNodes(): Sequence<Computable> = sequence {
         for(i in components.size - 1 downTo 0) {
             stack.push(components[i])
         }
+    }
+}
+
+fun Computable.traverseWithDepth(depth: Int = 0): Sequence<Pair<Computable, Int>> = sequence {
+    yield(Pair(this@traverseWithDepth, depth))
+
+    val newDepth = when(this@traverseWithDepth) {
+        is ExpressionSequence -> depth + 1
+        is FunctionDeclaration -> depth + 1
+        else -> depth
+    }
+    for(component in this@traverseWithDepth.getComponents()) {
+        yieldAll(component.traverseWithDepth(newDepth))
     }
 }
 

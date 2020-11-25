@@ -18,9 +18,9 @@ import com.tobi.mc.computable.operation.MathOperation
 import com.tobi.mc.computable.operation.Negation
 import com.tobi.mc.computable.operation.StringConcat
 import com.tobi.mc.computable.operation.UnaryMinus
-import com.tobi.mc.computable.variable.DefineVariable
 import com.tobi.mc.computable.variable.GetVariable
 import com.tobi.mc.computable.variable.SetVariable
+import com.tobi.mc.computable.variable.VariableDeclaration
 import com.tobi.mc.parser.util.getComponents
 import com.tobi.mc.type.*
 
@@ -89,7 +89,7 @@ object TypeDetector {
 
         when(this) {
             is SetVariable -> this.handle(state)
-            is DefineVariable -> this.handle(state)
+            is VariableDeclaration -> this.handle(state)
         }
     }
 
@@ -107,7 +107,7 @@ object TypeDetector {
         }
     }
 
-    private fun DefineVariable.handle(state: VariableTypeState) {
+    private fun VariableDeclaration.handle(state: VariableTypeState) {
         val expected = this.expectedType?.mapToExpandedType()
         val actualType = this.value.calculateType(state)
 

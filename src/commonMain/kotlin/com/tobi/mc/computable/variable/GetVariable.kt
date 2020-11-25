@@ -7,7 +7,7 @@ import com.tobi.mc.computable.Context
 import com.tobi.mc.computable.ExecutionEnvironment
 import com.tobi.mc.computable.data.Data
 
-class GetVariable(
+data class GetVariable(
     override var name: String,
     override var contextIndex: Int,
     override var sourceRange: SourceRange? = null
@@ -20,6 +20,6 @@ class GetVariable(
     }
 
     override fun toString(): String {
-        return "Get<$name>"
+        return "Get<$name,$contextIndex>"
     }
 }

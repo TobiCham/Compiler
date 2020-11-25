@@ -7,7 +7,7 @@ import com.tobi.mc.computable.Context
 import com.tobi.mc.computable.ExecutionEnvironment
 import com.tobi.mc.computable.data.DataTypeInt
 
-class Negation(var negation: Computable, override var sourceRange: SourceRange? = null) : Computable {
+data class Negation(var negation: Computable, override var sourceRange: SourceRange? = null) : Computable {
 
     override val description: String = "negation"
 

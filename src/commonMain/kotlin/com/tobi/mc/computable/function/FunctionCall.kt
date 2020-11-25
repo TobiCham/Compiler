@@ -9,9 +9,9 @@ import com.tobi.mc.computable.control.FlowInterrupt
 import com.tobi.mc.computable.control.ReturnStatement
 import com.tobi.mc.computable.data.Data
 
-class FunctionCall(
+data class FunctionCall(
     var function: Computable,
-    var arguments: Array<Computable>,
+    var arguments: List<Computable>,
     override var sourceRange: SourceRange? = null
 ) : Computable {
 

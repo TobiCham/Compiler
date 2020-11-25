@@ -8,7 +8,7 @@ import com.tobi.mc.computable.ExecutionEnvironment
 import com.tobi.mc.computable.data.Data
 import com.tobi.mc.computable.data.DataTypeInt
 
-class UnaryMinus(var expression: Computable, override var sourceRange: SourceRange? = null) : Computable {
+data class UnaryMinus(var expression: Computable, override var sourceRange: SourceRange? = null) : Computable {
 
     override val description: String = "unary minus"
 

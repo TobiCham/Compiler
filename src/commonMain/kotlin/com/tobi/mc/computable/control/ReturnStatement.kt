@@ -6,7 +6,7 @@ import com.tobi.mc.computable.Context
 import com.tobi.mc.computable.ExecutionEnvironment
 import com.tobi.mc.computable.data.DataTypeVoid
 
-class ReturnStatement(
+data class ReturnStatement(
     var toReturn: Computable?,
     override var sourceRange: SourceRange? = null
 ): FlowInterruptComputable {

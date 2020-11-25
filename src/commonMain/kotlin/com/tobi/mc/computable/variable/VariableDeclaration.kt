@@ -8,7 +8,7 @@ import com.tobi.mc.computable.ExecutionEnvironment
 import com.tobi.mc.computable.data.Data
 import com.tobi.mc.computable.data.DataType
 
-class DefineVariable(
+data class VariableDeclaration(
     override var name: String,
     var value: Computable,
     var expectedType: DataType?,

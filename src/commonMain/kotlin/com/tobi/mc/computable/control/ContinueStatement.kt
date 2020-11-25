@@ -4,7 +4,7 @@ import com.tobi.mc.SourceRange
 import com.tobi.mc.computable.Context
 import com.tobi.mc.computable.ExecutionEnvironment
 
-class ContinueStatement(override var sourceRange: SourceRange? = null) : FlowInterruptComputable {
+data class ContinueStatement(override var sourceRange: SourceRange? = null) : FlowInterruptComputable {
 
     override val description: String = "continue"
 

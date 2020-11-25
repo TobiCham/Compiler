@@ -6,9 +6,8 @@ import com.tobi.mc.computable.ExpressionSequence
 import com.tobi.mc.computable.Program
 import com.tobi.mc.computable.function.FunctionDeclaration
 import com.tobi.mc.computable.function.FunctionPrototype
-import com.tobi.mc.computable.variable.DefineVariable
-import com.tobi.mc.computable.variable.GetVariable
-import com.tobi.mc.computable.variable.SetVariable
+import com.tobi.mc.computable.variable.VariableContext
+import com.tobi.mc.computable.variable.VariableDeclaration
 import com.tobi.mc.computable.variable.VariableReference
 import com.tobi.mc.parser.util.getComponents
 import com.tobi.mc.util.ArrayListStack
@@ -28,9 +27,8 @@ object ContextIndexResolver {
 
     fun Computable.calculate(contexts: MutableStack<MutableSet<String>>) {
         if(this is ExpressionSequence) {
-            val newContext = HashSet<String>()
-            contexts.push(newContext)
-        } else if(this is DefineVariable || this is FunctionPrototype) {
+            contexts.push(HashSet())
+        } else if(this is VariableDeclaration || this is FunctionPrototype) {
             contexts.peek().add((this as VariableReference).name)
         }
         if(this is FunctionDeclaration) {
@@ -42,14 +40,12 @@ object ContextIndexResolver {
         if(this is ExpressionSequence || this is FunctionDeclaration) {
             contexts.pop()
         }
-        if(this is GetVariable) {
-            this.contextIndex = findVariable(this, contexts)
-        } else if(this is SetVariable) {
+        if(this is VariableContext) {
             this.contextIndex = findVariable(this, contexts)
         }
     }
 
-    private fun findVariable(variable: VariableReference, contexts: Stack<MutableSet<String>>): Int {
+    private fun findVariable(variable: VariableContext, contexts: Stack<MutableSet<String>>): Int {
         val name = variable.name
         var i = contexts.size - 1
         while(i >= 0) {

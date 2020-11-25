@@ -3,7 +3,7 @@ package com.tobi.mc.parser.experimental
 import com.tobi.mc.computable.Computable
 import com.tobi.mc.computable.ExpressionSequence
 import com.tobi.mc.computable.function.FunctionDeclaration
-import com.tobi.mc.computable.variable.DefineVariable
+import com.tobi.mc.computable.variable.VariableDeclaration
 import com.tobi.mc.computable.variable.VariableReference
 import com.tobi.mc.parser.util.getComponents
 
@@ -27,7 +27,7 @@ object VariableRenamer {
                     operation.rename(from, to)
 
                     //If 'from' is being redefined, nothing below this statement will need to be redefined
-                    if((operation is FunctionDeclaration || operation is DefineVariable) && (operation as VariableReference).name == from) break
+                    if((operation is FunctionDeclaration || operation is VariableDeclaration) && (operation as VariableReference).name == from) break
                 }
                 //Cancel normal children renaming
                 return

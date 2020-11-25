@@ -4,12 +4,14 @@ import com.tobi.mc.computable.Computable
 import com.tobi.mc.computable.ExpressionSequence
 import com.tobi.mc.computable.function.FunctionDeclaration
 import com.tobi.mc.computable.function.FunctionPrototype
-import com.tobi.mc.computable.variable.*
+import com.tobi.mc.computable.variable.VariableContext
+import com.tobi.mc.computable.variable.VariableDeclaration
+import com.tobi.mc.computable.variable.VariableReference
 import com.tobi.mc.parser.optimisation.InstanceOptimisation
 import com.tobi.mc.parser.util.getComponents
+import com.tobi.mc.parser.util.traverseWithDepth
 import com.tobi.mc.util.DescriptionMeta
 import com.tobi.mc.util.SimpleDescription
-import com.tobi.mc.util.copyAndReplaceIndex
 
 object RedundantVariablesOptimisation : InstanceOptimisation<ExpressionSequence>(ExpressionSequence::class) {
 
@@ -20,8 +22,8 @@ object RedundantVariablesOptimisation : InstanceOptimisation<ExpressionSequence>
     override fun ExpressionSequence.optimiseInstance(): Computable? {
         val unusedSymbols = ArrayList<Computable>()
         for (operation in this.getComponents()) {
-            if(operation is FunctionPrototype || operation is DefineVariable) {
-                if(!operation.hasUsages(0, (operation as VariableReference).name)) {
+            if(operation is FunctionPrototype || operation is VariableDeclaration) {
+                if(!this.hasUsages((operation as VariableReference).name)) {
                     unusedSymbols.add(operation)
                     if(operation is FunctionPrototype) {
                         unusedSymbols.add(operation.function)
@@ -32,24 +34,19 @@ object RedundantVariablesOptimisation : InstanceOptimisation<ExpressionSequence>
         if(unusedSymbols.isEmpty()) {
             return null
         }
-        val newOps = this.operations.filter { op -> !unusedSymbols.contains(op) }
+        val newOps = this.operations.mapNotNull { op ->
+            if(unusedSymbols.contains(op)) {
+                if(op is FunctionDeclaration) null
+                else if(op is VariableDeclaration) op.value
+                else throw IllegalStateException(op::class.simpleName)
+            } else op
+        }
         return ExpressionSequence(newOps)
     }
 
-    private fun Computable.hasUsages(contextIndex: Int, targetName: String): Boolean {
-        if(this is VariableContext) {
-            return this.contextIndex == contextIndex && this.name == targetName
-        }
-        if(this is ExpressionSequence) {
-            return this.getComponents().any {
-                it.hasUsages(contextIndex + 1, targetName)
-            }
-        }
-        if(this is FunctionDeclaration) {
-            return this.body.hasUsages(contextIndex + 1, targetName)
-        }
-        return this.getComponents().any {
-            it.hasUsages(contextIndex + 1, targetName)
+    private fun ExpressionSequence.hasUsages(targetName: String): Boolean {
+        return this.traverseWithDepth().any { (computable, depth) ->
+            computable is VariableContext && computable.name == targetName && computable.contextIndex == depth - 1
         }
     }
 }

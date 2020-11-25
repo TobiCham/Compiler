@@ -5,17 +5,15 @@ import com.tobi.mc.computable.ExpressionSequence
 import com.tobi.mc.computable.data.Data
 import com.tobi.mc.computable.data.DataTypeInt
 import com.tobi.mc.computable.data.DataTypeString
-import com.tobi.mc.computable.function.FunctionDeclaration
-import com.tobi.mc.computable.variable.DefineVariable
 import com.tobi.mc.computable.variable.GetVariable
 import com.tobi.mc.computable.variable.SetVariable
-import com.tobi.mc.computable.variable.VariableReference
+import com.tobi.mc.computable.variable.VariableDeclaration
 import com.tobi.mc.parser.optimisation.InstanceOptimisation
 import com.tobi.mc.parser.util.getComponents
+import com.tobi.mc.parser.util.traverseWithDepth
 import com.tobi.mc.parser.util.updateComponentAtIndex
 import com.tobi.mc.util.DescriptionMeta
 import com.tobi.mc.util.SimpleDescription
-import com.tobi.mc.util.copyExceptIndex
 
 object ConstantReferenceOptimisation : InstanceOptimisation<ExpressionSequence>(ExpressionSequence::class) {
 
@@ -24,65 +22,45 @@ object ConstantReferenceOptimisation : InstanceOptimisation<ExpressionSequence>(
     """.trimIndent())
 
     override fun ExpressionSequence.optimiseInstance(): Computable? {
-        for ((i, operation) in this.operations.withIndex()) {
-            if(operation !is DefineVariable) continue
+        val variablesToInline = ArrayList<Computable>()
+        for(operation in this.operations) {
+            if(operation !is VariableDeclaration) {
+                continue
+            }
             val value = operation.value
-
-            if(value !is DataTypeInt && value !is DataTypeString) continue
-            val isSet = this.hasSetters(i + 1, operation.name)
-            if(isSet) continue
-
-            this.replaceReferences(i + 1, operation.name, value as Data)
-            this.operations = this.operations.copyExceptIndex(i)
-            return this
+            if(value !is Data || !(value is DataTypeInt || value is DataTypeString)) {
+                continue
+            }
+            if(this.hasSetters(operation.name)) {
+                continue
+            }
+            this.updateGetters(operation.name, value)
+            variablesToInline.add(operation)
         }
-        return null
+        if(variablesToInline.isEmpty()) {
+            return null
+        }
+        val newOps = this.operations.filter { op -> !variablesToInline.contains(op) }
+        return ExpressionSequence(newOps)
     }
 
-    private fun Computable.replaceReferences(startIndex: Int, name: String, value: Data) {
-        if(this is FunctionDeclaration) {
-            if(this.name == name || this.parameters.any { it.name == name }) {
-                //The variable we're looking for has been redefined
-                return
-            }
+    private fun ExpressionSequence.updateGetters(targetName: String, value: Data) {
+        return this.traverseWithDepth().forEach { (computable, depth) ->
+            computable.updateGetter(depth, targetName, value)
         }
-        for((i, component) in getComponents().withIndex()) {
-            if(i < startIndex) continue
-            if(component is GetVariable && component.name == name) {
+    }
+
+    private fun Computable.updateGetter(depth: Int, targetName: String, value: Data) {
+        for ((i, component) in this.getComponents().withIndex()) {
+            if(component is GetVariable && component.name == targetName && component.contextIndex == depth) {
                 this.updateComponentAtIndex(i, value)
             }
-            if(component is DefineVariable || component is FunctionDeclaration) {
-                if((component as VariableReference).name == name) {
-                    //The variable we're looking for has been redefined
-                    return
-                }
-            }
-            component.replaceReferences(0, name, value)
         }
     }
 
-    private fun Computable.hasSetters(startIndex: Int, name: String): Boolean {
-        if(this is SetVariable && this.name == name) {
-            return true
+    private fun ExpressionSequence.hasSetters(targetName: String): Boolean {
+        return this.traverseWithDepth().any { (computable, depth) ->
+            computable is SetVariable && computable.name == targetName && computable.contextIndex == depth - 1
         }
-        if(this is FunctionDeclaration) {
-            if(this.name == name || this.parameters.any { it.name == name }) {
-                //The variable we're looking for has been redefined
-                return false
-            }
-        }
-        for((i, component) in getComponents().withIndex()) {
-            if(i < startIndex) continue
-            if(component is DefineVariable || component is FunctionDeclaration) {
-                if((component as VariableReference).name == name) {
-                    //The variable we're looking for has been redefined
-                    return false
-                }
-            }
-            if(component.hasSetters(0, name)) {
-                return true
-            }
-        }
-        return false
     }
 }

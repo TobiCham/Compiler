@@ -13,9 +13,9 @@ import com.tobi.mc.computable.operation.MathOperation
 import com.tobi.mc.computable.operation.Negation
 import com.tobi.mc.computable.operation.StringConcat
 import com.tobi.mc.computable.operation.UnaryMinus
-import com.tobi.mc.computable.variable.DefineVariable
 import com.tobi.mc.computable.variable.GetVariable
 import com.tobi.mc.computable.variable.SetVariable
+import com.tobi.mc.computable.variable.VariableDeclaration
 import com.tobi.mc.util.TabbedBuilder
 
 class ProgramToString(val styler: ProgramToStringStyler = Stylers.NONE) {
@@ -81,7 +81,7 @@ class ProgramToString(val styler: ProgramToStringStyler = Stylers.NONE) {
             body.toString(builder)
             builder.println("")
         }
-        is DefineVariable -> {
+        is VariableDeclaration -> {
             builder.print(styler.style(StyleType.TYPE_DECLARATION, expectedType?.toString() ?: "auto"))
             builder.print(" ")
             builder.print(styler.style(StyleType.NAME, name))
@@ -92,12 +92,16 @@ class ProgramToString(val styler: ProgramToStringStyler = Stylers.NONE) {
         }
         is SetVariable -> {
             builder.print(styler.style(StyleType.NAME, name))
+            builder.print("<${this.contextIndex}>")
             builder.print(" ")
             builder.print(styler.style(StyleType.ASSIGNMENT, "="))
             builder.print(" ")
             value.toString(builder)
         }
-        is GetVariable -> builder.print(styler.style(StyleType.NAME, name))
+        is GetVariable -> {
+            builder.print(styler.style(StyleType.NAME, name))
+            builder.print("<${this.contextIndex}>")
+        }
         is FunctionCall -> {
             function.toString(builder)
             builder.print(styler.style(StyleType.BRACKET, "("))

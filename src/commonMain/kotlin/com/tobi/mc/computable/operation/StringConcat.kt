@@ -8,7 +8,7 @@ import com.tobi.mc.computable.ExecutionEnvironment
 import com.tobi.mc.computable.data.Data
 import com.tobi.mc.computable.data.DataTypeString
 
-class StringConcat(var str1: Computable, var str2: Computable, override var sourceRange: SourceRange? = null) : Computable {
+data class StringConcat(var str1: Computable, var str2: Computable, override var sourceRange: SourceRange? = null) : Computable {
 
     override val description: String = "string concatenation"
 

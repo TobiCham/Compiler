@@ -1,14 +1,15 @@
 auto x = 5;
 
-void something() {
+auto something() {
     void increment(int something) {
         x = x + something;
     }
+    return increment;
 }
 
-auto function = something();
-function(2);
-function(8);
-function(-3);
+auto func = something();
+func(2);
+func(8);
+func(-3);
 
 printInt(x);

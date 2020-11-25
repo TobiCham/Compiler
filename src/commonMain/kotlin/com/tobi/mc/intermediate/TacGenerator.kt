@@ -9,13 +9,15 @@ import com.tobi.mc.computable.data.DataTypeInt
 import com.tobi.mc.computable.data.DataTypeString
 import com.tobi.mc.computable.function.FunctionCall
 import com.tobi.mc.computable.function.FunctionDeclaration
+import com.tobi.mc.computable.function.FunctionPrototype
 import com.tobi.mc.computable.operation.MathOperation
 import com.tobi.mc.computable.operation.Negation
 import com.tobi.mc.computable.operation.StringConcat
 import com.tobi.mc.computable.operation.UnaryMinus
-import com.tobi.mc.computable.variable.DefineVariable
 import com.tobi.mc.computable.variable.GetVariable
 import com.tobi.mc.computable.variable.SetVariable
+import com.tobi.mc.computable.variable.VariableContext
+import com.tobi.mc.computable.variable.VariableDeclaration
 import com.tobi.mc.intermediate.construct.ControlLabel
 import com.tobi.mc.intermediate.construct.TacEnvironment
 import com.tobi.mc.intermediate.construct.TacFunction
@@ -45,12 +47,12 @@ class TacGenerator private constructor() {
             FunctionDeclaration("main", emptyList(), ExpressionSequence(ArrayList(program.code.operations).apply {
                 add(ReturnStatement(null))
             }), DataType.VOID),
-            FunctionCall(GetVariable("main", 0), emptyArray()),
-            FunctionCall(GetVariable("exit", -1), arrayOf(DataTypeInt(0)))
+            FunctionCall(GetVariable("main", 0), emptyList()),
+            FunctionCall(GetVariable("exit", -1), listOf(DataTypeInt(0)))
         )), DataType.VOID)
 
         val globalEnvironment = TacEnvironment(null)
-        val treePosition = TreePositionData(-2, 0, globalFunction.body, 0, LinkedHashMap(), LinkedHashSet(), LinkedHashMap())
+        val treePosition = TreePositionData(-2, 0, globalFunction.body, LinkedHashMap(), LinkedHashSet(), LinkedHashMap())
         val inbuiltVariables = ArrayList(program.context.getVariables().filter {
             program.findVariable(it.key, 0, true) != null
         }.map {
@@ -80,10 +82,11 @@ class TacGenerator private constructor() {
         code: MutableList<TacStructure>,
         positionData: TreePositionData
     ): Any = when(this) {
+        is FunctionPrototype -> this.toTac(currentEnvironment, positionData)
         is FunctionDeclaration -> this.toTac(currentEnvironment, code, positionData)
         is FunctionCall -> this.toTac(currentEnvironment, RegisterUse(), code, null, positionData)
-        is DefineVariable -> {
-            val variable = if(isVariableInClosure(this.name, positionData.currentBlock, positionData.blockLine)) {
+        is VariableDeclaration -> {
+            val variable = if(isVariableInClosure(this.name, positionData.currentBlock)) {
                 currentEnvironment.addVariable(this.name)
                 positionData.createEnvironmentVariable(this.name)
             } else {
@@ -108,19 +111,30 @@ class TacGenerator private constructor() {
             }
             code.add(ConstructReturn)
         }
-        is ExpressionSequence -> this.operations.withIndex().forEach { (i, it) ->
+        is ExpressionSequence -> this.getComponents().forEach {
             val newData = TreePositionData(
                 contextDepth = positionData.contextDepth + 1,
                 functionCount = positionData.functionCount,
                 currentBlock = this,
-                blockLine = i,
                 environmentVariables = positionData.environmentVariables,
                 stackVariables = positionData.stackVariables,
                 variableNameMapping = positionData.variableNameMapping
             )
             it.toTac(currentEnvironment, code, newData)
         }
-        else -> throw IllegalStateException()
+        else -> throw IllegalStateException("Unknown computable ${this::class.simpleName}")
+    }
+
+    private fun FunctionPrototype.toTac(
+        currentEnvironment: TacEnvironment,
+        positionData: TreePositionData
+    ) {
+        if(isVariableInClosure(this.name, positionData.currentBlock)) {
+            currentEnvironment.addVariable(name)
+            positionData.createEnvironmentVariable(this.name)
+        } else {
+            positionData.createStackVariable(this.name)
+        }
     }
 
     private fun FunctionDeclaration.toTac(
@@ -128,17 +142,12 @@ class TacGenerator private constructor() {
         code: MutableList<TacStructure>,
         positionData: TreePositionData
     ): TacFunction {
-        val variable = if(isVariableInClosure(this.name, positionData.currentBlock, positionData.blockLine)) {
-            currentEnvironment.addVariable(name)
-            positionData.createEnvironmentVariable(this.name)
-        } else {
-            positionData.createStackVariable(this.name)
-        }
+        val variable = positionData.getVariable(0, this.name)
 
         val newEnvironment = TacEnvironment(currentEnvironment)
         val newVars = HashMap(positionData.environmentVariables)
 
-        val newData = TreePositionData(positionData.contextDepth + 1, positionData.functionCount + 1, this.body, 0, newVars, LinkedHashSet(), LinkedHashMap())
+        val newData = TreePositionData(positionData.contextDepth + 1, positionData.functionCount + 1, this.body, newVars, LinkedHashSet(), LinkedHashMap())
         val newCode = ArrayList<TacStructure>()
 
         for((i, parameter) in this.parameters.withIndex()) {
@@ -272,9 +281,9 @@ class TacGenerator private constructor() {
         code.add(ConstructLabel(endLabel))
     }
 
-    private fun isVariableInClosure(name: String, currentScope: ExpressionSequence, startLine: Int): Boolean {
+    private fun isVariableInClosure(name: String, currentScope: ExpressionSequence): Boolean {
         val code = currentScope.operations
-        for(i in startLine until code.size) {
+        for(i in 0 until code.size) {
             if(code[i].findVariable(name, 0, false) != null) {
                 return true
             }
@@ -283,7 +292,7 @@ class TacGenerator private constructor() {
     }
 
     private fun Computable.findVariable(name: String, currentDepth: Int, isInFunction: Boolean): Computable? = when(this) {
-        is GetVariable ->
+        is VariableContext ->
             if(this.contextIndex == currentDepth && isInFunction && this.name == name) this else null
         is ExpressionSequence -> this.operations.asSequence().map {
             it.findVariable(name, currentDepth + 1, isInFunction)

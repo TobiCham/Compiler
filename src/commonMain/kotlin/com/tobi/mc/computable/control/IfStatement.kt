@@ -10,7 +10,7 @@ import com.tobi.mc.computable.data.Data
 import com.tobi.mc.computable.data.DataTypeInt
 import com.tobi.mc.computable.data.DataTypeVoid
 
-class IfStatement(
+data class IfStatement(
     var check: Computable,
     var ifBody: ExpressionSequence,
     var elseBody: ExpressionSequence?,
