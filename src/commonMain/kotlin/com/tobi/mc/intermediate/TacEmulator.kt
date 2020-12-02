@@ -8,6 +8,7 @@ import com.tobi.mc.intermediate.construct.code.*
 import com.tobi.mc.parser.ReaderHelpers
 import com.tobi.mc.util.TimeUtils
 import kotlinx.coroutines.delay
+import kotlin.math.max
 
 class TacEmulator private constructor(private val program: TacProgram, private val environment: ExecutionEnvironment) {
 
@@ -60,37 +61,36 @@ class TacEmulator private constructor(private val program: TacProgram, private v
             val structure = function.code[line]
 
             when(structure) {
-                is ConstructBranchEqualZero -> {
+                is TacBranchEqualZero -> {
                     if(structure.conditionVariable.getValue() as Long == 0L) {
-                        line = findLabelIndex(function.code, structure.branchLabel)
+                        line = findLabelIndex(function.code, structure.branchTo)
                         continue
                     }
                 }
-                is ConstructSetVariable -> {
+                is TacSetVariable -> {
                     val value = structure.value
                     val actualValue = value.getValue()
                     structure.variable.setValue(actualValue)
                 }
-                is ConstructPushArgument -> {
-                    stack.ensureCapacity(framePointer + closure.variables + CALLING_SPACE + argsPushed + 1)
-                    stack[framePointer + closure.variables + CALLING_SPACE + argsPushed] = structure.variable.getValue()
-                    argsPushed++
+                is TacSetArgument -> {
+                    this.argsPushed = max(this.argsPushed, structure.index + 1)
+                    stack.ensureCapacity(framePointer + closure.variables + CALLING_SPACE + argsPushed)
+                    stack[framePointer + closure.variables + CALLING_SPACE + structure.index] = structure.variable.getValue()
                 }
-                is ConstructPopArgument -> argsPushed--
-                is ConstructGoto -> {
+                is TacGoto -> {
                     line = findLabelIndex(function.code, structure.label)
                     continue
                 }
-                is ConstructReturn -> {
+                is TacReturn -> {
                     restoreAfterFunction()
                     continue
                 }
-                is ConstructFunctionCall -> {
+                is TacFunctionCall -> {
                     val functionToCall = structure.function.getValue() as TacClosure
                     saveForFunction(functionToCall)
                     continue
                 }
-                is ConstructLabel -> {}
+                is TacLabel -> {}
                 else -> throw IllegalArgumentException(structure::class.simpleName)
             }
             line++
@@ -115,27 +115,27 @@ class TacEmulator private constructor(private val program: TacProgram, private v
                 closure.values[index].value!!
             }
             is RegisterVariable -> registers[register]!!
-            is ConstructStringConcat -> (str1.getValue() as String) + (str2.getValue() as String)
-            is ConstructUnaryMinus -> -(variable.getValue() as Long)
-            is ConstructNegation -> {
+            is TacStringConcat -> (str1.getValue() as String) + (str2.getValue() as String)
+            is TacUnaryMinus -> -(variable.getValue() as Long)
+            is TacNegation -> {
                 val value = toNegate.getValue() as Long
                 if(value == 0L) 1L else 0L
             }
-            is ConstructMath -> {
+            is TacMathOperation -> {
                 val val1 = this.arg1.getValue() as Long
                 val val2 = this.arg2.getValue() as Long
                 when(this.type) {
-                    ConstructMath.MathType.ADD -> val1 + val2
-                    ConstructMath.MathType.SUBTRACT -> val1 - val2
-                    ConstructMath.MathType.MULTIPLY -> val1 * val2
-                    ConstructMath.MathType.DIVIDE -> val1 / val2
-                    ConstructMath.MathType.MOD -> val1 % val2
-                    ConstructMath.MathType.GREATER_THAN -> if(val1 > val2) 1L else 0L
-                    ConstructMath.MathType.GREATER_THAN_OR_EQUAL -> if(val1 >= val2) 1L else 0L
-                    ConstructMath.MathType.LESS_THAN -> if(val1 < val2) 1L else 0L
-                    ConstructMath.MathType.LESS_THAN_OR_EQUAL -> if(val1 <= val2) 1L else 0L
-                    ConstructMath.MathType.EQUALS -> if(val1 == val2) 1L else 0L
-                    ConstructMath.MathType.NOT_EQUALS -> if(val1 != val2) 1L else 0L
+                    TacMathOperation.MathType.ADD -> val1 + val2
+                    TacMathOperation.MathType.SUBTRACT -> val1 - val2
+                    TacMathOperation.MathType.MULTIPLY -> val1 * val2
+                    TacMathOperation.MathType.DIVIDE -> val1 / val2
+                    TacMathOperation.MathType.MOD -> val1 % val2
+                    TacMathOperation.MathType.GREATER_THAN -> if(val1 > val2) 1L else 0L
+                    TacMathOperation.MathType.GREATER_THAN_OR_EQUAL -> if(val1 >= val2) 1L else 0L
+                    TacMathOperation.MathType.LESS_THAN -> if(val1 < val2) 1L else 0L
+                    TacMathOperation.MathType.LESS_THAN_OR_EQUAL -> if(val1 <= val2) 1L else 0L
+                    TacMathOperation.MathType.EQUALS -> if(val1 == val2) 1L else 0L
+                    TacMathOperation.MathType.NOT_EQUALS -> if(val1 != val2) 1L else 0L
                 }
             }
             is TacFunction -> {
@@ -223,10 +223,11 @@ class TacEmulator private constructor(private val program: TacProgram, private v
 
         this.stackTop = framePointer - this.closure.registersUsed
         this.stackTop -= (this.stack[stackTop - 1] as Int) + 1
+        this.argsPushed = 0
     }
 
     private fun findLabelIndex(code: List<TacStructure>, label: String): Int {
-        return code.indexOfFirst { it is ConstructLabel && it.label == label }
+        return code.indexOfFirst { it is TacLabel && it.label == label }
     }
 
     private fun indexOf(variable: String, variables: Set<String>): Int {

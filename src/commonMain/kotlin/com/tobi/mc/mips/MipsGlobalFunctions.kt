@@ -4,7 +4,7 @@ object MipsGlobalFunctions {
 
     val PRINT_INT = """
     printInt:
-        lw ${'$'}a0, 4(${'$'}sp)
+        lw ${'$'}a0, 0(${'$'}sp)
         li ${'$'}v0, 1
         syscall
         jr ${'$'}ra
@@ -12,7 +12,7 @@ object MipsGlobalFunctions {
 
     val PRINT_STRING = """
     printString:
-        lw ${'$'}a0, 4(${'$'}sp)
+        lw ${'$'}a0, 0(${'$'}sp)
         li ${'$'}v0, 4
         syscall
         jr ${'$'}ra
@@ -20,7 +20,7 @@ object MipsGlobalFunctions {
     
     val EXIT = """
     exit:
-        lw ${'$'}a0, 4(${'$'}sp)
+        lw ${'$'}a0, 0(${'$'}sp)
         li ${'$'}v0, 17
         syscall
         jr ${'$'}ra

@@ -1,6 +1,8 @@
 package com.tobi.mc
 
 import com.tobi.mc.computable.Computable
+import com.tobi.mc.computable.Program
+import com.tobi.mc.computable.function.FunctionPrototype
 import com.tobi.mc.parser.util.getComponents
 import kotlin.test.assertEquals
 
@@ -9,6 +11,9 @@ fun assertComputablesEqual(expected: Computable, actual: Computable) {
 }
 
 private fun deepEquals(c1: Computable, c2: Computable) {
+    if((c1 is FunctionPrototype && c2 is FunctionPrototype) || (c1 is Program && c2 is Program)) {
+        return
+    }
     if(c1::class != c2::class) {
         throw AssertionError("${c1::class} != ${c2::class}")
     }

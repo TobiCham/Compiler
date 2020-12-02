@@ -18,10 +18,10 @@ import com.tobi.mc.computable.variable.GetVariable
 import com.tobi.mc.computable.variable.SetVariable
 import com.tobi.mc.computable.variable.VariableContext
 import com.tobi.mc.computable.variable.VariableDeclaration
-import com.tobi.mc.intermediate.construct.ControlLabel
 import com.tobi.mc.intermediate.construct.TacEnvironment
 import com.tobi.mc.intermediate.construct.TacFunction
 import com.tobi.mc.intermediate.construct.TacInbuiltFunction
+import com.tobi.mc.intermediate.construct.WhileLoopControlBlock
 import com.tobi.mc.intermediate.construct.code.*
 import com.tobi.mc.parser.util.getComponents
 import com.tobi.mc.util.ArrayListStack
@@ -30,7 +30,7 @@ import com.tobi.mc.util.MutableStack
 class TacGenerator private constructor() {
 
     private var labelCounter = 0
-    private val controlLabels: MutableStack<ControlLabel> = ArrayListStack()
+    private val whileLoopControlBlocks: MutableStack<WhileLoopControlBlock> = ArrayListStack()
 
     //Using a LinkedHashMap so that the values iterating through the map is guaranteed to be in numeric order
     private val stringIndices: MutableMap<String, Int> = LinkedHashMap()
@@ -66,7 +66,7 @@ class TacGenerator private constructor() {
 
         val ops = ArrayList<TacStructure>()
         ops.addAll(inbuiltVariables.map { (name, _) ->
-            ConstructSetVariable(EnvironmentVariable(name, 0), TacInbuiltFunction(name))
+            TacSetVariable(EnvironmentVariable(name, 0), TacInbuiltFunction(name))
         })
 
         globalFunction.body.toTac(
@@ -92,24 +92,24 @@ class TacGenerator private constructor() {
             } else {
                 positionData.createStackVariable(this.name)
             }
-            code.add(ConstructSetVariable(variable, this.value.calculateIntermediate(currentEnvironment, RegisterUse(), code, positionData)))
+            code.add(TacSetVariable(variable, this.value.calculateIntermediate(currentEnvironment, RegisterUse(), code, positionData)))
         }
         is SetVariable -> {
             val variable = positionData.getVariable(this.contextIndex, this.name)
-            code.add(ConstructSetVariable(
+            code.add(TacSetVariable(
                 variable,
                 this.value.calculateIntermediate(currentEnvironment, RegisterUse(), code, positionData)
             ))
         }
         is IfStatement -> this.toTac(currentEnvironment, code, positionData)
         is WhileLoop -> this.toTac(currentEnvironment, code, positionData)
-        is ContinueStatement -> code.add(ConstructGoto(controlLabels.peek().start))
-        is BreakStatement -> code.add(ConstructGoto(controlLabels.peek().end))
+        is ContinueStatement -> code.add(TacGoto(whileLoopControlBlocks.peek().start))
+        is BreakStatement -> code.add(TacGoto(whileLoopControlBlocks.peek().end))
         is ReturnStatement -> {
             if(toReturn != null) {
-                code.add(ConstructSetVariable(ReturnedValue, this.toReturn!!.calculateIntermediate(currentEnvironment, RegisterUse(), code, positionData)))
+                code.add(TacSetVariable(ReturnedValue, this.toReturn!!.calculateIntermediate(currentEnvironment, RegisterUse(), code, positionData)))
             }
-            code.add(ConstructReturn)
+            code.add(TacReturn)
         }
         is ExpressionSequence -> this.getComponents().forEach {
             val newData = TreePositionData(
@@ -157,13 +157,13 @@ class TacGenerator private constructor() {
             } else {
                 newData.createStackVariable(parameter.name)
             }
-            newCode.add(ConstructSetVariable(variable, ParamReference(i)))
+            newCode.add(TacSetVariable(variable, ParamReference(i)))
         }
 
         this.body.toTac(newEnvironment, newCode, newData)
         val function = TacFunction(this.name, newEnvironment, newData.stackVariables, newCode, this.parameters.size)
 
-        code.add(ConstructSetVariable(variable, function))
+        code.add(TacSetVariable(variable, function))
 
         return function
     }
@@ -194,7 +194,7 @@ class TacGenerator private constructor() {
             is StringConcat -> this.toTac(currentEnvironment, registers, code, positionData)
             else -> throw IllegalArgumentException("Unknown computable ${this::class.simpleName}")
         }
-        code.add(ConstructSetVariable(newRegister, expression))
+        code.add(TacSetVariable(newRegister, expression))
         return newRegister
     }
 
@@ -205,41 +205,38 @@ class TacGenerator private constructor() {
         assignment: TacMutableVariable?,
         positionData: TreePositionData
     ) {
-        for(arg in this.arguments) {
+        for((i, arg) in this.arguments.withIndex()) {
             val actualArg = arg.calculateIntermediate(currentEnvironment, registers, code, positionData)
-            code.add(ConstructPushArgument(actualArg))
+            code.add(TacSetArgument(actualArg, i))
         }
-        code.add(ConstructFunctionCall(this.function.calculateIntermediate(currentEnvironment, registers, code, positionData)))
+        code.add(TacFunctionCall(this.function.calculateIntermediate(currentEnvironment, registers, code, positionData)))
         if(assignment != null) {
-            code.add(ConstructSetVariable(assignment, ReturnedValue))
-        }
-        for(arg in this.arguments) {
-            code.add(ConstructPopArgument)
+            code.add(TacSetVariable(assignment, ReturnedValue))
         }
     }
 
-    private fun MathOperation.toTac(currentEnvironment: TacEnvironment, registers: RegisterUse, code: MutableList<TacStructure>, positionData: TreePositionData): ConstructMath {
+    private fun MathOperation.toTac(currentEnvironment: TacEnvironment, registers: RegisterUse, code: MutableList<TacStructure>, positionData: TreePositionData): TacMathOperation {
         val first = this.arg1.calculateIntermediate(currentEnvironment, registers, code, positionData)
         val second = this.arg2.calculateIntermediate(currentEnvironment, registers, code, positionData)
 
-        return ConstructMath(first, ConstructMath.getType(this), second)
+        return TacMathOperation(first, TacMathOperation.getType(this), second)
     }
 
-    private fun UnaryMinus.toTac(currentEnvironment: TacEnvironment, registers: RegisterUse, code: MutableList<TacStructure>, positionData: TreePositionData): ConstructUnaryMinus {
+    private fun UnaryMinus.toTac(currentEnvironment: TacEnvironment, registers: RegisterUse, code: MutableList<TacStructure>, positionData: TreePositionData): TacUnaryMinus {
         val exp = this.expression.calculateIntermediate(currentEnvironment, registers, code, positionData)
-        return ConstructUnaryMinus(exp)
+        return TacUnaryMinus(exp)
     }
 
-    private fun Negation.toTac(currentEnvironment: TacEnvironment, registers: RegisterUse, code: MutableList<TacStructure>, positionData: TreePositionData): ConstructNegation {
+    private fun Negation.toTac(currentEnvironment: TacEnvironment, registers: RegisterUse, code: MutableList<TacStructure>, positionData: TreePositionData): TacNegation {
         val toNegate = this.negation.calculateIntermediate(currentEnvironment, registers, code, positionData)
-        return ConstructNegation(toNegate)
+        return TacNegation(toNegate)
     }
 
-    private fun StringConcat.toTac(currentEnvironment: TacEnvironment, registers: RegisterUse, code: MutableList<TacStructure>, positionData: TreePositionData): ConstructStringConcat {
+    private fun StringConcat.toTac(currentEnvironment: TacEnvironment, registers: RegisterUse, code: MutableList<TacStructure>, positionData: TreePositionData): TacStringConcat {
         val str1 = this.str1.calculateIntermediate(currentEnvironment, registers, code, positionData)
         val str2 = this.str2.calculateIntermediate(currentEnvironment, registers, code, positionData)
 
-        return ConstructStringConcat(str1, str2)
+        return TacStringConcat(str1, str2)
     }
 
     private fun IfStatement.toTac(
@@ -250,16 +247,16 @@ class TacGenerator private constructor() {
         val endLabel = generateLabel()
         val elseLabel = if(elseBody == null) endLabel else generateLabel()
 
-        code.add(ConstructBranchEqualZero(check.calculateIntermediate(environment, RegisterUse(), code, positionData), elseLabel))
+        code.add(TacBranchEqualZero(check.calculateIntermediate(environment, RegisterUse(), code, positionData), elseLabel))
         this.ifBody.toTac(environment, code, positionData)
-        code.add(ConstructGoto(endLabel))
+        code.add(TacGoto(endLabel))
 
         if(elseBody != null) {
-            code.add(ConstructLabel(elseLabel))
+            code.add(TacLabel(elseLabel))
             elseBody!!.toTac(environment, code, positionData)
-            code.add(ConstructGoto(endLabel))
+            code.add(TacGoto(endLabel))
         }
-        code.add(ConstructLabel(endLabel))
+        code.add(TacLabel(endLabel))
     }
 
     private fun WhileLoop.toTac(
@@ -269,22 +266,21 @@ class TacGenerator private constructor() {
     ) {
         val startLabel = generateLabel()
         val endLabel = generateLabel()
-        code.add(ConstructLabel(startLabel))
+        code.add(TacLabel(startLabel))
 
-        code.add(ConstructBranchEqualZero(check.calculateIntermediate(environment, RegisterUse(), code, positionData), endLabel))
-        controlLabels.push(
-            ControlLabel(startLabel, endLabel)
+        code.add(TacBranchEqualZero(check.calculateIntermediate(environment, RegisterUse(), code, positionData), endLabel))
+        whileLoopControlBlocks.push(
+            WhileLoopControlBlock(startLabel, endLabel)
         )
         body.toTac(environment, code, positionData)
-        controlLabels.pop()
-        code.add(ConstructGoto(startLabel))
-        code.add(ConstructLabel(endLabel))
+        whileLoopControlBlocks.pop()
+        code.add(TacGoto(startLabel))
+        code.add(TacLabel(endLabel))
     }
 
     private fun isVariableInClosure(name: String, currentScope: ExpressionSequence): Boolean {
-        val code = currentScope.operations
-        for(i in 0 until code.size) {
-            if(code[i].findVariable(name, 0, false) != null) {
+        for(element in currentScope.operations) {
+            if(element.findVariable(name, 0, false) != null) {
                 return true
             }
         }

@@ -11,4 +11,6 @@ data class EnvironmentVariable(val name: String, val index: Int) : TacMutableVar
 data class StackVariable(val name: String) : TacMutableVariable()
 data class IntValue(val value: Long) : TacVariableReference()
 data class ParamReference(val index: Int) : TacVariableReference()
-object ReturnedValue : TacMutableVariable()
+object ReturnedValue : TacMutableVariable() {
+    override fun toString(): String = "ReturnedValueRegister"
+}

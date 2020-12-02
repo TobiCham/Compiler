@@ -27,7 +27,7 @@ class FunctionToMips private constructor(
     companion object {
 
         const val PROCEDURE_CREATE_CLOSURE = "createClosure"
-        const val FUNCTION_DATA_SIZE = 3
+        const val FUNCTION_DATA_SIZE = 2
 
         private const val RESERVED_REGISTERS = 2
 
@@ -56,7 +56,6 @@ class FunctionToMips private constructor(
         this.registersToSave = LinkedHashSet<String>().apply {
             add(config.closureRegister)
             add(config.returnAddressRegister)
-            add(config.framePointer)
 
             addAll((0 until RESERVED_REGISTERS).map(::getReservedRegister))
             addAll(registerMapping.physicalRegisters.map(::getTemporaryRegister))
@@ -66,8 +65,7 @@ class FunctionToMips private constructor(
     private fun addEntryInstructions() {
         addRegisterInstructions("sw")
         instructions.addAll(
-            MipsInstruction("addi", Register(config.stackPointer), Register(config.stackPointer), Value(-config.wordSize * frameSize)),
-            MipsInstruction("move", Register(config.framePointer), Register(config.stackPointer)),
+            MipsInstruction("addi", Register(config.stackPointer), Register(config.stackPointer), Value(-config.wordSize * (frameSize + this.function.parameters))),
             MipsInstruction("move", Register(config.closureRegister), Register(config.argumentRegisters[0]))
         )
     }
@@ -75,7 +73,7 @@ class FunctionToMips private constructor(
     private fun addExitInstructions() {
         instructions.addAll(
             MipsInstruction("${endFuncLabel}:"),
-            MipsInstruction("addi", Register(config.stackPointer), Register(config.stackPointer), Value(config.wordSize * frameSize))
+            MipsInstruction("addi", Register(config.stackPointer), Register(config.stackPointer), Value(config.wordSize * (frameSize + this.function.parameters)))
         )
         addRegisterInstructions("lw")
         instructions.add(MipsInstruction("jr", Register(config.returnAddressRegister)))
@@ -83,50 +81,44 @@ class FunctionToMips private constructor(
 
     private fun addRegisterInstructions(instruction: String) {
         val instructions = registersToSave.mapIndexed { index, register ->
-            MipsInstruction(instruction, Register(register), IndirectRegister(config.stackPointer, index * -config.wordSize))
+            MipsInstruction(instruction, Register(register), IndirectRegister(config.stackPointer, (index + this.function.parameters) * -config.wordSize))
         }
         this.instructions.addAll(instructions)
     }
 
     private fun addConstruct(construct: TacStructure) {
         when(construct) {
-            is ConstructPushArgument -> {
+            is TacSetArgument -> {
                 val stackPointer = config.stackPointer
                 val argumentValueRegister = construct.variable.allocateRegister(getReservedRegister(0))
 
-                instructions.add(MipsInstruction("sw", argumentValueRegister, IndirectRegister(stackPointer, 0)))
-                instructions.add(MipsInstruction("addi", Register(stackPointer), Register(stackPointer), Value(-config.wordSize)))
+                instructions.add(MipsInstruction("sw", argumentValueRegister, IndirectRegister(stackPointer, construct.index * -config.wordSize)))
             }
-            is ConstructPopArgument -> {
-                //No need to clear the argument from the stack
-                val stackPointer = Register(config.stackPointer)
-                instructions.add(MipsInstruction("addi", stackPointer, stackPointer, Value(config.wordSize)))
-            }
-            is ConstructFunctionCall -> {
+            is TacFunctionCall -> {
                 val closureRegister = construct.function.allocateRegister(config.argumentRegisters[0])
                 val codeAddressRegister = Register(getTemporaryRegister(0))
                 instructions.add(MipsInstruction("lw", codeAddressRegister, IndirectRegister(closureRegister.name, 0)))
                 instructions.add(MipsInstruction("jalr", codeAddressRegister))
             }
-            is ConstructSetVariable -> construct.createSetInstructions()
-            is ConstructBranchEqualZero -> {
+            is TacSetVariable -> construct.createSetInstructions()
+            is TacBranchEqualZero -> {
                 val register = construct.conditionVariable.allocateRegister(getReservedRegister(0))
-                instructions.add(MipsInstruction("beq", register, Register(config.zeroRegister), Label(construct.branchLabel)))
+                instructions.add(MipsInstruction("beq", register, Register(config.zeroRegister), Label(construct.branchTo)))
             }
-            is ConstructGoto -> {
+            is TacGoto -> {
                 instructions.add(MipsInstruction("j", Label(construct.label)))
             }
-            is ConstructLabel -> {
+            is TacLabel -> {
                 instructions.add(MipsInstruction("${construct.label}:"))
             }
-            is ConstructReturn -> {
+            is TacReturn -> {
                 instructions.add(MipsInstruction("j", Label(endFuncLabel)))
             }
             else -> throw IllegalStateException(construct::class.simpleName)
         }
     }
 
-    private fun ConstructSetVariable.createSetInstructions() {
+    private fun TacSetVariable.createSetInstructions() {
         when(variable) {
             is RegisterVariable -> {
                 if(registerMapping.isPhysicalRegister(variable)) {
@@ -204,36 +196,36 @@ class FunctionToMips private constructor(
 
                 instructions.add(MipsInstruction("lw", register, IndirectRegister(register.name, offset)))
             }
-            is ConstructNegation -> {
+            is TacNegation -> {
                 toNegate.copyToRegister(register)
                 instructions.add(MipsInstruction("neg", register, register))
             }
             is ParamReference -> {
                 instructions.add(MipsInstruction("lw", register, getParameterRegister(this.index)))
             }
-            is ConstructMath -> {
+            is TacMathOperation -> {
                 val r2 = Register(getReservedRegister(1))
                 arg1.copyToRegister(register)
                 arg2.copyToRegister(r2)
 
                 instructions.add(when(type) {
-                    ConstructMath.MathType.ADD -> MipsInstruction("add", register, register, r2)
-                    ConstructMath.MathType.SUBTRACT -> MipsInstruction("sub", register, register, r2)
-                    ConstructMath.MathType.MULTIPLY -> MipsInstruction("mul", register, register, r2)
-                    ConstructMath.MathType.DIVIDE -> MipsInstruction("div", register, register, r2)
-                    ConstructMath.MathType.MOD -> MipsInstruction("rem", register, register, r2)
-                    ConstructMath.MathType.EQUALS -> MipsInstruction("seq", register, register, r2)
-                    ConstructMath.MathType.NOT_EQUALS -> {
+                    TacMathOperation.MathType.ADD -> MipsInstruction("add", register, register, r2)
+                    TacMathOperation.MathType.SUBTRACT -> MipsInstruction("sub", register, register, r2)
+                    TacMathOperation.MathType.MULTIPLY -> MipsInstruction("mul", register, register, r2)
+                    TacMathOperation.MathType.DIVIDE -> MipsInstruction("div", register, register, r2)
+                    TacMathOperation.MathType.MOD -> MipsInstruction("rem", register, register, r2)
+                    TacMathOperation.MathType.EQUALS -> MipsInstruction("seq", register, register, r2)
+                    TacMathOperation.MathType.NOT_EQUALS -> {
                         instructions.add(MipsInstruction("seq", register, register, r2))
                         MipsInstruction("neg", register, register)
                     }
-                    ConstructMath.MathType.LESS_THAN -> MipsInstruction("slt", register, register, r2)
-                    ConstructMath.MathType.LESS_THAN_OR_EQUAL -> MipsInstruction("sle", register, register, r2)
-                    ConstructMath.MathType.GREATER_THAN -> MipsInstruction("sgt", register, register, r2)
-                    ConstructMath.MathType.GREATER_THAN_OR_EQUAL -> MipsInstruction("sge", register, register, r2)
+                    TacMathOperation.MathType.LESS_THAN -> MipsInstruction("slt", register, register, r2)
+                    TacMathOperation.MathType.LESS_THAN_OR_EQUAL -> MipsInstruction("sle", register, register, r2)
+                    TacMathOperation.MathType.GREATER_THAN -> MipsInstruction("sgt", register, register, r2)
+                    TacMathOperation.MathType.GREATER_THAN_OR_EQUAL -> MipsInstruction("sge", register, register, r2)
                 })
             }
-            is ConstructUnaryMinus -> {
+            is TacUnaryMinus -> {
                 this.variable.copyToRegister(register)
                 instructions.add(MipsInstruction("sub", register, Register(config.zeroRegister), register))
             }
@@ -295,12 +287,12 @@ class FunctionToMips private constructor(
     }
 
     private fun createStackVariableRegister(index: Int): IndirectRegister {
-        return IndirectRegister(config.framePointer, (index + 1) * config.wordSize)
+        return IndirectRegister(config.stackPointer, (index + 1) * config.wordSize)
     }
 
     private fun getParameterRegister(index: Int): IndirectRegister {
         val pos = this.frameSize + (this.function.parameters - index)
-        return IndirectRegister(config.framePointer, pos * config.wordSize)
+        return IndirectRegister(config.stackPointer, pos * config.wordSize)
     }
 
     private fun createTemporaryRegister(index: Int): Register {

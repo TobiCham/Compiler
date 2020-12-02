@@ -20,6 +20,7 @@ object NestedSequenceOptimisation : InstanceOptimisation<ExpressionSequence>(Exp
 
     override fun ExpressionSequence.optimiseInstance(): Computable? {
         val newOps = ArrayList<Computable>(this.operations.size)
+        var changed = false
 
         for(operation in this.operations) {
             if(operation is ExpressionSequence) {
@@ -27,11 +28,12 @@ object NestedSequenceOptimisation : InstanceOptimisation<ExpressionSequence>(Exp
                 operation.renameVariables(usedVariables)
                 operation.decrementVariableContexts()
                 newOps.addAll(operation.operations)
+                changed = true
             } else {
                 newOps.add(operation)
             }
         }
-        if(newOps.size != this.operations.size) {
+        if(changed) {
             return ExpressionSequence(newOps)
         }
         return null

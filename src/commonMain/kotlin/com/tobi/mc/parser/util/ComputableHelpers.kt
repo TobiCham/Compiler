@@ -98,8 +98,6 @@ fun Computable.getComponents(): Array<Computable> = when(this) {
 }
 
 fun Computable.traverseAllNodes(): Sequence<Computable> = sequence {
-    yield(this@traverseAllNodes)
-
     val stack = ArrayListStack<Computable>()
     stack.push(this@traverseAllNodes)
 

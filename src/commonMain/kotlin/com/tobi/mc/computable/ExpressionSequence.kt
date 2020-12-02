@@ -6,6 +6,8 @@ import com.tobi.mc.computable.data.DataTypeVoid
 
 data class ExpressionSequence(var operations: List<Computable>, override var sourceRange: SourceRange? = null): Computable {
 
+    constructor(vararg operations: Computable, sourceRange: SourceRange? = null) : this(listOf(*operations), sourceRange)
+
     override val description: String = "code block"
 
     override suspend fun compute(context: Context, environment: ExecutionEnvironment): Data {

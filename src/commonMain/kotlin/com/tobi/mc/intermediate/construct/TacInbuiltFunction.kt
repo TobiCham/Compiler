@@ -1,3 +1,3 @@
 package com.tobi.mc.intermediate.construct
 
-class TacInbuiltFunction(val label: String) : TacExpression
+data class TacInbuiltFunction(val label: String) : TacExpression

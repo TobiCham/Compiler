@@ -14,8 +14,6 @@ interface MipsConfiguration {
 
     val stackPointer: String
 
-    val framePointer: String
-
     val sysCallRegister: String
 
     val returnAddressRegister: String
@@ -44,8 +42,9 @@ interface MipsConfiguration {
         }
 
         override val temporaryRegisters: Array<String> = arrayOf(
-            "s0", "s1", "s2", "s3", "s4", "s5", "s6", "s7",
             "t0", "t1", "t2", "t3", "t4", "t5", "t6", "t7", "t8", "t9",
+            "k1", "fp",
+            "s0", "s1", "s2", "s3", "s4", "s5", "s6", "s7",
         )
 
         override val argumentRegisters: Array<String> = Array(4) {
@@ -53,7 +52,6 @@ interface MipsConfiguration {
         }
 
         override val stackPointer: String = "sp"
-        override val framePointer: String = "fp"
         override val sysCallRegister: String = "v0"
         override val zeroRegister: String = "zero"
         override val returnAddressRegister: String = "ra"

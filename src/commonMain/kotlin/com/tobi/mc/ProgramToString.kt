@@ -92,7 +92,7 @@ class ProgramToString(val styler: ProgramToStringStyler = Stylers.NONE) {
         }
         is SetVariable -> {
             builder.print(styler.style(StyleType.NAME, name))
-            builder.print("<${this.contextIndex}>")
+            builder.print("[${this.contextIndex}]")
             builder.print(" ")
             builder.print(styler.style(StyleType.ASSIGNMENT, "="))
             builder.print(" ")
@@ -100,7 +100,7 @@ class ProgramToString(val styler: ProgramToStringStyler = Stylers.NONE) {
         }
         is GetVariable -> {
             builder.print(styler.style(StyleType.NAME, name))
-            builder.print("<${this.contextIndex}>")
+            builder.print("[${this.contextIndex}]")
         }
         is FunctionCall -> {
             function.toString(builder)

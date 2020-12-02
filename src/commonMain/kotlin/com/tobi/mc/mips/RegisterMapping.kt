@@ -12,12 +12,12 @@ class RegisterMapping(private val function: TacFunction, private val availableRe
     /**
      * The number of excess registers which are instead stored on the stack
      */
-    val excessRegisters: Int = registerToStackVariable.size
+    val excessRegisters: Int
 
     /**
      * The number of physical registers used
      */
-    val physicalRegistersCount: Int = registerToPhysicalRegister.size
+    val physicalRegistersCount: Int
 
     val physicalRegisters: Set<Int>
         get() = LinkedHashSet(registerToPhysicalRegister.values)
@@ -43,6 +43,9 @@ class RegisterMapping(private val function: TacFunction, private val availableRe
                 this.registerToStackVariable[register] = i
             }
         }
+
+        physicalRegistersCount = registerToPhysicalRegister.size
+        excessRegisters = registerToStackVariable.size
     }
 
     fun isStackRegister(register: RegisterVariable): Boolean {

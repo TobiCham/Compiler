@@ -26,43 +26,42 @@ object TacToString {
 
     private fun TacStructure.print(builder: TabbedBuilder): Any = when(this) {
         is TacFunction -> this.print(builder)
-        is ConstructBranchEqualZero -> {
+        is TacBranchEqualZero -> {
             builder.print("BrZ ")
             this.conditionVariable.print(builder)
-            builder.print(" ${this.branchLabel}")
+            builder.print(" ${this.branchTo}")
         }
-        is ConstructFunctionCall -> {
+        is TacFunctionCall -> {
             builder.print("Call ")
             this.function.print(builder)
         }
-        is ConstructGoto -> builder.print("Goto ${this.label}")
-        is ConstructLabel -> builder.print("${this.label}:")
-        is ConstructMath -> {
+        is TacGoto -> builder.print("Goto ${this.label}")
+        is TacLabel -> builder.print("${this.label}:")
+        is TacMathOperation -> {
             this.arg1.print(builder)
             builder.print(" ${this.type.opString} ")
             this.arg2.print(builder)
         }
-        is ConstructUnaryMinus -> {
+        is TacUnaryMinus -> {
             builder.print("-")
             this.variable.print(builder)
         }
-        is ConstructNegation -> {
+        is TacNegation -> {
             builder.print("Negate ")
             this.toNegate.print(builder)
         }
-        is ConstructStringConcat -> {
+        is TacStringConcat -> {
             builder.print("Concat ")
             this.str1.print(builder)
             builder.print(" ")
             this.str2.print(builder)
         }
-        is ConstructPushArgument -> {
-            builder.print("PushArg ")
+        is TacSetArgument -> {
+            builder.print("SetArg ${this.index} ")
             this.variable.print(builder)
         }
-        is ConstructPopArgument -> builder.print("PopArg")
-        is ConstructReturn -> builder.print("return")
-        is ConstructSetVariable -> {
+        is TacReturn -> builder.print("return")
+        is TacSetVariable -> {
             this.variable.print(builder)
             builder.print(" = ")
             this.value.print(builder)

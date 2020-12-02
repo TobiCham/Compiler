@@ -3,7 +3,7 @@ package com.tobi.mc.intermediate.construct.code
 import com.tobi.mc.computable.operation.*
 import com.tobi.mc.intermediate.construct.TacExpression
 
-class ConstructMath(val arg1: TacVariableReference, val type: MathType, val arg2: TacVariableReference) : TacExpression {
+data class TacMathOperation(val arg1: TacVariableReference, val type: MathType, val arg2: TacVariableReference) : TacExpression {
 
     enum class MathType(val opString: String) {
         ADD("+"),
@@ -17,6 +17,10 @@ class ConstructMath(val arg1: TacVariableReference, val type: MathType, val arg2
         LESS_THAN_OR_EQUAL("<="),
         EQUALS("=="),
         NOT_EQUALS("!=")
+    }
+
+    override fun toString(): String {
+        return "$arg1 ${type.opString} $arg2"
     }
 
     companion object {

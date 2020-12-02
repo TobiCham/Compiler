@@ -23,6 +23,7 @@ object Optimisations {
         UnreachableCodeOptimisation,
         RedundantOperationOptimisation,
         ConstantReferenceOptimisation,
-        TailRecursionOptimisation
+        TailRecursionOptimisation,
+        SingleFunctionCallOptimisation
     )
 }
