@@ -12,6 +12,8 @@ data class StringConcat(var str1: Computable, var str2: Computable, override var
 
     override val description: String = "string concatenation"
 
+    override fun getNodes(): Iterable<Computable> = listOf(str1, str2)
+
     override suspend fun compute(context: Context, environment: ExecutionEnvironment): Data {
         val str1 = this.str1.getString(context, environment)
         val str2 = this.str2.getString(context, environment)

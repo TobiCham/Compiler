@@ -19,6 +19,16 @@ data class IfStatement(
 
     override val description: String = "if statement"
 
+    override fun getNodes(): Iterable<Computable> {
+        val nodes = ArrayList<Computable>()
+        nodes.add(check)
+        nodes.add(ifBody)
+        if(elseBody != null) {
+            nodes.add(elseBody!!)
+        }
+        return nodes
+    }
+
     override suspend fun compute(context: Context, environment: ExecutionEnvironment): Data {
         val checkResult = check.compute(context, environment)
         if(checkResult !is DataTypeInt) {

@@ -46,7 +46,7 @@ class MinusCParser(val config: ParserConfiguration = ParserConfiguration()) {
         return when(result) {
             is Program -> result
             is ExpressionSequence -> Program(result, program.context, result.sourceRange)
-            else -> Program(ExpressionSequence(listOf(result)), program.context, result.sourceRange)
+            else -> Program(ExpressionSequence(result), program.context, result.sourceRange)
         }
     }
 

@@ -5,16 +5,13 @@ import com.tobi.mc.computable.Computable
 import com.tobi.mc.computable.ExpressionSequence
 import com.tobi.mc.computable.Program
 import com.tobi.mc.computable.control.*
-import com.tobi.mc.computable.data.Data
 import com.tobi.mc.computable.data.DataTypeInt
 import com.tobi.mc.computable.function.FunctionCall
 import com.tobi.mc.computable.function.FunctionDeclaration
-import com.tobi.mc.computable.function.FunctionPrototype
 import com.tobi.mc.computable.operation.MathOperation
 import com.tobi.mc.computable.operation.Negation
 import com.tobi.mc.computable.operation.StringConcat
 import com.tobi.mc.computable.operation.UnaryMinus
-import com.tobi.mc.computable.variable.GetVariable
 import com.tobi.mc.computable.variable.SetVariable
 import com.tobi.mc.computable.variable.VariableDeclaration
 import com.tobi.mc.util.ArrayListStack
@@ -23,9 +20,9 @@ import com.tobi.mc.util.typeName
 import kotlin.reflect.KMutableProperty0
 
 @Suppress("UNCHECKED_CAST")
-fun Computable.updateComponentAtIndex(index: Int, component: Computable) {
+fun Computable.updateNodeAtIndex(index: Int, node: Computable?) {
     fun update(vararg properties: KMutableProperty0<out Computable?>): Boolean {
-        (properties[index] as KMutableProperty0<Computable>).set(component)
+        (properties[index] as KMutableProperty0<Computable?>).set(node)
         if(index < 0 || index >= properties.size) {
             return false
         }
@@ -36,11 +33,15 @@ fun Computable.updateComponentAtIndex(index: Int, component: Computable) {
         is IfStatement -> update(this::check, this::ifBody, this::elseBody)
         is WhileLoop -> update(this::check, this::body)
         is ExpressionSequence -> {
-            val functions = this.operations.count { it is FunctionDeclaration }
-            if(index < functions || index < 0 || index >= this.operations.size + functions) {
+            val functions = this.expressions.count { it is FunctionDeclaration }
+            if(index < functions || index < 0 || index >= this.expressions.size + functions) {
                 false
             } else {
-                this.operations = this.operations.copyAndReplaceIndex(index - functions, component)
+                if(node == null) {
+                    this.expressions.removeAt(index - functions)
+                } else {
+                    this.expressions.set(index - functions, node)
+                }
                 true
             }
         }
@@ -48,9 +49,12 @@ fun Computable.updateComponentAtIndex(index: Int, component: Computable) {
         is VariableDeclaration -> update(this::value)
         is FunctionDeclaration -> update(this::body)
         is FunctionCall -> {
+            if(node == null) {
+                throw IllegalArgumentException("Node can't be null")
+            }
             if(index >= 0 && index < this.arguments.size + 1) {
-                if(index == 0) this.function = component
-                else this.arguments = this.arguments.copyAndReplaceIndex(index - 1, component)
+                if(index == 0) this.function = node
+                else this.arguments = this.arguments.copyAndReplaceIndex(index - 1, node)
                 true
             } else false
         }
@@ -59,42 +63,11 @@ fun Computable.updateComponentAtIndex(index: Int, component: Computable) {
         is Negation -> update(this::negation)
         is StringConcat -> update(this::str1, this::str2)
         is Program -> update(this::code)
-        else -> throw IllegalStateException("Can't update components for ${this.typeName}")
+        else -> throw IllegalStateException("Can't update nodes for ${this.typeName}")
     }
     if(!updated) {
-        throw IllegalStateException("Invalid component index $index for ${this.typeName}")
+        throw IllegalStateException("Invalid node index $index for ${this.typeName}")
     }
-}
-
-fun Computable.getComponents(): Array<Computable> = when(this) {
-    is ContinueStatement -> emptyArray()
-    is BreakStatement -> emptyArray()
-    is Data -> emptyArray()
-    is FunctionPrototype -> emptyArray()
-    is ReturnStatement -> if(toReturn == null) emptyArray() else arrayOf(toReturn!!)
-    is IfStatement -> if(elseBody == null) arrayOf(check, ifBody) else arrayOf(check, ifBody, elseBody!!)
-    is WhileLoop -> arrayOf(check, body)
-    is ExpressionSequence -> {
-        val newList = ArrayList<Computable>(this.operations.size)
-        for(operation in operations) {
-            if(operation is FunctionDeclaration) {
-                newList.add(FunctionPrototype(operation))
-            }
-        }
-        newList.addAll(this.operations)
-        newList.toTypedArray()
-    }
-    is GetVariable -> emptyArray()
-    is SetVariable -> arrayOf(value)
-    is VariableDeclaration -> arrayOf(value)
-    is FunctionDeclaration -> arrayOf(body)
-    is FunctionCall -> arrayOf(function, *arguments.toTypedArray())
-    is MathOperation -> arrayOf(arg1, arg2)
-    is UnaryMinus -> arrayOf(expression)
-    is Negation -> arrayOf(negation)
-    is StringConcat -> arrayOf(str1, str2)
-    is Program -> arrayOf(code)
-    else -> throw IllegalStateException("Can't get components for ${this.typeName}")
 }
 
 fun Computable.traverseAllNodes(): Sequence<Computable> = sequence {
@@ -105,10 +78,7 @@ fun Computable.traverseAllNodes(): Sequence<Computable> = sequence {
         val computable = stack.pop()
         yield(computable)
 
-        val components = computable.getComponents()
-        for(i in components.size - 1 downTo 0) {
-            stack.push(components[i])
-        }
+        computable.getNodes().reversed().forEach(stack::push)
     }
 }
 
@@ -120,8 +90,8 @@ fun Computable.traverseWithDepth(depth: Int = 0): Sequence<Pair<Computable, Int>
         is FunctionDeclaration -> depth + 1
         else -> depth
     }
-    for(component in this@traverseWithDepth.getComponents()) {
-        yieldAll(component.traverseWithDepth(newDepth))
+    for(node in this@traverseWithDepth.getNodes()) {
+        yieldAll(node.traverseWithDepth(newDepth))
     }
 }
 

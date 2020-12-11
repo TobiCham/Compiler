@@ -23,22 +23,22 @@ class RedundantVariablesTest {
         assertComputablesEqual(createOutput(), output)
     }
 
-    private fun createInput() = ExpressionSequence(listOf(
+    private fun createInput() = ExpressionSequence(
         VariableDeclaration("unusedVar", FunctionCall(GetVariable("printInt", 3), listOf(DataTypeInt(6))), DataType.VOID),
         VariableDeclaration("usedVar", DataTypeInt(8), DataType.INT),
-        FunctionDeclaration("unusedFunc", emptyList(), ExpressionSequence(emptyList()), DataType.VOID),
-        FunctionDeclaration("usedFunc", emptyList(), ExpressionSequence(emptyList()), DataType.VOID),
+        FunctionDeclaration("unusedFunc", emptyList(), ExpressionSequence(), DataType.VOID),
+        FunctionDeclaration("usedFunc", emptyList(), ExpressionSequence(), DataType.VOID),
 
         FunctionCall(GetVariable("usedFunc", 0), emptyList()),
         SetVariable("usedVar", 0, DataTypeInt(5))
-    ))
+    )
 
-    private fun createOutput() = ExpressionSequence(listOf(
+    private fun createOutput() = ExpressionSequence(
         FunctionCall(GetVariable("printInt", 3), listOf(DataTypeInt(6))),
         VariableDeclaration("usedVar", DataTypeInt(8), DataType.INT),
-        FunctionDeclaration("usedFunc", emptyList(), ExpressionSequence(emptyList()), DataType.VOID),
+        FunctionDeclaration("usedFunc", emptyList(), ExpressionSequence(), DataType.VOID),
 
         FunctionCall(GetVariable("usedFunc", 0), emptyList()),
         SetVariable("usedVar", 0, DataTypeInt(5))
-    ))
+    )
 }

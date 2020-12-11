@@ -1,5 +1,6 @@
 package com.tobi.mc.parser.optimisation.optimisations
 
+import com.tobi.mc.OptimisationResult
 import com.tobi.mc.computable.Computable
 import com.tobi.mc.computable.ExpressionSequence
 import com.tobi.mc.computable.control.ContinueStatement
@@ -11,35 +12,37 @@ import com.tobi.mc.computable.function.FunctionCall
 import com.tobi.mc.computable.function.FunctionDeclaration
 import com.tobi.mc.computable.function.Parameter
 import com.tobi.mc.computable.variable.*
-import com.tobi.mc.parser.optimisation.InstanceOptimisation
+import com.tobi.mc.newValue
+import com.tobi.mc.noOptimisation
+import com.tobi.mc.parser.optimisation.ASTInstanceOptimisation
 import com.tobi.mc.parser.util.traverseAllNodes
 import com.tobi.mc.parser.util.traverseWithDepth
 import com.tobi.mc.util.DescriptionMeta
 import com.tobi.mc.util.SimpleDescription
 
-object TailRecursionOptimisation : InstanceOptimisation<FunctionDeclaration>(FunctionDeclaration::class) {
+object TailRecursionOptimisation : ASTInstanceOptimisation<FunctionDeclaration>(FunctionDeclaration::class) {
 
     override val description: DescriptionMeta = SimpleDescription("Tail-recursion reduction", """
         Converts tail recursive functions into iterative functions
     """.trimIndent())
 
-    override fun FunctionDeclaration.optimiseInstance(): Computable? {
+    override fun FunctionDeclaration.optimiseInstance(): OptimisationResult<FunctionDeclaration> {
         if(!this.isTailRecursive()) {
-            return null
+            return noOptimisation()
         }
 
         val loopBody = body.convertToTailrec(this, 0) as ExpressionSequence
         loopBody.incrementVariableContexts()
 
-        val newBody = ExpressionSequence(listOf(
-            WhileLoop(DataTypeInt(1), loopBody, this.body.sourceRange)
-        ), this.body.sourceRange)
-        return FunctionDeclaration(name, parameters, newBody, returnType, this.sourceRange)
+        val newBody = ExpressionSequence(
+            WhileLoop(DataTypeInt(1), loopBody, this.body.sourceRange), sourceRange = this.body.sourceRange
+        )
+        return newValue(FunctionDeclaration(name, parameters, newBody, returnType, this.sourceRange))
     }
 
     private fun Computable.convertToTailrec(tailRecFunc: FunctionDeclaration, parameterDepth: Int): Computable = when(this) {
         is ReturnStatement -> this.convertReturnToTailrec(tailRecFunc, parameterDepth)
-        is ExpressionSequence -> ExpressionSequence(operations.map { it.convertToTailrec(tailRecFunc, parameterDepth + 1) }, this.sourceRange)
+        is ExpressionSequence -> ExpressionSequence(expressions.map { it.convertToTailrec(tailRecFunc, parameterDepth + 1) }.toMutableList(), this.sourceRange)
         is IfStatement -> IfStatement(
             check,
             ifBody.convertToTailrec(tailRecFunc, parameterDepth) as ExpressionSequence,
@@ -64,7 +67,7 @@ object TailRecursionOptimisation : InstanceOptimisation<FunctionDeclaration>(Fun
             paramNameMapping[parameter.name] = mappingName
 
             val argument = (this.toReturn as FunctionCall).arguments[i]
-            ExpressionSequence(listOf(argument)).incrementVariableContexts()
+            ExpressionSequence(argument).incrementVariableContexts()
             list.add(VariableDeclaration(mappingName, argument, parameter.type, argument.sourceRange))
         }
         for((i, param) in tailRecFunc.parameters.withIndex()) {
@@ -111,9 +114,9 @@ object TailRecursionOptimisation : InstanceOptimisation<FunctionDeclaration>(Fun
     }
 
     private fun ExpressionSequence.incrementVariableContexts() {
-        for((component, depth) in this.traverseWithDepth()) {
-            if(component is VariableContext && component.contextIndex >= depth) {
-                component.contextIndex++
+        for((node, depth) in this.traverseWithDepth()) {
+            if(node is VariableContext && node.contextIndex >= depth) {
+                node.contextIndex++
             }
         }
     }

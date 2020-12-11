@@ -12,6 +12,8 @@ data class UnaryMinus(var expression: Computable, override var sourceRange: Sour
 
     override val description: String = "unary minus"
 
+    override fun getNodes(): Iterable<Computable> = listOf(expression)
+
     override suspend fun compute(context: Context, environment: ExecutionEnvironment): Data {
         val result = expression.compute(context, environment)
         if(result !is DataTypeInt) {

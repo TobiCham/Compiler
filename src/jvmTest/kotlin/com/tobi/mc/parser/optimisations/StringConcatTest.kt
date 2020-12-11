@@ -20,13 +20,13 @@ class StringConcatTest {
         assertComputablesEqual(createOutput(), output)
     }
 
-    private fun createInput() = ExpressionSequence(listOf(
+    private fun createInput() = ExpressionSequence(
         StringConcat(DataTypeString("Hello "), DataTypeString("world")),
         StringConcat(DataTypeString("Hello "), FunctionCall(GetVariable("readString", 2), emptyList()))
-    ))
+    )
 
-    private fun createOutput() = ExpressionSequence(listOf(
+    private fun createOutput() = ExpressionSequence(
         DataTypeString("Hello world"),
         StringConcat(DataTypeString("Hello "), FunctionCall(GetVariable("readString", 2), emptyList()))
-    ))
+    )
 }

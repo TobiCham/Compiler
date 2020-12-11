@@ -92,7 +92,7 @@ class ParserActions(
             result
         }
         1 -> {
-            val list = stack.peek().value as List<Computable>
+            val list = stack.peek().value as MutableList<Computable>
             val expression = ExpressionSequence(list)
             val program = Program(expression, defaultContext)
             val symbol = this.parser.symbolFactory.newSymbol("program", 22, stack.peek(), stack.peek(), program)
@@ -269,7 +269,7 @@ class ParserActions(
             this.parser.symbolFactory.newSymbol("expressionSequence", 15, stack[stackTop - 1], stack.peek(), RESULT)
         }
         56 -> {
-            val list = stack[stackTop - 1].value as List<Computable>
+            val list = stack[stackTop - 1].value as MutableList<Computable>
             val RESULT = ExpressionSequence(list)
             this.parser.symbolFactory.newSymbol("expressionSequence", 15, stack[stackTop - 2], stack.peek(), RESULT)
         }

@@ -15,6 +15,8 @@ data class SetVariable(
 
     override val description: String = "set variable"
 
+    override fun getNodes(): Iterable<Computable> = listOf(value)
+
     override suspend fun compute(context: Context, environment: ExecutionEnvironment): Data {
         val data = value.compute(context, environment)
         context.setVariable(name, contextIndex, data, this)

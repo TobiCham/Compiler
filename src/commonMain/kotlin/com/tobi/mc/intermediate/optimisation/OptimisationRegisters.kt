@@ -1,9 +1,10 @@
 package com.tobi.mc.intermediate.optimisation
 
-import com.tobi.mc.intermediate.TacStructure
-import com.tobi.mc.intermediate.construct.TacFunction
-import com.tobi.mc.intermediate.construct.code.RegisterVariable
-import com.tobi.mc.intermediate.util.getComponents
+import com.tobi.mc.OptimisationResult
+import com.tobi.mc.intermediate.TacNode
+import com.tobi.mc.intermediate.code.RegisterVariable
+import com.tobi.mc.intermediate.code.TacFunction
+import com.tobi.mc.noOptimisation
 import com.tobi.mc.util.DescriptionMeta
 import com.tobi.mc.util.SimpleDescription
 
@@ -13,22 +14,22 @@ object OptimisationRegisters : TacInstanceOptimisation<TacFunction>(TacFunction:
         Allows reuse of registers as soon as possible
     """.trimIndent())
 
-    override fun TacFunction.optimise(): Boolean {
-        listRegisterExtents(this).toList().sortedBy { it.register }.forEach(::println)
-        return false
+    override fun TacFunction.optimiseInstance(): OptimisationResult<TacNode> {
+//        listRegisterExtents(this).toList().sortedBy { it.register }.forEach(::println)
+        return noOptimisation()
     }
 
     private fun listRegisterExtents(function: TacFunction): Set<RegisterExtent> {
-        fun addRegisters(line: Int, structure: TacStructure, registers: MutableMap<Int, MutableSet<Int>>) {
-            if(structure is RegisterVariable) {
-                registers.getOrPut(structure.register, ::LinkedHashSet).add(line)
+        fun addRegisters(line: Int, node: TacNode, registers: MutableMap<Int, MutableSet<Int>>) {
+            if(node is RegisterVariable) {
+                registers.getOrPut(node.register, ::LinkedHashSet).add(line)
             }
-            for (component in structure.getComponents()) {
-                addRegisters(line, component, registers)
+            for (node in node.getNodes()) {
+                addRegisters(line, node, registers)
             }
         }
         val registers = LinkedHashMap<Int, MutableSet<Int>>()
-        for((line, construct) in function.code.withIndex()) {
+        for((line, construct) in function.code.instructions.withIndex()) {
             addRegisters(line, construct, registers)
         }
         return LinkedHashSet(registers.entries.map { (register, lines) ->

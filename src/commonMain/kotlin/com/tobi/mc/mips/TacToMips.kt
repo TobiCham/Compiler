@@ -1,14 +1,26 @@
 package com.tobi.mc.mips
 
+import com.tobi.mc.intermediate.TacLabelCalculator
+import com.tobi.mc.intermediate.TacLabels
 import com.tobi.mc.intermediate.TacProgram
-import com.tobi.mc.intermediate.construct.TacFunction
+import com.tobi.mc.intermediate.TacReturnMerger
+import com.tobi.mc.intermediate.code.TacFunction
+import com.tobi.mc.intermediate.optimisation.Optimisations
+import com.tobi.mc.intermediate.optimisation.TacOptimiser
 
 class TacToMips(val config: MipsConfiguration) {
 
-    fun toMips(program: TacProgram): MipsProgram = MipsProgram.Builder().also { builder ->
+    fun toMips(program: TacProgram): MipsProgram {
+        //Optimisation to ensure that there aren't multiple lines of the same return code
+        TacReturnMerger.mergeReturns(program)
+        TacOptimiser(Optimisations.ALL_OPTIMISATIONS).optimise(program)
+
+        val builder = MipsProgram.Builder()
         addStrings(program.strings, builder)
-        addFunction(program.code, builder)
-    }.build(config)
+        addFunction(program.mainFunction, TacLabelCalculator.calculateLabels(program), builder)
+
+        return builder.build(config)
+    }
 
     private fun addStrings(strings: Array<String>, builder: MipsProgram.Builder) {
         for ((i, string) in strings.withIndex()) {
@@ -16,8 +28,8 @@ class TacToMips(val config: MipsConfiguration) {
         }
     }
 
-    private fun addFunction(function: TacFunction, builder: MipsProgram.Builder) {
-        val globalFunction = FunctionToMips.toMips(function.codeName, function, config, builder)
+    private fun addFunction(function: TacFunction, labels: TacLabels, builder: MipsProgram.Builder) {
+        val globalFunction = FunctionToMips.toMips(function, config, labels, builder)
 
         builder.addInitialCode(MipsInstruction("main:"))
         builder.initialCode.addAll(FunctionToMips.getClosureCreationCode(config, globalFunction))

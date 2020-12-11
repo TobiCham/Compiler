@@ -42,8 +42,9 @@ auto printHowToPlay() {
 }
 
 auto printGuesses(int guesses) {
-    if(guesses == 1) printString("1 guess");
-    else {
+    if(guesses == 1) {
+        printString("1 guess");
+    } else {
         printInt(guesses);
         printString(" guesses");
     }

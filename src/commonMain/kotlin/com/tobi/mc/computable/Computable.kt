@@ -7,5 +7,7 @@ interface Computable : SourceObject {
 
     val description: String
 
+    fun getNodes(): Iterable<Computable>
+
     suspend fun compute(context: Context, environment: ExecutionEnvironment): Data
 }

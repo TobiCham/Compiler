@@ -40,6 +40,7 @@ kotlin {
         val commonMain by getting {
             dependencies {
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.0-M1")
+                implementation(kotlin("reflect"))
             }
         }
         val commonTest by getting {

@@ -13,6 +13,8 @@ data class FunctionPrototype(val function: FunctionDeclaration) : Computable, Va
 
     override var name: String = function.name
 
+    override fun getNodes(): Iterable<Computable> = emptyList()
+
     override suspend fun compute(context: Context, environment: ExecutionEnvironment): Data {
         throw ScriptException("Function prototypes are for internal use only", null)
     }

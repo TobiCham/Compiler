@@ -3,6 +3,7 @@ package com.tobi.mc.main
 import com.tobi.mc.ProgramToString
 import com.tobi.mc.intermediate.TacEmulator
 import com.tobi.mc.intermediate.TacGenerator
+import com.tobi.mc.intermediate.TacGraphGenerator
 import com.tobi.mc.intermediate.TacToString
 import com.tobi.mc.main.options.*
 import com.tobi.mc.mips.MipsAssemblyGenerator
@@ -23,14 +24,11 @@ class MinusCApplication {
     private val options = Options()
 
     init {
-        val optionGroup = OptionGroup()
-        optionGroup.addOption(OptionGenerateMips.option)
-        optionGroup.addOption(OptionGenerateTac.option)
-        optionGroup.addOption(OptionRunProgram.option)
-        optionGroup.addOption(OptionsPrintCode.option)
-        optionGroup.isRequired = true
-
-        options.addOptionGroup(optionGroup)
+        options.addOption(OptionGenerateMips.option)
+        options.addOption(OptionGenerateTac.option)
+        options.addOption(OptionGenerateFlowGraph.option)
+        options.addOption(OptionRunProgram.option)
+        options.addOption(OptionsPrintCode.option)
         options.addOption(OptionOptimisations.option)
         options.addOption(OptionShowHelp.option)
 
@@ -105,7 +103,12 @@ class MinusCApplication {
                 ProgramToString().toString(program)
             }
         }
-        val tac = TacGenerator.toTac(program)
+        val tacGenerator = if(OptionOptimisations.getValue(line)) TacGenerator() else TacGenerator(emptyList())
+        val tac = tacGenerator.toTac(program)
+
+        writeToFile(line, OptionGenerateFlowGraph) {
+            TacGraphGenerator.createGraphStructure(tac)
+        }
         writeToFile(line, OptionGenerateTac) {
             TacToString.toString(tac)
         }

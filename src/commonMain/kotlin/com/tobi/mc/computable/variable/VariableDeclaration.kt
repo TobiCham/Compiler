@@ -17,6 +17,8 @@ data class VariableDeclaration(
 
     override val description: String = "variable declaration"
 
+    override fun getNodes(): Iterable<Computable> = listOf(value)
+
     override suspend fun compute(context: Context, environment: ExecutionEnvironment): Data {
         val value = value.compute(context, environment)
 

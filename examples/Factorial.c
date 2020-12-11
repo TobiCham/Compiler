@@ -1,14 +1,16 @@
 auto factorial(int n) {
     int innerFact(int n, int accum) {
         if(n == 1) return accum;
-        return innerFact(n - 1, n * accum);
+        else return innerFact(n - 1, n * accum);
     }
     return innerFact(n, 1);
 }
 
-auto n = 1;
-while(n <= 2000) {
-    factorial(n);
-    n = n + 1;
+while(1) {
+    auto n = readInt();
+    if(n < 0) {
+        break;
+    }
+    printInt(factorial(n));
+    printString("\n");
 }
-

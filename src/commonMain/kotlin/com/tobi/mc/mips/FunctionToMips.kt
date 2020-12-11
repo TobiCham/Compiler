@@ -1,20 +1,17 @@
 package com.tobi.mc.mips
 
-import com.tobi.mc.intermediate.TacStructure
-import com.tobi.mc.intermediate.construct.TacExpression
-import com.tobi.mc.intermediate.construct.TacFunction
-import com.tobi.mc.intermediate.construct.TacInbuiltFunction
-import com.tobi.mc.intermediate.construct.code.*
+import com.tobi.mc.intermediate.TacLabels
+import com.tobi.mc.intermediate.TacNode
+import com.tobi.mc.intermediate.code.*
 import com.tobi.mc.util.addAll
 
 class FunctionToMips private constructor(
-    private val functionName: String,
     private val function: TacFunction,
     val config: MipsConfiguration,
+    private val labels: TacLabels,
     private val programBuilder: MipsProgram.Builder
 ) {
 
-    private val endFuncLabel = "${this.functionName}_end"
     private val registerMapping = RegisterMapping(function, config.temporaryRegisters.size - RESERVED_REGISTERS)
     private val frameSize =
             FUNCTION_DATA_SIZE +
@@ -24,6 +21,8 @@ class FunctionToMips private constructor(
     private val instructions = ArrayList<MipsInstruction>()
     private val registersToSave: Set<String>
 
+    private val generatedBlocks: MutableSet<TacBlock> = HashSet()
+
     companion object {
 
         const val PROCEDURE_CREATE_CLOSURE = "createClosure"
@@ -31,12 +30,12 @@ class FunctionToMips private constructor(
 
         private const val RESERVED_REGISTERS = 2
 
-        fun toMips(functionName: String, function: TacFunction, config: MipsConfiguration, programBuilder: MipsProgram.Builder): MipsFunction {
-            val instance = FunctionToMips(functionName, function, config, programBuilder)
+        fun toMips(function: TacFunction, config: MipsConfiguration, labels: TacLabels, programBuilder: MipsProgram.Builder): MipsFunction {
+            val instance = FunctionToMips(function, config, labels, programBuilder)
 
             instance.addEntryInstructions()
-            function.code.forEach(instance::addConstruct)
-            instance.addExitInstructions()
+
+            instance.addNode(function.code)
 
             val newFunction = instance.createFunction()
             programBuilder.addFunction(newFunction)
@@ -70,15 +69,6 @@ class FunctionToMips private constructor(
         )
     }
 
-    private fun addExitInstructions() {
-        instructions.addAll(
-            MipsInstruction("${endFuncLabel}:"),
-            MipsInstruction("addi", Register(config.stackPointer), Register(config.stackPointer), Value(config.wordSize * (frameSize + this.function.parameters)))
-        )
-        addRegisterInstructions("lw")
-        instructions.add(MipsInstruction("jr", Register(config.returnAddressRegister)))
-    }
-
     private fun addRegisterInstructions(instruction: String) {
         val instructions = registersToSave.mapIndexed { index, register ->
             MipsInstruction(instruction, Register(register), IndirectRegister(config.stackPointer, (index + this.function.parameters) * -config.wordSize))
@@ -86,39 +76,65 @@ class FunctionToMips private constructor(
         this.instructions.addAll(instructions)
     }
 
-    private fun addConstruct(construct: TacStructure) {
-        when(construct) {
+    private fun addNode(node: TacNode) {
+        when(node) {
             is TacSetArgument -> {
                 val stackPointer = config.stackPointer
-                val argumentValueRegister = construct.variable.allocateRegister(getReservedRegister(0))
+                val argumentValueRegister = node.variable.allocateRegister(getReservedRegister(0))
 
-                instructions.add(MipsInstruction("sw", argumentValueRegister, IndirectRegister(stackPointer, construct.index * -config.wordSize)))
+                instructions.add(MipsInstruction("sw", argumentValueRegister, IndirectRegister(stackPointer, node.index * -config.wordSize)))
             }
             is TacFunctionCall -> {
-                val closureRegister = construct.function.allocateRegister(config.argumentRegisters[0])
+                val closureRegister = node.function.allocateRegister(config.argumentRegisters[0])
                 val codeAddressRegister = Register(getTemporaryRegister(0))
                 instructions.add(MipsInstruction("lw", codeAddressRegister, IndirectRegister(closureRegister.name, 0)))
                 instructions.add(MipsInstruction("jalr", codeAddressRegister))
             }
-            is TacSetVariable -> construct.createSetInstructions()
+            is TacSetVariable -> node.createSetInstructions()
+            is TacBlock -> {
+                if(!generatedBlocks.add(node)) {
+                    return
+                }
+                val label = labels.getLabel(node)
+                if(label != null) {
+                    this.instructions.add(MipsInstruction("$label:"))
+                }
+                for(instruction in node.instructions) {
+                    addNode(instruction)
+                }
+            }
             is TacBranchEqualZero -> {
-                val register = construct.conditionVariable.allocateRegister(getReservedRegister(0))
-                instructions.add(MipsInstruction("beq", register, Register(config.zeroRegister), Label(construct.branchTo)))
+                val successLabel = labels.getLabel(node.successBlock)
+                    ?: throw IllegalStateException("No label found for success block")
+                val register = node.conditionVariable.allocateRegister(getReservedRegister(0))
+
+                instructions.add(MipsInstruction("beq", register, Register(config.zeroRegister), Label(successLabel)))
+                if(generatedBlocks.contains(node.failBlock)) {
+                    throw IllegalStateException("Fail block should not have already been generated")
+                }
+                addNode(node.failBlock)
+                addNode(node.successBlock)
             }
             is TacGoto -> {
-                instructions.add(MipsInstruction("j", Label(construct.label)))
-            }
-            is TacLabel -> {
-                instructions.add(MipsInstruction("${construct.label}:"))
+                if(generatedBlocks.contains(node.block)) {
+                    val label = labels.getLabel(node.block)
+                        ?: throw IllegalStateException("Block already generated but no label found")
+                    instructions.add(MipsInstruction("j", Label(label)))
+                } else {
+                    addNode(node.block)
+                }
             }
             is TacReturn -> {
-                instructions.add(MipsInstruction("j", Label(endFuncLabel)))
+                instructions.add(MipsInstruction("addi", Register(config.stackPointer), Register(config.stackPointer), Value(config.wordSize * (frameSize + this.function.parameters))))
+                addRegisterInstructions("lw")
+                instructions.add(MipsInstruction("jr", Register(config.returnAddressRegister)))
             }
-            else -> throw IllegalStateException(construct::class.simpleName)
+            else -> throw IllegalStateException(node::class.simpleName)
         }
     }
 
     private fun TacSetVariable.createSetInstructions() {
+        val variable = this.variable
         when(variable) {
             is RegisterVariable -> {
                 if(registerMapping.isPhysicalRegister(variable)) {
@@ -131,6 +147,10 @@ class FunctionToMips private constructor(
             is StackVariable -> {
                 val register = value.allocateRegister(getReservedRegister(0))
                 instructions.add(MipsInstruction("sw", register, getVariableRegister(variable.name)))
+            }
+            is ParamReference -> {
+                val register = value.allocateRegister(getReservedRegister(0))
+                instructions.add(MipsInstruction("sw", register, getParameterRegister(variable.index)))
             }
             is EnvironmentVariable -> {
                 val valueRegister = value.allocateRegister(getReservedRegister(0))
@@ -230,7 +250,7 @@ class FunctionToMips private constructor(
                 instructions.add(MipsInstruction("sub", register, Register(config.zeroRegister), register))
             }
             is TacFunction -> {
-                val newClosureMips = toMips("${this@FunctionToMips.functionName}_${this.codeName}", this, config, programBuilder)
+                val newClosureMips = toMips(this, config, labels, programBuilder)
                 instructions.addAll(getClosureCreationCode(config, newClosureMips))
 
                 if(register.name != config.resultRegister) {
@@ -303,6 +323,6 @@ class FunctionToMips private constructor(
         val environmentVariables = function.environment.newVariables.size
         val parentEnvironments = function.environment.variables.size - 1
 
-        return MipsFunction(functionName, instructions, environmentVariables, parentEnvironments)
+        return MipsFunction(this.labels.generateNewLabel(), instructions, environmentVariables, parentEnvironments)
     }
 }

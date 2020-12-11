@@ -1,10 +1,10 @@
 package com.tobi.mc.mips
 
-import com.tobi.mc.intermediate.construct.TacFunction
-import com.tobi.mc.intermediate.construct.code.RegisterVariable
-import com.tobi.mc.intermediate.util.asDeepSequence
+import com.tobi.mc.intermediate.code.RegisterVariable
+import com.tobi.mc.intermediate.code.TacFunction
+import com.tobi.mc.intermediate.util.traverseAllNodes
 
-class RegisterMapping(private val function: TacFunction, private val availableRegisters: Int) {
+class RegisterMapping(private val function: TacFunction, availableRegisters: Int) {
 
     private val registerToPhysicalRegister = HashMap<Int, Int>()
     private val registerToStackVariable = HashMap<Int, Int>()
@@ -27,9 +27,9 @@ class RegisterMapping(private val function: TacFunction, private val availableRe
         //whereas registers which are used infrequently may not be as important
 
         val registerCount = HashMap<Int, Int>()
-        for(structure in function.asDeepSequence()) {
-            if(structure is RegisterVariable) {
-                registerCount[structure.register] = (registerCount[structure.register] ?: 0) + 1
+        for(node in function.traverseAllNodes()) {
+            if(node is RegisterVariable) {
+                registerCount[node.register] = (registerCount[node.register] ?: 0) + 1
             }
         }
         val sortedRegisters = registerCount.map { (register, count) ->

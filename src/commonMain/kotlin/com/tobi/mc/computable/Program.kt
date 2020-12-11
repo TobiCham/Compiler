@@ -9,7 +9,9 @@ data class Program(var code: ExpressionSequence, var context: Context, override 
 
     override val description: String = "program"
 
-    suspend fun compute(executionEnvironment: ExecutionEnvironment) = compute(this.context, executionEnvironment)
+    override fun getNodes(): Iterable<Computable> = listOf(code)
+
+    suspend fun compute(executionEnvironment: ExecutionEnvironment) = compute(this.context.copy(), executionEnvironment)
 
     override suspend fun compute(context: Context, environment: ExecutionEnvironment): Data {
         return try {

@@ -8,6 +8,7 @@ import com.tobi.mc.computable.ExecutionEnvironment
 import com.tobi.mc.computable.control.FlowInterrupt
 import com.tobi.mc.computable.control.ReturnStatement
 import com.tobi.mc.computable.data.Data
+import com.tobi.mc.util.plus
 
 data class FunctionCall(
     var function: Computable,
@@ -16,6 +17,8 @@ data class FunctionCall(
 ) : Computable {
 
     override val description: String = "function call"
+
+    override fun getNodes(): Iterable<Computable> = function + arguments
 
     override suspend fun compute(context: Context, environment: ExecutionEnvironment): Data {
         val function = this.function.compute(context, environment)

@@ -5,10 +5,8 @@ import com.tobi.mc.ProgramToString
 import com.tobi.mc.ScriptException
 import com.tobi.mc.SourceRange
 import com.tobi.mc.computable.Program
-import com.tobi.mc.intermediate.TacEmulator
-import com.tobi.mc.intermediate.TacGenerator
-import com.tobi.mc.intermediate.TacProgram
-import com.tobi.mc.intermediate.TacToString
+import com.tobi.mc.intermediate.*
+import com.tobi.mc.intermediate.code.*
 import com.tobi.mc.mips.MipsAssemblyGenerator
 import com.tobi.mc.mips.MipsConfiguration
 import com.tobi.mc.mips.TacToMips
@@ -37,6 +35,7 @@ class Application {
         }
     }
     private val tacButton = SimpleButton(TAC_ID) { createTac() }
+    private val graphButton = SimpleButton(GRAPH_ID) { createGraph() }
     private val mipsButton = SimpleButton(MIPS_ID) { createMips() }
     private val runButton = SimpleButton(RUN_ID) { runProgram() }
     private val prettyPrintButton = SimpleButton(PRETTY_PRINT_ID) { prettyPrint() }
@@ -75,11 +74,10 @@ class Application {
             try {
                 val environment = JSExecutionEnvironment(outputWindow, inputElement)
                 val exitCode = TacEmulator.emulate(tac, environment)
-//                val exitCode = (program.compute(environment) as? DataTypeInt)?.value
+
                 if (outputWindow.text.isNotEmpty()) outputWindow.text += "\n"
                 outputWindow.text += when (exitCode) {
                     0L -> "Program exited successfully with exit code $exitCode"
-                    null -> "Program exited successfully"
                     else -> "Program exited with code $exitCode"
                 }
             } catch (e: ScriptException) {
@@ -112,11 +110,28 @@ class Application {
         outputWindow.language = "tac"
     }
 
+    private fun createGraph() {
+        val tac = parseToTac(optimiseButton.enabled) ?: return
+        val mainFunction = tac.mainFunction.code.instructions.filterIsInstance<TacSetVariable>().filter {
+            it.variable.getName() == "main"
+        }.mapNotNull {
+            if(it.value is TacFunction) it.value as TacFunction else null
+        }.first()
+
+        outputWindow.type = OutputWindow.Type.RICH_TEXT
+        outputWindow.text = TacGraphGenerator.createGraphStructure(mainFunction)
+    }
+
+    private fun TacVariableReference.getName(): String? = when(this) {
+        is StackVariable -> this.name
+        is EnvironmentVariable -> this.name
+        else -> null
+    }
+
     private fun createMips() {
-        val program = parse(optimiseButton.enabled) ?: return
+        val tac = parseToTac(optimiseButton.enabled) ?: return
 
         val text = try {
-            val tac = TacGenerator.toTac(program)
             val mips = TacToMips(MipsConfiguration.StandardMips).toMips(tac)
             MipsAssemblyGenerator.generateAssembly(mips)
         } catch (e: Exception) {
@@ -133,6 +148,7 @@ class Application {
     private fun setButtonsEnabled(enabled: Boolean) {
         validateButton.enabled = enabled
         tacButton.enabled = enabled
+        graphButton.enabled = enabled
         mipsButton.enabled = enabled
         runButton.enabled = enabled
         prettyPrintButton.enabled = enabled
@@ -141,8 +157,9 @@ class Application {
     private fun parseToTac(optimise: Boolean): TacProgram? {
         val program = parse(optimise) ?: return null
 
+        val generator = if(optimise) TacGenerator() else TacGenerator(optimisations = emptyList())
         return try {
-            TacGenerator.toTac(program)
+            generator.toTac(program)
         } catch (e: Exception) {
             outputWindow.type = OutputWindow.Type.PLAIN_TEXT
             outputWindow.text = "Failed to create MIPS: $e"
@@ -184,6 +201,7 @@ class Application {
         const val VALIDATE_ID = "validate"
         const val PRETTY_PRINT_ID = "pretty-print"
         const val TAC_ID = "tac"
+        const val GRAPH_ID = "graph"
         const val MIPS_ID = "mips"
         const val RUN_ID = "run"
         const val OPTIMISE_ID = "optimise"

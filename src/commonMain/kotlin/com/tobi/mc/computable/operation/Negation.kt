@@ -11,6 +11,8 @@ data class Negation(var negation: Computable, override var sourceRange: SourceRa
 
     override val description: String = "negation"
 
+    override fun getNodes(): Iterable<Computable> = listOf(negation)
+
     override suspend fun compute(context: Context, environment: ExecutionEnvironment): DataTypeInt {
         val checkResult = negation.compute(context, environment)
         if(checkResult !is DataTypeInt) {

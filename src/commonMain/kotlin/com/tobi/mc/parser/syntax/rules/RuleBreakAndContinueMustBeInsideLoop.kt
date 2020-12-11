@@ -8,7 +8,6 @@ import com.tobi.mc.computable.control.ContinueStatement
 import com.tobi.mc.computable.control.WhileLoop
 import com.tobi.mc.computable.function.FunctionDeclaration
 import com.tobi.mc.parser.syntax.InstanceSyntaxRule
-import com.tobi.mc.parser.util.getComponents
 import com.tobi.mc.util.DescriptionMeta
 import com.tobi.mc.util.SimpleDescription
 
@@ -32,8 +31,8 @@ object RuleBreakAndContinueMustBeInsideLoop : InstanceSyntaxRule<Program>(Progra
             is WhileLoop -> true
             else -> isInLoop
         }
-        for(component in computable.getComponents()) {
-            validate(component, nextInLoop)
+        for(node in computable.getNodes()) {
+            validate(node, nextInLoop)
         }
     }
 }

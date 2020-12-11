@@ -2,8 +2,9 @@ package com.tobi.mc
 
 import com.tobi.mc.computable.Computable
 import com.tobi.mc.computable.Program
+import com.tobi.mc.computable.function.FunctionDeclaration
 import com.tobi.mc.computable.function.FunctionPrototype
-import com.tobi.mc.parser.util.getComponents
+import com.tobi.mc.parser.util.traverseAllNodes
 import kotlin.test.assertEquals
 
 fun assertComputablesEqual(expected: Computable, actual: Computable) {
@@ -17,14 +18,14 @@ private fun deepEquals(c1: Computable, c2: Computable) {
     if(c1::class != c2::class) {
         throw AssertionError("${c1::class} != ${c2::class}")
     }
-    val components1 = c1.getComponents()
-    val components2 = c2.getComponents()
+    val nodes1 = c1.getNodes().toList()
+    val nodes2 = c2.getNodes().toList()
 
-    if(components1.size != components2.size) {
-        throw AssertionError("Size ${components1.size} != ${components2.size}")
+    if(nodes1.size != nodes2.size) {
+        throw AssertionError("Size ${nodes1.size} != ${nodes2.size}")
     }
-    for ((i, component) in components1.withIndex()) {
-        deepEquals(component, components2[i])
+    for ((i, component) in nodes1.withIndex()) {
+        deepEquals(component, nodes2[i])
     }
     if(c1 != c2) {
         val toString = ProgramToString()
@@ -36,5 +37,15 @@ private fun deepEquals(c1: Computable, c2: Computable) {
         }
     }
     assertEquals(c1, c2)
+}
+
+fun <T : Computable> T.removeSourceInformation(): T {
+    for (computable in this.traverseAllNodes()) {
+        computable.sourceRange = null
+        if(computable is FunctionDeclaration) {
+            computable.parameters.forEach { it.sourceRange = null }
+        }
+    }
+    return this
 }
 

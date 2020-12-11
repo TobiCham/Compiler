@@ -1,29 +1,25 @@
 package com.tobi.mc.intermediate
 
 import com.tobi.mc.computable.ExecutionEnvironment
-import com.tobi.mc.intermediate.construct.TacExpression
-import com.tobi.mc.intermediate.construct.TacFunction
-import com.tobi.mc.intermediate.construct.TacInbuiltFunction
-import com.tobi.mc.intermediate.construct.code.*
+import com.tobi.mc.intermediate.code.*
 import com.tobi.mc.parser.ReaderHelpers
 import com.tobi.mc.util.TimeUtils
 import kotlinx.coroutines.delay
-import kotlin.math.max
 
 class TacEmulator private constructor(private val program: TacProgram, private val environment: ExecutionEnvironment) {
 
     private val stack = TacStack(1)
     private val registers = TacStack(1)
+
     private var stackTop = 0
-    private var framePointer = 0
     private var line = 0
-    private var argsPushed = 0
     private lateinit var closure: TacClosure
+    private lateinit var block: TacBlock
     private var returnValue: Any? = null
 
     companion object {
 
-        private const val CALLING_SPACE = 2
+        private const val CALLING_SPACE = 1
 
         suspend fun emulate(program: TacProgram, environment: ExecutionEnvironment) =  TacEmulator(program, environment).emulateStart()
     }
@@ -32,10 +28,14 @@ class TacEmulator private constructor(private val program: TacProgram, private v
         this.closure = object : TacClosure {
             override val registersUsed: Int = 0
             override val variables: Int = 0
+            override val params: Int = 0
         }
 
-        val closure = TacFunctionClosure(program.code, Array(program.code.environment.newVariables.size) { TacData(null) })
-        saveForFunction(closure)
+        this.line = 0
+        this.block = program.mainFunction.code
+        this.closure = TacFunctionClosure(program.mainFunction, Array(program.mainFunction.environment.newVariables.size) { TacData(null) })
+        this.stack.ensureCapacity(CALLING_SPACE + program.mainFunction.variables.size)
+
         return try {
             emulateCode()
             0L
@@ -52,33 +52,36 @@ class TacEmulator private constructor(private val program: TacProgram, private v
                 continue
             }
 
-            val function = (closure as TacFunctionClosure).code
-            if(line >= function.code.size) {
+            if(line >= block.instructions.size) {
                 restoreAfterFunction()
                 continue
             }
 
-            val structure = function.code[line]
+            val instruction = block.instructions[line]
 
-            when(structure) {
+            when(instruction) {
                 is TacBranchEqualZero -> {
-                    if(structure.conditionVariable.getValue() as Long == 0L) {
-                        line = findLabelIndex(function.code, structure.branchTo)
-                        continue
+                    this.line = 0
+                    if(instruction.conditionVariable.getValue() as Long == 0L) {
+                        this.block = instruction.successBlock
+                    } else {
+                        this.block = instruction.failBlock
                     }
+                    continue
                 }
                 is TacSetVariable -> {
-                    val value = structure.value
+                    val value = instruction.value
                     val actualValue = value.getValue()
-                    structure.variable.setValue(actualValue)
+                    instruction.variable.setValue(actualValue)
                 }
                 is TacSetArgument -> {
-                    this.argsPushed = max(this.argsPushed, structure.index + 1)
-                    stack.ensureCapacity(framePointer + closure.variables + CALLING_SPACE + argsPushed)
-                    stack[framePointer + closure.variables + CALLING_SPACE + structure.index] = structure.variable.getValue()
+                    val index = stackTop + this.closure.params + CALLING_SPACE + this.closure.variables + instruction.index
+                    stack.ensureCapacity(index + 1)
+                    stack[index] = instruction.variable.getValue()
                 }
                 is TacGoto -> {
-                    line = findLabelIndex(function.code, structure.label)
+                    this.line = 0
+                    this.block = instruction.block
                     continue
                 }
                 is TacReturn -> {
@@ -86,12 +89,11 @@ class TacEmulator private constructor(private val program: TacProgram, private v
                     continue
                 }
                 is TacFunctionCall -> {
-                    val functionToCall = structure.function.getValue() as TacClosure
+                    val functionToCall = instruction.function.getValue() as TacClosure
                     saveForFunction(functionToCall)
                     continue
                 }
-                is TacLabel -> {}
-                else -> throw IllegalArgumentException(structure::class.simpleName)
+                else -> throw IllegalArgumentException(instruction::class.simpleName)
             }
             line++
         }
@@ -104,17 +106,17 @@ class TacEmulator private constructor(private val program: TacProgram, private v
             is IntValue -> value
             is StringVariable -> program.strings[stringIndex]
             is ParamReference -> {
-                stack[stackTop + index]!!
+                stack[stackTop + index]
             }
-            is ReturnedValue -> this@TacEmulator.returnValue!!
+            is ReturnedValue -> this@TacEmulator.returnValue ?: throw IllegalStateException("No return value")
             is StackVariable -> {
-                stack[framePointer + indexOf(name, closure.code.variables)]!!
+                stack[stackTop + closure.params + CALLING_SPACE + indexOf(name, closure.code.variables)]
             }
             is EnvironmentVariable -> {
                 val index = closure.code.environment.indexOf(this)
                 closure.values[index].value!!
             }
-            is RegisterVariable -> registers[register]!!
+            is RegisterVariable -> registers[register]
             is TacStringConcat -> (str1.getValue() as String) + (str2.getValue() as String)
             is TacUnaryMinus -> -(variable.getValue() as Long)
             is TacNegation -> {
@@ -146,9 +148,9 @@ class TacEmulator private constructor(private val program: TacProgram, private v
                 TacFunctionClosure(this, newArray)
             }
             is TacInbuiltFunction -> {
-                InbuiltFunction(this.label, 0, INBUILT_FUNCTIONS.find {
+                INBUILT_FUNCTIONS.find {
                     it.name == this.label
-                }?.execute ?: throw IllegalArgumentException("Unknown inbuilt function ${this.label}"))
+                } ?: throw IllegalArgumentException("Unknown inbuilt function ${this.label}")
             }
             else -> throw IllegalArgumentException(this::class.simpleName)
         }
@@ -158,7 +160,7 @@ class TacEmulator private constructor(private val program: TacProgram, private v
         val closure = this@TacEmulator.closure as TacFunctionClosure
         when(this) {
             is StackVariable -> {
-                stack[framePointer + indexOf(name, closure.code.variables)] = value
+                stack[stackTop + closure.params + CALLING_SPACE + indexOf(name, closure.code.variables)] = value
             }
             is EnvironmentVariable -> {
                 val index = closure.code.environment.indexOf(this)
@@ -167,67 +169,44 @@ class TacEmulator private constructor(private val program: TacProgram, private v
             is RegisterVariable -> {
                 registers[this.register] = value
             }
+            is ParamReference -> {
+                stack[stackTop + index] = value
+            }
             is ReturnedValue -> this@TacEmulator.returnValue = value
             else -> throw IllegalArgumentException(this::class.simpleName)
         }
     }
 
     private fun saveForFunction(newClosure: TacClosure) {
-        /*
-            closure reference
-            line number
-            sp - [args pushed]
-            count of args pushed
-            [saved registers]
-            [new frame stack variables]
-            closure reference
-            line number
-            sp - [args pushed]
-            count of args pushed
-            [saved registers]
-            fp -- [new frame stack variables]
-         */
-        stackTop = framePointer + this.closure.variables
-        stack.ensureCapacity(stackTop + CALLING_SPACE + argsPushed + 1 + newClosure.registersUsed + newClosure.variables)
+        stackTop += this.closure.params
+        stackTop += CALLING_SPACE
+        stackTop += this.closure.variables
+
         registers.ensureCapacity(newClosure.registersUsed)
-
-        stack[stackTop++] = this.closure
-        stack[stackTop++] = this.line
-        stack[stackTop + argsPushed] = this.argsPushed
-
-        framePointer = stackTop + this.argsPushed + 1
-
-
-        for(i in 0 until newClosure.registersUsed) {
-            stack[framePointer++] = registers[i]
-        }
+        stack.ensureCapacity(stackTop + newClosure.params + newClosure.variables + 1)
+        stack[stackTop + newClosure.params] = FrameData(this.line, this.block, this.closure, this.registers.array.copyOf())
 
         this.line = 0
-        this.argsPushed = 0
         this.closure = newClosure
+        if(newClosure is TacFunctionClosure) {
+            this.block = newClosure.code.code
+        }
     }
 
     private fun restoreAfterFunction() {
-        framePointer--
-        framePointer -= closure.registersUsed
-        for(i in 0 until closure.registersUsed) {
-            registers[i] = stack[framePointer + i]
+        val frameData = stack[stackTop + this.closure.params] as FrameData
+        this.line = frameData.line + 1
+
+        val registers = frameData.registers
+        for(i in registers.indices) {
+            this.registers[i] = registers[i]
         }
+        this.closure = frameData.closure
+        this.block = frameData.block
 
-        this.argsPushed = this.stack[framePointer--] as Int
-        this.framePointer -= this.argsPushed
-        this.line = this.stack[framePointer--] as Int + 1
-
-        this.closure = this.stack[framePointer] as TacClosure
-        framePointer -= this.closure.variables
-
-        this.stackTop = framePointer - this.closure.registersUsed
-        this.stackTop -= (this.stack[stackTop - 1] as Int) + 1
-        this.argsPushed = 0
-    }
-
-    private fun findLabelIndex(code: List<TacStructure>, label: String): Int {
-        return code.indexOfFirst { it is TacLabel && it.label == label }
+        stackTop -= this.closure.variables
+        stackTop -= CALLING_SPACE
+        stackTop -= this.closure.params
     }
 
     private fun indexOf(variable: String, variables: Set<String>): Int {
@@ -237,22 +216,24 @@ class TacEmulator private constructor(private val program: TacProgram, private v
     private interface TacClosure {
         val registersUsed: Int
         val variables: Int
+        val params: Int
     }
 
     private class TacFunctionClosure(val code: TacFunction, val values: Array<TacData>) : TacClosure {
-        override val registersUsed: Int
-            get() = code.registersUsed
-        override val variables: Int
-            get() = code.variables.size
+        override val registersUsed: Int = code.calculateRegistersUsed()
+        override val variables: Int = code.variables.size
+        override val params: Int = code.parameters
 
-        override fun toString(): String = "Closure($registersUsed, ${code.variables})"
+        override fun toString(): String = "Closure($params, $registersUsed, ${code.variables.size})"
     }
-    private class InbuiltFunction(val name: String, val params: Int, val execute: suspend () -> Any?) : TacClosure {
+    private class InbuiltFunction(val name: String, override val params: Int, val execute: suspend () -> Any?) : TacClosure {
         override fun toString(): String = "Func<$name>"
 
         override val registersUsed: Int = 0
         override val variables: Int = 0
     }
+
+    private data class FrameData(val line: Int, val block: TacBlock, val closure: TacClosure, val registers: Array<Any?>)
 
     private data class TacData(var value: Any?)
 
@@ -316,7 +297,8 @@ class TacEmulator private constructor(private val program: TacProgram, private v
             }
         }
 
-        operator fun get(index: Int) = array[index]
+        operator fun get(index: Int) = array[index] ?: throw IndexOutOfBoundsException("$index")
+
         operator fun set(index: Int, value: Any?) {
             array[index] = value
         }

@@ -9,7 +9,6 @@ import com.tobi.mc.computable.function.FunctionPrototype
 import com.tobi.mc.computable.variable.VariableContext
 import com.tobi.mc.computable.variable.VariableDeclaration
 import com.tobi.mc.computable.variable.VariableReference
-import com.tobi.mc.parser.util.getComponents
 import com.tobi.mc.util.ArrayListStack
 import com.tobi.mc.util.MutableStack
 import com.tobi.mc.util.Stack
@@ -28,20 +27,31 @@ object ContextIndexResolver {
     fun Computable.calculate(contexts: MutableStack<MutableSet<String>>) {
         if(this is ExpressionSequence) {
             contexts.push(HashSet())
-        } else if(this is VariableDeclaration || this is FunctionPrototype) {
-            contexts.peek().add((this as VariableReference).name)
+        } else if(this is FunctionPrototype) {
+            addVariable(this, contexts)
         }
         if(this is FunctionDeclaration) {
             contexts.push(this.parameters.map { it.name }.toHashSet())
         }
-        for(component in this.getComponents()) {
-            component.calculate(contexts)
+        for(node in this.getNodes()) {
+            node.calculate(contexts)
         }
+        if(this is VariableDeclaration) {
+            addVariable(this, contexts)
+        }
+
         if(this is ExpressionSequence || this is FunctionDeclaration) {
             contexts.pop()
         }
         if(this is VariableContext) {
             this.contextIndex = findVariable(this, contexts)
+        }
+    }
+
+    private fun addVariable(variable: VariableReference, contexts: MutableStack<MutableSet<String>>) {
+        val context = contexts.peek()
+        if(!context.add(variable.name)) {
+            throw ParseException("Variable already declared", variable)
         }
     }
 

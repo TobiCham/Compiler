@@ -23,7 +23,7 @@ class ConstantReferenceTest {
         assertComputablesEqual(createOutput(), output)
     }
 
-    private fun createInput() = ExpressionSequence(listOf(
+    private fun createInput() = ExpressionSequence(
         VariableDeclaration("a", DataTypeInt(3), DataType.INT),
         VariableDeclaration("b", DataTypeString("Hello"), DataType.INT),
         VariableDeclaration("c", FunctionCall(GetVariable("readInt", 3), emptyList()), DataType.INT),
@@ -33,9 +33,9 @@ class ConstantReferenceTest {
         GetVariable("c", 0),
         GetVariable("d", 0),
         SetVariable("d", 0, DataTypeInt(5))
-    ))
+    )
 
-    private fun createOutput() = ExpressionSequence(listOf(
+    private fun createOutput() = ExpressionSequence(
         VariableDeclaration("c", FunctionCall(GetVariable("readInt", 3), emptyList()), DataType.INT),
         VariableDeclaration("d", DataTypeInt(4), DataType.INT),
         DataTypeInt(3),
@@ -43,5 +43,5 @@ class ConstantReferenceTest {
         GetVariable("c", 0),
         GetVariable("d", 0),
         SetVariable("d", 0, DataTypeInt(5))
-    ))
+    )
 }

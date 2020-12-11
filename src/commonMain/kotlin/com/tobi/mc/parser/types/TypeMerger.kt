@@ -27,7 +27,8 @@ object TypeMerger {
                 }
             }
         }
-        return resultType ?: throw ParseException("Cannot invoke function with the specified arguments", sourceObject)
+        return resultType
+            ?: throw ParseException("Cannot invoke function with the specified arguments", sourceObject)
     }
 
     private fun canInvoke(function: FunctionType, args: List<ExpandedType>): Boolean = when(function.parameters) {

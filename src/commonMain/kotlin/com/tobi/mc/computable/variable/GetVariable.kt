@@ -15,6 +15,8 @@ data class GetVariable(
 
     override val description: String = "get variable"
 
+    override fun getNodes(): Iterable<Computable> = emptyList()
+
     override suspend fun compute(context: Context, environment: ExecutionEnvironment): Data {
         return context.getDataType(name, contextIndex)?: throw ScriptException("Unknown variable '$name'", this)
     }

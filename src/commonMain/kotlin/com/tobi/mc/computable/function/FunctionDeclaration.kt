@@ -20,6 +20,8 @@ data class FunctionDeclaration(
 
     override val description: String = "function declaration"
 
+    override fun getNodes(): Iterable<Computable> = listOf(body)
+
     override suspend fun compute(context: Context, environment: ExecutionEnvironment): DataTypeClosure {
         val closure = DataTypeClosure(parameters, context, body, returnType
             ?: throw ScriptException("Return type cannot be auto when executing", this))

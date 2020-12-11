@@ -17,6 +17,8 @@ abstract class MathOperation(
 
     override val description: String = operationString
 
+    override fun getNodes(): Iterable<Computable> = listOf(arg1, arg2)
+
     override suspend fun compute(context: Context, environment: ExecutionEnvironment): Data {
         val result = computation(getValue(arg1, context, environment), getValue(arg2, context, environment))
         return DataTypeInt(result)

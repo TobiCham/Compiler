@@ -1,51 +1,54 @@
 package com.tobi.mc.parser.optimisation.optimisations
 
+import com.tobi.mc.OptimisationResult
 import com.tobi.mc.computable.Computable
 import com.tobi.mc.computable.ExpressionSequence
 import com.tobi.mc.computable.function.FunctionDeclaration
 import com.tobi.mc.computable.variable.VariableContext
 import com.tobi.mc.computable.variable.VariableDeclaration
 import com.tobi.mc.computable.variable.VariableReference
-import com.tobi.mc.parser.optimisation.InstanceOptimisation
+import com.tobi.mc.newValue
+import com.tobi.mc.noOptimisation
+import com.tobi.mc.parser.optimisation.ASTInstanceOptimisation
 import com.tobi.mc.parser.util.traverseWithDepth
 import com.tobi.mc.util.DescriptionMeta
 import com.tobi.mc.util.SimpleDescription
 
-object NestedSequenceOptimisation : InstanceOptimisation<ExpressionSequence>(ExpressionSequence::class) {
+object NestedSequenceOptimisation : ASTInstanceOptimisation<ExpressionSequence>(ExpressionSequence::class) {
 
     override val description: DescriptionMeta = SimpleDescription("Nested sequence", """
         It can occur that expression sequences are nested, e.g. when the body of an if will always succeed.
         This will split those sequences out
     """.trimIndent())
 
-    override fun ExpressionSequence.optimiseInstance(): Computable? {
-        val newOps = ArrayList<Computable>(this.operations.size)
+    override fun ExpressionSequence.optimiseInstance(): OptimisationResult<ExpressionSequence> {
+        val newOps = ArrayList<Computable>(this.expressions.size)
         var changed = false
 
-        for(operation in this.operations) {
-            if(operation is ExpressionSequence) {
+        for(expression in this.expressions) {
+            if(expression is ExpressionSequence) {
                 val usedVariables = this.findUnavailableVariables()
-                operation.renameVariables(usedVariables)
-                operation.decrementVariableContexts()
-                newOps.addAll(operation.operations)
+                expression.renameVariables(usedVariables)
+                expression.decrementVariableContexts()
+                newOps.addAll(expression.expressions)
                 changed = true
             } else {
-                newOps.add(operation)
+                newOps.add(expression)
             }
         }
         if(changed) {
-            return ExpressionSequence(newOps)
+            return newValue(ExpressionSequence(newOps))
         }
-        return null
+        return noOptimisation()
     }
 
     private fun ExpressionSequence.renameVariables(usedVariables: MutableSet<String>) {
-        for(operation in this.operations) {
-            if(operation is FunctionDeclaration || operation is VariableDeclaration) {
-                if(usedVariables.contains((operation as VariableReference).name)) {
-                    val newName = findNewName(usedVariables, operation.name)
-                    this.renameVariable(operation.name, newName)
-                    operation.name = newName
+        for(expression in this.expressions) {
+            if(expression is FunctionDeclaration || expression is VariableDeclaration) {
+                if(usedVariables.contains((expression as VariableReference).name)) {
+                    val newName = findNewName(usedVariables, expression.name)
+                    this.renameVariable(expression.name, newName)
+                    expression.name = newName
                     usedVariables.add(newName)
                 }
             }
@@ -61,9 +64,9 @@ object NestedSequenceOptimisation : InstanceOptimisation<ExpressionSequence>(Exp
     }
 
     private fun ExpressionSequence.decrementVariableContexts() {
-        for((component, depth) in this.traverseWithDepth()) {
-            if(component is VariableContext && component.contextIndex >= depth) {
-                component.contextIndex--
+        for((node, depth) in this.traverseWithDepth()) {
+            if(node is VariableContext && node.contextIndex >= depth) {
+                node.contextIndex--
             }
         }
     }

@@ -18,6 +18,8 @@ data class WhileLoop(
 
     override val description: String = "while loop"
 
+    override fun getNodes(): Iterable<Computable> = listOf(check, body)
+
     override suspend fun compute(context: Context, environment: ExecutionEnvironment): Data {
         while(computeBoolean(context, environment)) {
             try {

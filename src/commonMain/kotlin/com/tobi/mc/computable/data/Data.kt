@@ -11,5 +11,7 @@ abstract class Data : Computable {
 
     abstract val type: DataType
 
+    override fun getNodes(): Iterable<Computable> = emptyList()
+
     final override suspend fun compute(context: Context, environment: ExecutionEnvironment): Data = this
 }

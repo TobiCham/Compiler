@@ -18,6 +18,7 @@ import java.io.BufferedReader
 import java.io.ByteArrayInputStream
 import java.io.File
 import java.io.StringReader
+import java.nio.file.Files
 import java.util.concurrent.TimeUnit
 import kotlin.test.assertEquals
 
@@ -28,6 +29,9 @@ class ExecutionTests {
         val optimisedParser = MinusCParser()
         val unoptimisedParser = MinusCParser(ParserConfiguration(optimisations = emptyList()))
 
+        val optimisedGenerator = TacGenerator()
+        val unoptimisedGenerator = TacGenerator(optimisations = emptyList())
+
         val files = File(javaClass.classLoader.getResource("execution")!!.file)
         for(file in files.listFiles() ?: emptyArray()) {
             val inputFile = File(file, "input")
@@ -36,18 +40,19 @@ class ExecutionTests {
             val input = if(inputFile.exists()) inputFile.readText() else ""
             val output = if(outputFile.exists()) outputFile.readText() else ""
 
-            testCase(optimisedParser, "Optimised", file.name, code, input, output)
-            testCase(unoptimisedParser, "Unoptimised", file.name, code, input, output)
+            testCase(optimisedParser, optimisedGenerator, "Optimised", file.name, code, input, output)
+            testCase(unoptimisedParser, unoptimisedGenerator, "Unoptimised", file.name, code, input, output)
         }
     }
 
-    private fun testCase(parser: MinusCParser, description: String, name: String, code: String, input: String, expectedOutput: String) {
+    private fun testCase(parser: MinusCParser, tacGenerator: TacGenerator, description: String, name: String, code: String, input: String, expectedOutput: String) {
         println("Testing $name ($description):")
         fun <T> doTest(testDescription: String, action: () -> T): T {
+            val t1 = System.currentTimeMillis()
             try {
                 print(" - ${testDescription}")
                 val result = action()
-                println(", Pass")
+                println(", Pass (${System.currentTimeMillis() - t1})")
                 return result
             } catch (e: Throwable) {
                 var msg = "Failed to run '${name}' ($description, $testDescription):"
@@ -58,12 +63,12 @@ class ExecutionTests {
                 }
                 val error = AssertionError(msg)
                 error.addSuppressed(e)
-                println(", Fail")
+                println(", Fail (${System.currentTimeMillis() - t1})")
                 throw error
             }
         }
         val program = doTest("Parse") { parser.parse(code) }
-        val tac = doTest("Generate TAC") { TacGenerator.toTac(program) }
+        val tac = doTest("Generate TAC") { tacGenerator.toTac(program) }
         val mips = doTest("Generate MIPS") { TacToMips(MipsConfiguration.StandardMips).toMips(tac) }
 
         doTest("Emulate program") { testProgramEmulation(program, input, expectedOutput) }
@@ -104,11 +109,13 @@ class ExecutionTests {
     }
 
     private fun testMips(name: String, mipsCode: String, input: String, expectedOutput: String) {
-        val codeFile = File.createTempFile(name, "minusc-test.tmp")
+        val dir = Files.createTempDirectory("minusc-test-$name").toAbsolutePath().toFile()
+
+        val codeFile = File(dir, "code.asm")
         codeFile.writeText(mipsCode)
         codeFile.deleteOnExit()
 
-        val process = ProcessBuilder("java", "-jar", "mars.jar", "nc", "me", codeFile.absolutePath).start()
+        val process = ProcessBuilder("java", "-jar", File("mars.jar").absolutePath, "nc", "me", "ae5", "se6", codeFile.name).directory(dir).start()
         ByteArrayInputStream(input.toByteArray()).use { inp -> inp.copyTo(process.outputStream) }
         process.outputStream.flush()
         process.outputStream.close()
@@ -120,6 +127,8 @@ class ExecutionTests {
         if(process.isAlive) {
             process.destroyForcibly()
         }
+
+        dir.deleteRecursively()
 
         if(process.exitValue() != 0) {
             if(!errorOutput.isBlank()) {

@@ -52,7 +52,7 @@ class ProgramToString(val styler: ProgramToStringStyler = Stylers.NONE) {
                 builder.print(styler.style(StyleType.ELSE, "else"))
                 builder.print(" ")
 
-                val elseOps = elseBody!!.operations
+                val elseOps = elseBody!!.expressions
                 if(elseOps.size == 1 && elseOps[0] is IfStatement) {
                     elseOps[0].toString(builder)
                 } else {
@@ -92,7 +92,7 @@ class ProgramToString(val styler: ProgramToStringStyler = Stylers.NONE) {
         }
         is SetVariable -> {
             builder.print(styler.style(StyleType.NAME, name))
-            builder.print("[${this.contextIndex}]")
+//            builder.print("[${this.contextIndex}]")
             builder.print(" ")
             builder.print(styler.style(StyleType.ASSIGNMENT, "="))
             builder.print(" ")
@@ -100,7 +100,7 @@ class ProgramToString(val styler: ProgramToStringStyler = Stylers.NONE) {
         }
         is GetVariable -> {
             builder.print(styler.style(StyleType.NAME, name))
-            builder.print("[${this.contextIndex}]")
+//            builder.print("[${this.contextIndex}]")
         }
         is FunctionCall -> {
             function.toString(builder)
@@ -126,10 +126,10 @@ class ProgramToString(val styler: ProgramToStringStyler = Stylers.NONE) {
         is ExpressionSequence -> {
             builder.println(styler.style(StyleType.CURLY_BRACKET, "{"))
             builder.indent()
-            for (operation in operations) {
-                operation.toString(builder)
+            for (expression in expressions) {
+                expression.toString(builder)
 
-                if(operation.requiresSemiColon()) {
+                if(expression.requiresSemiColon()) {
                     builder.print(styler.style(StyleType.SEMI_COLON, ";"))
                 }
                 builder.println("")
@@ -165,9 +165,9 @@ class ProgramToString(val styler: ProgramToStringStyler = Stylers.NONE) {
             str2.toString(builder)
         }
         is Program -> {
-            for (operation in this.code.operations) {
-                operation.toString(builder)
-                if(operation.requiresSemiColon()) {
+            for (expression in this.code.expressions) {
+                expression.toString(builder)
+                if(expression.requiresSemiColon()) {
                     builder.print(';')
                 }
                 builder.println("")

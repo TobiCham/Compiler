@@ -1,8 +1,11 @@
 package com.tobi.mc.intermediate
 
-import com.tobi.mc.intermediate.construct.TacFunction
+import com.tobi.mc.intermediate.code.TacFunction
 
 class TacProgram(
     val strings: Array<String>,
-    val code: TacFunction
-) : TacStructure
+    var mainFunction: TacFunction
+) : TacNode {
+
+    override fun getNodes(): Iterable<TacNode> = listOf(mainFunction)
+}

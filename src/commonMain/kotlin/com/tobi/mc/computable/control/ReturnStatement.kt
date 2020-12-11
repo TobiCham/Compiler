@@ -13,6 +13,8 @@ data class ReturnStatement(
 
     override val description: String = "return"
 
+    override fun getNodes(): Iterable<Computable> = if(toReturn == null) emptyList() else listOf(toReturn!!)
+
     override suspend fun compute(context: Context, environment: ExecutionEnvironment): Nothing {
         val result = toReturn?.compute(context, environment) ?: DataTypeVoid()
         throw FlowInterrupt.Return(result, this)

@@ -21,7 +21,6 @@ import com.tobi.mc.computable.operation.UnaryMinus
 import com.tobi.mc.computable.variable.GetVariable
 import com.tobi.mc.computable.variable.SetVariable
 import com.tobi.mc.computable.variable.VariableDeclaration
-import com.tobi.mc.parser.util.getComponents
 import com.tobi.mc.type.*
 
 /**
@@ -83,8 +82,8 @@ object TypeDetector {
                 return
             }
         }
-        for (component in this.getComponents()) {
-            component.detectTypes(newState, currentFunction)
+        for (node in this.getNodes()) {
+            node.detectTypes(newState, currentFunction)
         }
 
         when(this) {

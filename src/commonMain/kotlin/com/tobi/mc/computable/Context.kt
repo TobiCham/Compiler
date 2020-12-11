@@ -4,18 +4,14 @@ import com.tobi.mc.ScriptException
 import com.tobi.mc.SourceObject
 import com.tobi.mc.computable.data.Data
 
-open class Context(parent: Context?) {
+open class Context private constructor(private val variables: List<MutableMap<String, Data>>) {
 
-    private val variables: List<MutableMap<String, Data>>
-
-    init {
-        variables = ArrayList<MutableMap<String, Data>>().apply {
-            add(LinkedHashMap())
-            if(parent != null) {
-                addAll(parent.variables)
-            }
+    constructor(parent: Context?): this(ArrayList<MutableMap<String, Data>>().apply {
+        add(LinkedHashMap())
+        if(parent != null) {
+            addAll(parent.variables)
         }
-    }
+    })
 
     fun getDataType(name: String, contextIndex: Int): Data? {
         checkIndex(contextIndex)
@@ -41,6 +37,8 @@ open class Context(parent: Context?) {
     }
 
     fun getVariables() = variables[0].toMap()
+
+    fun copy() = Context(this.variables.map { LinkedHashMap(it) })
 
     private fun checkIndex(index: Int) {
         if(index < 0 || index >= variables.size) {

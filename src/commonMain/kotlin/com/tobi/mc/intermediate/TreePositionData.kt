@@ -1,18 +1,32 @@
 package com.tobi.mc.intermediate
 
 import com.tobi.mc.computable.ExpressionSequence
-import com.tobi.mc.intermediate.construct.code.EnvironmentVariable
-import com.tobi.mc.intermediate.construct.code.StackVariable
-import com.tobi.mc.intermediate.construct.code.TacMutableVariable
+import com.tobi.mc.computable.function.FunctionDeclaration
+import com.tobi.mc.intermediate.code.EnvironmentVariable
+import com.tobi.mc.intermediate.code.StackVariable
+import com.tobi.mc.intermediate.code.TacMutableVariable
 
 data class TreePositionData(
-    val contextDepth: Int, //Context depth
+    val contextDepth: Int,
     val functionCount: Int,
     val currentBlock: ExpressionSequence,
     val environmentVariables: MutableMap<Pair<Int, String>, Int>,
     val stackVariables: MutableSet<String>,
     val variableNameMapping: MutableMap<Pair<Int, String>, String>
 ) {
+
+    fun enterFunction(function: FunctionDeclaration): TreePositionData = TreePositionData(
+        contextDepth + 1,
+        functionCount + 1,
+        function.body,
+        HashMap(environmentVariables),
+        LinkedHashSet(), LinkedHashMap()
+    )
+
+    fun enterSequence(sequence: ExpressionSequence): TreePositionData = this.copy(
+        contextDepth = contextDepth + 1,
+        currentBlock = sequence
+    )
 
     fun getVariable(index: Int, name: String): TacMutableVariable {
         val rootDepth = contextDepth - index
@@ -37,7 +51,8 @@ data class TreePositionData(
 
     private fun getStackVariable(index: Int, name: String): StackVariable {
         val rootDepth = contextDepth - index
-        val mappedName = variableNameMapping[rootDepth to name] ?: throw IllegalStateException("Variable $name not found")
+        val mappedName = variableNameMapping[rootDepth to name]
+            ?: throw IllegalStateException("Variable $name not found")
         return StackVariable(mappedName)
     }
 

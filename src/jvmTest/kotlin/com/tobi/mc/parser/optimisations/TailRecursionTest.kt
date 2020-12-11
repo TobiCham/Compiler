@@ -34,10 +34,10 @@ class TailRecursionTest {
     private fun createInput() = FunctionDeclaration(
         "factorial",
         listOf(Parameter(DataType.INT, "n"), Parameter(DataType.INT, "accum")),
-        ExpressionSequence(listOf(
-            IfStatement(Equals(GetVariable("n", 1), DataTypeInt(1)), ExpressionSequence(listOf(
+        ExpressionSequence(
+            IfStatement(Equals(GetVariable("n", 1), DataTypeInt(1)), ExpressionSequence(
                 ReturnStatement(GetVariable("accum", 2))
-            )), null),
+            ), null),
             ReturnStatement(FunctionCall(
                 GetVariable("factorial", 2),
                 listOf(
@@ -45,25 +45,25 @@ class TailRecursionTest {
                     Multiply(GetVariable("n", 1), GetVariable("accum", 1))
                 )
             ))
-        )),
+        ),
         DataType.INT
     )
 
     private fun createOutput() = FunctionDeclaration(
         "factorial",
         listOf(Parameter(DataType.INT, "n"), Parameter(DataType.INT, "accum")),
-        ExpressionSequence(listOf(
-            WhileLoop(DataTypeInt(1), ExpressionSequence(listOf(
-                IfStatement(Equals(GetVariable("n", 2), DataTypeInt(1)), ExpressionSequence(listOf(
+        ExpressionSequence(
+            WhileLoop(DataTypeInt(1), ExpressionSequence(
+                IfStatement(Equals(GetVariable("n", 2), DataTypeInt(1)), ExpressionSequence(
                     ReturnStatement(GetVariable("accum", 3))
-                )), null),
+                ), null),
                 VariableDeclaration("tail_n", Subtract(GetVariable("n", 2), DataTypeInt(1)), DataType.INT),
                 VariableDeclaration("tail_accum", Multiply(GetVariable("n", 2), GetVariable("accum", 2)), DataType.INT),
                 SetVariable("n", 2, GetVariable("tail_n", 0)),
                 SetVariable("accum", 2, GetVariable("tail_accum", 0)),
                 ContinueStatement()
-            )))
-        )),
+            ))
+        ),
         DataType.INT
     )
 }

@@ -18,38 +18,33 @@ import com.tobi.mc.computable.variable.GetVariable
 import com.tobi.mc.computable.variable.SetVariable
 import com.tobi.mc.computable.variable.VariableContext
 import com.tobi.mc.computable.variable.VariableDeclaration
-import com.tobi.mc.intermediate.construct.TacEnvironment
-import com.tobi.mc.intermediate.construct.TacFunction
-import com.tobi.mc.intermediate.construct.TacInbuiltFunction
-import com.tobi.mc.intermediate.construct.WhileLoopControlBlock
-import com.tobi.mc.intermediate.construct.code.*
-import com.tobi.mc.parser.util.getComponents
+import com.tobi.mc.intermediate.code.*
+import com.tobi.mc.intermediate.optimisation.Optimisations
+import com.tobi.mc.intermediate.optimisation.TacOptimisation
+import com.tobi.mc.intermediate.optimisation.TacOptimiser
 import com.tobi.mc.util.ArrayListStack
 import com.tobi.mc.util.MutableStack
 
-class TacGenerator private constructor() {
+class TacGenerator(val optimisations: List<TacOptimisation> = Optimisations.ALL_OPTIMISATIONS) {
 
-    private var labelCounter = 0
     private val whileLoopControlBlocks: MutableStack<WhileLoopControlBlock> = ArrayListStack()
 
     //Using a LinkedHashMap so that the values iterating through the map is guaranteed to be in numeric order
     private val stringIndices: MutableMap<String, Int> = LinkedHashMap()
 
-    companion object {
-
-        fun toTac(program: Program): TacProgram {
-            return TacGenerator().toTac(program)
-        }
+    fun toTac(program: Program): TacProgram {
+        val tac = visitProgram(program)
+        return TacOptimiser(this.optimisations).optimise(tac) as TacProgram
     }
 
-    private fun toTac(program: Program): TacProgram {
-        val globalFunction = FunctionDeclaration("global", emptyList(), ExpressionSequence(listOf(
-            FunctionDeclaration("main", emptyList(), ExpressionSequence(ArrayList(program.code.operations).apply {
+    private fun visitProgram(program: Program): TacProgram {
+        val globalFunction = FunctionDeclaration("global", emptyList(), ExpressionSequence(
+            FunctionDeclaration("main", emptyList(), ExpressionSequence(ArrayList(program.code.expressions).apply {
                 add(ReturnStatement(null))
             }), DataType.VOID),
             FunctionCall(GetVariable("main", 0), emptyList()),
             FunctionCall(GetVariable("exit", -1), listOf(DataTypeInt(0)))
-        )), DataType.VOID)
+        ), DataType.VOID)
 
         val globalEnvironment = TacEnvironment(null)
         val treePosition = TreePositionData(-2, 0, globalFunction.body, LinkedHashMap(), LinkedHashSet(), LinkedHashMap())
@@ -64,114 +59,119 @@ class TacGenerator private constructor() {
             treePosition.environmentVariables[0 to name] = 0
         }
 
-        val ops = ArrayList<TacStructure>()
+        val ops = ArrayList<TacNode>()
         ops.addAll(inbuiltVariables.map { (name, _) ->
             TacSetVariable(EnvironmentVariable(name, 0), TacInbuiltFunction(name))
         })
 
-        globalFunction.body.toTac(
-            globalEnvironment,
-            ops,
-            treePosition
-        )
-        return TacProgram(stringIndices.keys.toTypedArray(), TacFunction("global", globalEnvironment, setOf("main"), ops, 0))
+        val body = visitSequence(globalFunction.body, globalEnvironment, treePosition, null)
+        body.instructions.addAll(0, ops)
+
+        return TacProgram(stringIndices.keys.toTypedArray(), TacFunction(globalEnvironment, setOf("main"), body, 0))
     }
 
-    private fun Computable.toTac(
+    private fun visitNode(
+        computable: Computable,
         currentEnvironment: TacEnvironment,
-        code: MutableList<TacStructure>,
-        positionData: TreePositionData
-    ): Any = when(this) {
-        is FunctionPrototype -> this.toTac(currentEnvironment, positionData)
-        is FunctionDeclaration -> this.toTac(currentEnvironment, code, positionData)
-        is FunctionCall -> this.toTac(currentEnvironment, RegisterUse(), code, null, positionData)
-        is VariableDeclaration -> {
-            val variable = if(isVariableInClosure(this.name, positionData.currentBlock)) {
-                currentEnvironment.addVariable(this.name)
-                positionData.createEnvironmentVariable(this.name)
-            } else {
-                positionData.createStackVariable(this.name)
-            }
-            code.add(TacSetVariable(variable, this.value.calculateIntermediate(currentEnvironment, RegisterUse(), code, positionData)))
-        }
-        is SetVariable -> {
-            val variable = positionData.getVariable(this.contextIndex, this.name)
-            code.add(TacSetVariable(
-                variable,
-                this.value.calculateIntermediate(currentEnvironment, RegisterUse(), code, positionData)
-            ))
-        }
-        is IfStatement -> this.toTac(currentEnvironment, code, positionData)
-        is WhileLoop -> this.toTac(currentEnvironment, code, positionData)
+        code: MutableList<TacNode>,
+        positionData: TreePositionData,
+        currentSequence: Iterator<Computable>,
+        currentBlock: TacBlock?
+    ): Any = when(computable) {
+        is FunctionPrototype -> visitFunctionPrototype(computable, currentEnvironment, positionData)
+        is FunctionDeclaration -> visitFunctionDeclaration(computable, currentEnvironment, code, positionData)
+        is FunctionCall -> visitFunctionCall(computable, currentEnvironment, RegisterUse(), code, null, positionData)
+        is VariableDeclaration -> visitVariableDeclaration(computable, currentEnvironment, code, positionData)
+        is SetVariable -> visitSetVariable(computable, currentEnvironment, code, positionData)
+        is IfStatement -> visitIfStatement(computable, currentEnvironment, code, positionData, currentSequence, currentBlock)
+        is WhileLoop -> visitWhileLoop(computable, currentEnvironment, code, positionData, currentSequence, currentBlock)
         is ContinueStatement -> code.add(TacGoto(whileLoopControlBlocks.peek().start))
         is BreakStatement -> code.add(TacGoto(whileLoopControlBlocks.peek().end))
-        is ReturnStatement -> {
-            if(toReturn != null) {
-                code.add(TacSetVariable(ReturnedValue, this.toReturn!!.calculateIntermediate(currentEnvironment, RegisterUse(), code, positionData)))
-            }
-            code.add(TacReturn)
-        }
-        is ExpressionSequence -> this.getComponents().forEach {
-            val newData = TreePositionData(
-                contextDepth = positionData.contextDepth + 1,
-                functionCount = positionData.functionCount,
-                currentBlock = this,
-                environmentVariables = positionData.environmentVariables,
-                stackVariables = positionData.stackVariables,
-                variableNameMapping = positionData.variableNameMapping
-            )
-            it.toTac(currentEnvironment, code, newData)
-        }
-        else -> throw IllegalStateException("Unknown computable ${this::class.simpleName}")
+        is ReturnStatement -> visitReturnStatement(computable, currentEnvironment, code, positionData)
+        is ExpressionSequence -> visitSequence(computable, currentEnvironment, positionData, currentBlock)
+        else -> throw IllegalStateException("Unknown node ${this::class.simpleName}")
     }
 
-    private fun FunctionPrototype.toTac(
-        currentEnvironment: TacEnvironment,
+    private fun visitFunctionPrototype(
+        prototype: FunctionPrototype,
+        environment: TacEnvironment,
         positionData: TreePositionData
     ) {
-        if(isVariableInClosure(this.name, positionData.currentBlock)) {
-            currentEnvironment.addVariable(name)
-            positionData.createEnvironmentVariable(this.name)
+        if(isVariableInClosure(prototype.name, positionData.currentBlock)) {
+            environment.addVariable(prototype.name)
+            positionData.createEnvironmentVariable(prototype.name)
         } else {
-            positionData.createStackVariable(this.name)
+            positionData.createStackVariable(prototype.name)
         }
     }
 
-    private fun FunctionDeclaration.toTac(
+    private fun visitFunctionDeclaration(
+        function: FunctionDeclaration,
         currentEnvironment: TacEnvironment,
-        code: MutableList<TacStructure>,
+        code: MutableList<TacNode>,
         positionData: TreePositionData
     ): TacFunction {
-        val variable = positionData.getVariable(0, this.name)
-
+        val functionVariable = positionData.getVariable(0, function.name)
         val newEnvironment = TacEnvironment(currentEnvironment)
-        val newVars = HashMap(positionData.environmentVariables)
+        val newData = positionData.enterFunction(function)
 
-        val newData = TreePositionData(positionData.contextDepth + 1, positionData.functionCount + 1, this.body, newVars, LinkedHashSet(), LinkedHashMap())
-        val newCode = ArrayList<TacStructure>()
-
-        for((i, parameter) in this.parameters.withIndex()) {
-            val variable = if(this.body.findVariable(parameter.name, 0, false) != null) {
+        val paramSetInstructions = ArrayList<TacNode>()
+        for((i, parameter) in function.parameters.withIndex()) {
+            val paramVariable = if(function.body.findVariable(parameter.name, 0, false) != null) {
                 newEnvironment.addVariable(parameter.name)
                 newData.createEnvironmentVariable(parameter.name)
             } else {
                 newData.createStackVariable(parameter.name)
             }
-            newCode.add(TacSetVariable(variable, ParamReference(i)))
+            paramSetInstructions.add(TacSetVariable(paramVariable, ParamReference(i)))
         }
 
-        this.body.toTac(newEnvironment, newCode, newData)
-        val function = TacFunction(this.name, newEnvironment, newData.stackVariables, newCode, this.parameters.size)
+        val returnBlock = TacBlock(arrayListOf(TacReturn))
+        val functionBodyBlock = visitSequence(function.body, newEnvironment, newData, returnBlock)
+        functionBodyBlock.instructions.addAll(0, paramSetInstructions)
 
-        code.add(TacSetVariable(variable, function))
+        val tacFunction = TacFunction(newEnvironment, newData.stackVariables, functionBodyBlock, function.parameters.size)
 
-        return function
+        code.add(TacSetVariable(functionVariable, tacFunction))
+
+        return tacFunction
+    }
+
+    private fun visitVariableDeclaration(
+        variableDeclaration: VariableDeclaration,
+        environment: TacEnvironment,
+        code: MutableList<TacNode>,
+        positionData: TreePositionData
+    ) {
+        val name = variableDeclaration.name
+        val assignment = variableDeclaration.value.calculateIntermediate(environment, RegisterUse(), code, positionData)
+
+        val variable = if(isVariableInClosure(name, positionData.currentBlock)) {
+            environment.addVariable(name)
+            positionData.createEnvironmentVariable(name)
+        } else {
+            positionData.createStackVariable(name)
+        }
+        code.add(TacSetVariable(variable, assignment))
+    }
+
+    private fun visitSetVariable(
+        setVariable: SetVariable,
+        environment: TacEnvironment,
+        code: MutableList<TacNode>,
+        positionData: TreePositionData
+    ) {
+        val variable = positionData.getVariable(setVariable.contextIndex, setVariable.name)
+        code.add(TacSetVariable(
+            variable,
+            setVariable.value.calculateIntermediate(environment, RegisterUse(), code, positionData)
+        ))
     }
 
     private fun Computable.calculateIntermediate(
         currentEnvironment: TacEnvironment,
         registers: RegisterUse,
-        code: MutableList<TacStructure>,
+        code: MutableList<TacNode>,
         positionData: TreePositionData
     ): TacVariableReference {
         when(this) {
@@ -183,7 +183,7 @@ class TacGenerator private constructor() {
         val newRegister = RegisterVariable(registers.findAvailable())
 
         if(this is FunctionCall) {
-            this.toTac(currentEnvironment, registers, code, newRegister, positionData)
+            visitFunctionCall(this, currentEnvironment, registers, code, newRegister, positionData)
             return newRegister
         }
 
@@ -198,88 +198,146 @@ class TacGenerator private constructor() {
         return newRegister
     }
 
-    private fun FunctionCall.toTac(
-        currentEnvironment: TacEnvironment,
+    private fun visitFunctionCall(
+        functionCall: FunctionCall,
+        environment: TacEnvironment,
         registers: RegisterUse,
-        code: MutableList<TacStructure>,
+        code: MutableList<TacNode>,
         assignment: TacMutableVariable?,
         positionData: TreePositionData
     ) {
-        for((i, arg) in this.arguments.withIndex()) {
-            val actualArg = arg.calculateIntermediate(currentEnvironment, registers, code, positionData)
+        val function = functionCall.function.calculateIntermediate(environment, registers, code, positionData)
+        for((i, arg) in functionCall.arguments.withIndex()) {
+            val actualArg = arg.calculateIntermediate(environment, registers, code, positionData)
             code.add(TacSetArgument(actualArg, i))
         }
-        code.add(TacFunctionCall(this.function.calculateIntermediate(currentEnvironment, registers, code, positionData)))
+        code.add(TacFunctionCall(function))
         if(assignment != null) {
             code.add(TacSetVariable(assignment, ReturnedValue))
         }
     }
 
-    private fun MathOperation.toTac(currentEnvironment: TacEnvironment, registers: RegisterUse, code: MutableList<TacStructure>, positionData: TreePositionData): TacMathOperation {
+    private fun visitReturnStatement(
+        returnStatement: ReturnStatement,
+        environment: TacEnvironment,
+        code: MutableList<TacNode>,
+        positionData: TreePositionData
+    ) {
+        val toReturn = returnStatement.toReturn
+        if(toReturn != null) {
+            // If returning the result of a function call, the return register will already contain the resulting value,
+            // otherwise an assignment is required to populate the return register with the returned value
+            if(toReturn is FunctionCall) {
+                visitFunctionCall(toReturn, environment, RegisterUse(), code, null, positionData)
+            } else {
+                code.add(TacSetVariable(ReturnedValue, toReturn.calculateIntermediate(environment, RegisterUse(), code, positionData)))
+            }
+        }
+        code.add(TacReturn)
+    }
+
+    private fun MathOperation.toTac(currentEnvironment: TacEnvironment, registers: RegisterUse, code: MutableList<TacNode>, positionData: TreePositionData): TacMathOperation {
         val first = this.arg1.calculateIntermediate(currentEnvironment, registers, code, positionData)
         val second = this.arg2.calculateIntermediate(currentEnvironment, registers, code, positionData)
 
         return TacMathOperation(first, TacMathOperation.getType(this), second)
     }
 
-    private fun UnaryMinus.toTac(currentEnvironment: TacEnvironment, registers: RegisterUse, code: MutableList<TacStructure>, positionData: TreePositionData): TacUnaryMinus {
+    private fun UnaryMinus.toTac(currentEnvironment: TacEnvironment, registers: RegisterUse, code: MutableList<TacNode>, positionData: TreePositionData): TacUnaryMinus {
         val exp = this.expression.calculateIntermediate(currentEnvironment, registers, code, positionData)
         return TacUnaryMinus(exp)
     }
 
-    private fun Negation.toTac(currentEnvironment: TacEnvironment, registers: RegisterUse, code: MutableList<TacStructure>, positionData: TreePositionData): TacNegation {
+    private fun Negation.toTac(currentEnvironment: TacEnvironment, registers: RegisterUse, code: MutableList<TacNode>, positionData: TreePositionData): TacNegation {
         val toNegate = this.negation.calculateIntermediate(currentEnvironment, registers, code, positionData)
         return TacNegation(toNegate)
     }
 
-    private fun StringConcat.toTac(currentEnvironment: TacEnvironment, registers: RegisterUse, code: MutableList<TacStructure>, positionData: TreePositionData): TacStringConcat {
+    private fun StringConcat.toTac(currentEnvironment: TacEnvironment, registers: RegisterUse, code: MutableList<TacNode>, positionData: TreePositionData): TacStringConcat {
         val str1 = this.str1.calculateIntermediate(currentEnvironment, registers, code, positionData)
         val str2 = this.str2.calculateIntermediate(currentEnvironment, registers, code, positionData)
 
         return TacStringConcat(str1, str2)
     }
 
-    private fun IfStatement.toTac(
+    private fun visitSequence(
+        sequence: ExpressionSequence,
         environment: TacEnvironment,
-        code: MutableList<TacStructure>,
-        positionData: TreePositionData
-    ) {
-        val endLabel = generateLabel()
-        val elseLabel = if(elseBody == null) endLabel else generateLabel()
-
-        code.add(TacBranchEqualZero(check.calculateIntermediate(environment, RegisterUse(), code, positionData), elseLabel))
-        this.ifBody.toTac(environment, code, positionData)
-        code.add(TacGoto(endLabel))
-
-        if(elseBody != null) {
-            code.add(TacLabel(elseLabel))
-            elseBody!!.toTac(environment, code, positionData)
-            code.add(TacGoto(endLabel))
-        }
-        code.add(TacLabel(endLabel))
+        positionData: TreePositionData,
+        currentBlock: TacBlock?
+    ): TacBlock {
+        val newData = positionData.enterSequence(sequence)
+        return visitRemainderOfSequence(environment, newData, sequence.getNodes().iterator(), currentBlock)
     }
 
-    private fun WhileLoop.toTac(
+    private fun visitRemainderOfSequence(
         environment: TacEnvironment,
-        code: MutableList<TacStructure>,
-        positionData: TreePositionData
-    ) {
-        val startLabel = generateLabel()
-        val endLabel = generateLabel()
-        code.add(TacLabel(startLabel))
+        positionData: TreePositionData,
+        currentSequence: Iterator<Computable>,
+        currentBlock: TacBlock?
+    ): TacBlock {
+        val code = ArrayList<TacNode>()
+        val block = TacBlock(code)
 
-        code.add(TacBranchEqualZero(check.calculateIntermediate(environment, RegisterUse(), code, positionData), endLabel))
-        whileLoopControlBlocks.push(
-            WhileLoopControlBlock(startLabel, endLabel)
-        )
-        body.toTac(environment, code, positionData)
+        while(currentSequence.hasNext()) {
+            visitNode(currentSequence.next(), environment, code, positionData, currentSequence, currentBlock)
+        }
+
+        if(currentBlock != null && !code.any { it is TacBranch || it is TacReturn }) {
+            code.add(TacGoto(currentBlock))
+        }
+        return block
+    }
+
+    private fun visitIfStatement(
+        ifStatement: IfStatement,
+        environment: TacEnvironment,
+        code: MutableList<TacNode>,
+        positionData: TreePositionData,
+        currentSequence: Iterator<Computable>,
+        currentBlock: TacBlock?
+    ) {
+        val check = ifStatement.check.calculateIntermediate(environment, RegisterUse(), code, positionData)
+
+        val endOfCheckBlock = visitRemainderOfSequence(environment, positionData, currentSequence, currentBlock)
+        val ifBlock = visitSequence(ifStatement.ifBody, environment, positionData, endOfCheckBlock)
+        val elseBlock = if(ifStatement.elseBody == null) {
+            endOfCheckBlock
+        } else {
+            visitSequence(ifStatement.elseBody!!, environment, positionData, endOfCheckBlock)
+        }
+
+        ifBlock.instructions.add(TacGoto(endOfCheckBlock))
+        if(ifStatement.elseBody != null) {
+            elseBlock.instructions.add(TacGoto(endOfCheckBlock))
+        }
+        code.add(TacBranchEqualZero(check, elseBlock, ifBlock))
+    }
+
+    private fun visitWhileLoop(
+        loop: WhileLoop,
+        environment: TacEnvironment,
+        code: MutableList<TacNode>,
+        positionData: TreePositionData,
+        currentSequence: Iterator<Computable>,
+        currentBlock: TacBlock?
+    ) {
+        val whileBlockCode = ArrayList<TacNode>()
+        val whileBlock = TacBlock(whileBlockCode)
+        val checkVariable = loop.check.calculateIntermediate(environment, RegisterUse(), whileBlockCode, positionData)
+        val endOfLoop = visitRemainderOfSequence(environment, positionData, currentSequence, currentBlock)
+        whileLoopControlBlocks.push(WhileLoopControlBlock(whileBlock, endOfLoop))
+
+        val innerLoop = visitSequence(loop.body, environment, positionData, whileBlock)
+        innerLoop.instructions.add(TacGoto(whileBlock))
+        whileBlock.instructions.add(TacBranchEqualZero(checkVariable, endOfLoop, innerLoop))
+        code.add(TacGoto(whileBlock))
+
         whileLoopControlBlocks.pop()
-        code.add(TacGoto(startLabel))
-        code.add(TacLabel(endLabel))
     }
 
     private fun isVariableInClosure(name: String, currentScope: ExpressionSequence): Boolean {
-        for(element in currentScope.operations) {
+        for(element in currentScope.expressions) {
             if(element.findVariable(name, 0, false) != null) {
                 return true
             }
@@ -288,13 +346,17 @@ class TacGenerator private constructor() {
     }
 
     private fun Computable.findVariable(name: String, currentDepth: Int, isInFunction: Boolean): Computable? = when(this) {
-        is VariableContext ->
-            if(this.contextIndex == currentDepth && isInFunction && this.name == name) this else null
-        is ExpressionSequence -> this.operations.asSequence().map {
+        is VariableContext -> {
+            if(this.contextIndex == currentDepth && isInFunction && this.name == name) this
+            else getNodes().asSequence().map {
+                it.findVariable(name, currentDepth, isInFunction)
+            }.filterNotNull().firstOrNull()
+        }
+        is ExpressionSequence -> this.expressions.asSequence().map {
             it.findVariable(name, currentDepth + 1, isInFunction)
         }.filterNotNull().firstOrNull()
         is FunctionDeclaration -> this.body.findVariable(name, currentDepth + 1, true)
-        else -> getComponents().asSequence().map {
+        else -> getNodes().asSequence().map {
             it.findVariable(name, currentDepth, isInFunction)
         }.filterNotNull().firstOrNull()
     }
@@ -308,11 +370,5 @@ class TacGenerator private constructor() {
         val newIndex = stringIndices.size
         stringIndices[text] = newIndex
         return newIndex
-    }
-
-    private fun generateLabel(): String {
-        val label = "label$labelCounter"
-        labelCounter++
-        return label
     }
 }

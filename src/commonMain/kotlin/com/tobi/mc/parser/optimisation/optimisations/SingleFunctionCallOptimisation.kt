@@ -1,5 +1,6 @@
 package com.tobi.mc.parser.optimisation.optimisations
 
+import com.tobi.mc.OptimisationResult
 import com.tobi.mc.ParseException
 import com.tobi.mc.computable.Computable
 import com.tobi.mc.computable.ExpressionSequence
@@ -12,14 +13,15 @@ import com.tobi.mc.computable.variable.GetVariable
 import com.tobi.mc.computable.variable.SetVariable
 import com.tobi.mc.computable.variable.VariableContext
 import com.tobi.mc.computable.variable.VariableDeclaration
-import com.tobi.mc.parser.optimisation.InstanceOptimisation
-import com.tobi.mc.parser.util.getComponents
+import com.tobi.mc.newValue
+import com.tobi.mc.noOptimisation
+import com.tobi.mc.parser.optimisation.ASTInstanceOptimisation
 import com.tobi.mc.parser.util.traverseAllNodes
 import com.tobi.mc.parser.util.traverseWithDepth
 import com.tobi.mc.util.DescriptionMeta
 import com.tobi.mc.util.SimpleDescription
 
-object SingleFunctionCallOptimisation : InstanceOptimisation<ExpressionSequence>(ExpressionSequence::class) {
+object SingleFunctionCallOptimisation : ASTInstanceOptimisation<ExpressionSequence>(ExpressionSequence::class) {
 
     private const val MAX_INLINES = 1
 
@@ -27,30 +29,30 @@ object SingleFunctionCallOptimisation : InstanceOptimisation<ExpressionSequence>
         Inlines the result of any function calls which only occur once when being returned
     """.trimIndent())
 
-    override fun ExpressionSequence.optimiseInstance(): Computable? {
+    override fun ExpressionSequence.optimiseInstance(): OptimisationResult<ExpressionSequence> {
         val newSequence = ArrayList<Computable>()
         val inlines = ArrayList<InlineData>()
 
-        for (operation in this.operations) {
-            if(operation is FunctionDeclaration) {
-                val inlineData = this.tryGetInlineData(operation) ?: continue
+        for (expression in this.expressions) {
+            if(expression is FunctionDeclaration) {
+                val inlineData = this.tryGetInlineData(expression) ?: continue
                 inlines.add(inlineData)
             } else if(inlines.isEmpty()) {
-                newSequence.add(operation)
+                newSequence.add(expression)
             } else {
-                newSequence.add(operation.mapInline(inlines))
+                newSequence.add(expression.mapInline(inlines))
             }
         }
 
         if(inlines.isEmpty()) {
-            return null
+            return noOptimisation()
         }
-        return ExpressionSequence(newSequence)
+        return newValue(ExpressionSequence(newSequence))
     }
 
     private fun Computable.mapInline(inlines: List<InlineData>): Computable = when(this) {
         is ReturnStatement -> this.mapReturn(inlines)
-        is ExpressionSequence -> ExpressionSequence(operations.map { it.mapInline(inlines) }, this.sourceRange)
+        is ExpressionSequence -> ExpressionSequence(expressions.map { it.mapInline(inlines) }.toMutableList(), this.sourceRange)
         is IfStatement -> IfStatement(
             check,
             ifBody.mapInline(inlines) as ExpressionSequence,
@@ -129,20 +131,18 @@ object SingleFunctionCallOptimisation : InstanceOptimisation<ExpressionSequence>
 
     private data class InlineData(val function: FunctionDeclaration, val returns: List<ReturnStatement>)
 
-    private fun ExpressionSequence.isVariableInClosure(name: String): Boolean = operations.any {
+    private fun ExpressionSequence.isVariableInClosure(name: String): Boolean = expressions.any {
         it.findVariable(name, 0, false) != null
     }
 
     private fun Computable.findVariable(name: String, currentDepth: Int, isInFunction: Boolean): Computable? = when(this) {
         is VariableContext -> if(this.contextIndex == currentDepth && isInFunction && this.name == name) this else null
-        is ExpressionSequence -> this.operations.asSequence().map {
+        is ExpressionSequence -> this.expressions.asSequence().map {
             it.findVariable(name, currentDepth + 1, isInFunction)
         }.filterNotNull().firstOrNull()
         is FunctionDeclaration -> this.body.findVariable(name, currentDepth + 1, true)
-        else -> getComponents().asSequence().map {
+        else -> getNodes().asSequence().map {
             it.findVariable(name, currentDepth, isInFunction)
         }.filterNotNull().firstOrNull()
     }
-
-
 }
